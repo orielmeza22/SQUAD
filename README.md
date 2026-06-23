@@ -35,6 +35,18 @@ La finalidad última de SQUAD es **eliminar la fricción técnica y de infraestr
 
 ---
 
+## ⚠️ Estado del Proyecto: Fase Beta
+
+> [!WARNING]
+> SQUAD se encuentra actualmente en **Fase Beta Activa**. Esto significa que aunque el núcleo de orquestación y autocuración es completamente operativo, se pueden presentar comportamientos inesperados o excepciones de contexto en modelos LLM locales con ventanas de contexto reducidas.
+
+### ¿Qué hay que hacer / Cómo colaborar?
+1. **Configurar el Modelo LLM**: Asegúrate de descargar un modelo apto para codificación en Ollama (ej. `qwen2.5-coder:14b` o `qwen2.5-coder:7b`) o configurar tu API Key de Gemini en el archivo `.env` para garantizar la mejor tasa de acierto y respuestas completas.
+2. **Reportar Errores**: Si el linter autónomo entra en bucle infinito o no logra resolver un error específico, copia el log de consola de SQUAD y abre un *Issue* en el repositorio.
+3. **Contribuir con Prompts/Agentes**: Puedes sugerir mejoras en la lógica de los agentes modificando las directivas del sistema en el archivo `squad_server.py`.
+
+---
+
 ## 🚀 Arquitectura del Enjambre
 
 ```mermaid
