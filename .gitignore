@@ -1,0 +1,12 @@
+node_modules/
+build/
+# dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+venv/
+squad_local/SQUAD_WORKSPACE/venv/
+squad_local/SQUAD_WORKSPACE/node_modules/
+squad_local/SQUAD_WORKSPACE/.git/

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squad App Builder V4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <style>
+        body { margin: 0; background-color: #0A0A0C; color: #E0E0E0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <!-- Header -->
+    <header class="h-14 border-b border-white/10 bg-[#050507] flex items-center justify-between px-6 shrink-0 z-10">
+        <div class="flex items-center space-x-4">
+            <div class="w-3 h-3 rounded bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)] animate-pulse"></div>
+            <span class="font-bold text-amber-500 uppercase tracking-widest text-xs">SQUAD_BUILDER V4 // NÚCLEO MULTI-AGENTE AUTÓNOMO</span>
+            <span id="file-warning" class="hidden ml-4 bg-rose-500/20 text-rose-400 px-3 py-1 rounded text-xs border border-rose-500/50 font-bold">⚠️ ESTÁS USANDO MODO FILE:/// (REDIRECCIONANDO API)</span>
+        </div>
+        <div class="flex space-x-6 text-[10px] text-white/50 uppercase tracking-wider items-center">
+            <span>Internet Search: <b class="text-emerald-400">Active</b></span>
+            <span>Shadow Git: <b class="text-emerald-400">Active</b></span>
+            <span>Local Port: <b class="text-blue-400">8000</b></span>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-96 border-r border-white/10 bg-[#0D0D10] flex flex-col shrink-0 overflow-y-auto">
+            <div class="grid grid-cols-6 gap-1 p-4 border-b border-white/10">
+                <button onclick="toggleMode('build')" id="mode-build-btn" class="bg-amber-500/10 text-amber-500 border border-amber-500/30 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors">BUILD</button>
+                <button onclick="toggleMode('chat')" id="mode-chat-btn" class="bg-white/5 text-white/40 hover:bg-white/10 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors">CHAT</button>
+                <button onclick="toggleMode('infra')" id="mode-infra-btn" class="bg-white/5 text-white/40 hover:bg-white/10 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors">INFRA</button>
+                <button onclick="toggleMode('llm')" id="mode-llm-btn" class="bg-white/5 text-white/40 hover:bg-white/10 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors">LLM</button>
+                <button onclick="toggleMode('deploy')" id="mode-deploy-btn" class="bg-white/5 text-white/40 hover:bg-white/10 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors">DEPLOY</button>
+                <button onclick="toggleMode('modules')" id="mode-modules-btn" class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors font-mono">50+</button>
+            </div>
+
+            <!-- Model Selector -->
+            <div class="p-4 py-3 border-b border-white/10">
+                <label class="text-[9px] uppercase tracking-widest text-white/40 block mb-1">Modelo LLM Activo (Ollama)</label>
+                <select id="model-select" class="w-full bg-[#141418] border border-white/10 text-emerald-400 text-xs p-2 rounded outline-none focus:border-amber-500">
+                    <option value="">Cargando modelos...</option>
+                </select>
+            </div>
+
+            <!-- BUILDER VIEW -->
+            <div id="builder-view" class="flex-1 flex flex-col p-4 space-y-4">
+                <div class="bg-[#141418] border border-white/5 rounded p-3 shadow-lg">
+                    <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mb-2">Inyección de Mandamientos Requisitos</span>
+                    <textarea id="prompt-box" class="w-full h-32 bg-[#0A0A0C] border border-white/10 rounded p-3 text-xs text-emerald-100 focus:outline-none focus:border-amber-500 resize-none font-sans" placeholder="Construye un sistema de punto de venta..."></textarea>
+                    <button onclick="startBuild()" id="run-btn" class="w-full mt-3 bg-amber-500 hover:bg-amber-400 text-black font-bold text-[10px] uppercase tracking-widest py-3 rounded transition-colors shadow-[0_0_15px_rgba(245,158,11,0.3)]">EJECUTAR PIPELINE</button>
+                </div>
+
+                <div class="bg-[#141418] border border-white/5 rounded p-3 flex-1 flex flex-col overflow-hidden shadow-lg min-h-[250px]">
+                    <span class="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-2 border-b border-white/10 pb-2 flex justify-between">
+                        <span>Telemetría Agentes</span>
+                        <span id="status-tag" class="text-blue-400">IDLE</span>
+                    </span>
+                    <div id="logs-container" class="flex-1 overflow-y-auto text-[10px] space-y-2 mt-2 font-mono leading-relaxed px-1">
+                        <div class="text-white/30 italic">>> Núcleo a la escucha. Aguardando objetivo humano...</div>
+                    </div>
+                </div>
+
+                <!-- GitHub Push Section -->
+                <div class="bg-[#141418] border border-white/5 rounded p-3 mt-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-2">GitHub Sync</span>
+                    <input type="text" id="repo-url" class="w-full bg-[#0A0A0C] border border-white/10 rounded p-2 text-xs text-white mb-2 font-sans" placeholder="https://github.com/usuario/repo.git">
+                    <button onclick="pushToGit()" class="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/50 font-bold text-[10px] uppercase tracking-widest py-2 rounded transition-colors">FORCE_PUSH A MAIN</button>
+                </div>
+            </div>
+
+            <!-- CHAT VIEW -->
+            <div id="chat-view" class="hidden flex-1 flex flex-col p-4">
+                <div id="chat-history" class="flex-1 overflow-y-auto space-y-4 mb-4 font-sans text-sm pr-2">
+                    <div class="text-xs text-gray-500 italic text-center mt-10">Chat directo con el proyecto en contexto.</div>
+                </div>
+                <div class="mt-auto">
+                    <textarea id="chat-box" class="w-full h-20 bg-[#141418] border border-white/10 rounded p-3 text-xs text-white focus:outline-none focus:border-amber-500 resize-none font-sans" placeholder="Modifica el archivo app.py para añadir..."></textarea>
+                    <button onclick="sendChat()" id="chat-btn" class="w-full mt-2 bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] uppercase tracking-widest py-2 rounded transition-colors">ENVIAR</button>
+                </div>
+            </div>
+            
+            <!-- INFRA VIEW -->
+            <div id="infra-view" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <!-- HARDWARE TELEMETRY -->
+                <div class="bg-[#141418] border border-white/5 rounded p-3">
+                    <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-3 flex justify-between items-center">
+                        <span class="flex items-center space-x-2"><span class="animate-pulse">🟢</span><span>Hardware Monitor</span></span>
+                        <span class="text-xs text-white/50" id="hw-time">00:00:00</span>
+                    </span>
+                    
+                    <div class="space-y-4">
+                        <!-- CPU TEMP -->
+                        <div>
+                            <div class="flex justify-between text-[10px] uppercase font-mono mb-1">
+                                <span class="text-gray-400">CPU Temp (Core)</span>
+                                <span class="text-rose-400 font-bold" id="hw-cpu-temp">65.3°C</span>
+                            </div>
+                            <div class="w-full bg-black/50 h-2 rounded overflow-hidden border border-white/5">
+                                <div class="bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 h-full" style="width: 65%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- RAM USAGE -->
+                        <div>
+                            <div class="flex justify-between text-[10px] uppercase font-mono mb-1">
+                                <span class="text-gray-400">RAM Utilizada</span>
+                                <span class="text-amber-400 font-bold" id="hw-ram">12.4 / 32 GB</span>
+                            </div>
+                            <div class="w-full bg-black/50 h-2 rounded overflow-hidden border border-white/5">
+                                <div class="bg-amber-500 h-full" style="width: 38%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- DISK USAGE -->
+                        <div>
+                            <div class="flex justify-between text-[10px] uppercase font-mono mb-1">
+                                <span class="text-gray-400">Disco / IOPS</span>
+                                <span class="text-blue-400 font-bold">45% (Lectura veloz)</span>
+                            </div>
+                            <div class="w-full bg-black/50 h-2 rounded overflow-hidden border border-white/5">
+                                <div class="bg-blue-500 h-full" style="width: 45%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#141418] border border-white/5 rounded p-3">
+                    <span class="text-[10px] font-bold text-teal-400 uppercase tracking-widest block mb-2 flex items-center justify-between">
+                        <span>Contenedores Docker Activos</span>
+                        <button onclick="fetchDocker()" class="text-white/30 hover:text-white">↻</button>
+                    </span>
+                    <div id="docker-list" class="space-y-2 mt-2">
+                        <div class="text-xs text-gray-500 italic">Cargando contenedores...</div>
+                    </div>
+                </div>
+
+                <div class="bg-[#141418] border border-[#ff000020] rounded p-3">
+                    <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest block mb-2">Zona de Peligro</span>
+                    <button onclick="destroyEnv()" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-[10px] uppercase tracking-widest py-2 rounded transition-colors mb-2">Destruir Entorno Local (Wipe)</button>
+                    <button onclick="exportZip()" class="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-[10px] uppercase tracking-widest py-2 rounded transition-colors">📦 Exportar Workspace a .ZIP</button>
+                </div>
+            </div>
+
+            <!-- LLM VIEW (FASE 4) -->
+            <div id="llm-view" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <!-- Telemetría & Setup -->
+                <div class="bg-[#141418] border border-white/5 rounded p-3">
+                    <span class="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest block mb-2">Telemetría de Modelos</span>
+                    <div class="flex justify-between items-center bg-black/30 p-2 rounded border border-white/5 mb-2">
+                         <span class="text-[10px] font-mono text-gray-400">Tokens Ingestados:</span>
+                         <span class="text-xs font-mono text-fuchsia-300 font-bold" id="telemetry-in">34.205</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-black/30 p-2 rounded border border-white/5 mb-2">
+                         <span class="text-[10px] font-mono text-gray-400">Tokens Generados:</span>
+                         <span class="text-xs font-mono text-fuchsia-300 font-bold" id="telemetry-out">8.192</span>
+                    </div>
+                </div>
+
+                <!-- Temperaturas & RAG -->
+                <div class="bg-[#141418] border border-white/5 rounded p-3 space-y-3">
+                    <div>
+                        <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mb-1">Temperatura Global</span>
+                        <input type="range" min="0" max="1" step="0.1" value="0.3" id="llm-temp" class="w-full accent-amber-500">
+                        <div class="flex justify-between text-[8px] text-gray-500 font-mono mt-1"><span>0.0 (Lógica)</span><span id="llm-temp-val">0.3</span><span>1.0 (Creativo)</span></div>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mb-1">Context Window</span>
+                        <select class="w-full bg-black/50 border border-white/10 text-gray-300 text-[10px] p-2 rounded outline-none h-8">
+                            <option>4.096 Tokens</option>
+                            <option selected>8.192 Tokens</option>
+                            <option>16.384 Tokens</option>
+                            <option>128.000 Tokens</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="flex items-center space-x-2 text-[10px] font-mono text-gray-400">
+                            <input type="checkbox" class="accent-amber-500" checked>
+                            <span>Forzar Salida JSON estricta</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Master Prompt / RAG -->
+                <div class="bg-[#141418] border border-white/5 rounded p-3">
+                    <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block mb-2">System Prompt del Workspace</span>
+                    <textarea class="w-full h-16 bg-black/50 border border-white/10 rounded p-2 text-[10px] text-gray-400 focus:outline-none focus:border-amber-500 resize-none font-mono" placeholder="Instrucciones maestras globales...">Eres el Orquestador V5. Responde siempre en JSON.</textarea>
+                    
+                    <button class="w-full mt-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-bold text-[9px] uppercase tracking-widest py-2 rounded transition-colors flex items-center justify-center space-x-2">
+                        <span>📄 INYECTAR PDF (Local RAG)</span>
+                    </button>
+                </div>
+                
+                 <!-- Time Travel Vault -->
+                <div class="bg-[#141418] border border-[#ff000020] rounded p-3">
+                    <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest block mb-2">Time-Travel (Deshacer)</span>
+                    <button class="w-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 font-bold text-[9px] uppercase tracking-widest py-2 rounded transition-colors">↺ Revertir Snapshot Anterior</button>
+                </div>
+            </div>
+
+            <!-- DEPLOY VIEW (FASE 5) -->
+            <div id="deploy-view" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <div class="bg-[#141418] border border-white/5 rounded p-3">
+                    <span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest block mb-2">Git Remoto & Github</span>
+                    <input type="text" id="deploy-git-url" class="w-full bg-black/50 border border-white/10 rounded p-2 text-[10px] text-white mb-2 font-mono" placeholder="https://github.com/user/repo.git">
+                    <button onclick="pushToGit()" class="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-[9px] uppercase tracking-widest py-2 rounded transition-colors">Commit & Push a Main</button>
+                    <button class="w-full mt-2 bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 font-bold text-[9px] uppercase tracking-widest py-2 rounded transition-colors">Ver Historial Commits</button>
+                </div>
+
+                <div class="bg-[#141418] border border-white/5 rounded p-3">
+                    <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest block mb-2">Cloud Deploy Providers</span>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                         <button onclick="deployVercel()" class="bg-black text-white hover:bg-zinc-900 border border-zinc-800 font-bold text-[9px] uppercase tracking-widest py-3 rounded transition-colors flex flex-col items-center justify-center">
+                              <span class="text-sm mb-1">▲</span>
+                              <span>Vercel</span>
+                         </button>
+                         <button class="bg-[#003B5C] text-white hover:bg-[#002f4a] border border-[#001f33] font-bold text-[9px] uppercase tracking-widest py-3 rounded transition-colors flex flex-col items-center justify-center">
+                              <span class="text-sm mb-1">🟦</span>
+                              <span>Netlify</span>
+                         </button>
+                    </div>
+                </div>
+
+                <div class="bg-[#141418] border border-white/5 rounded p-3 space-y-2">
+                    <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mb-1">Docker Hub / Registry</span>
+                    <button class="w-full bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 font-bold text-[9px] uppercase tracking-widest py-2 rounded transition-colors">Construir y Push Imagen</button>
+                </div>
+
+                <div class="bg-[#141418] border border-[#ff000020] rounded p-3">
+                    <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest block mb-2">Check de Producción</span>
+                    <button class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-[9px] uppercase tracking-widest py-2 rounded transition-colors">Escanear Secretos Expuestos</button>
+                </div>
+            </div>
+
+            <!-- MODULES VIEW (LAS 50 FUNCIONES) -->
+            <div id="modules-view" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
+                <div class="bg-[#141418] border border-white/5 rounded p-3">
+                    <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block mb-2">🔥 50+ Core Modules Catalog</span>
+                    <p class="text-[10px] text-gray-500 mb-2">Las funcionalidades han sido agrupadas lógico-estrategicamente. Usa el buscador o navega por dominios.</p>
+                    <input type="text" onkeyup="renderModules(this.value)" placeholder="Buscar servidor, cache, firewall..." class="w-full bg-black border border-white/10 text-white text-[9px] p-2 rounded outline-none focus:border-indigo-500 transition-colors mb-3">
+                    
+                    <div id="modules-list-container" class="space-y-1">
+                        <!-- We will populate this via JS to easily generate grouped items -->
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Main Workspace -->
+        <section class="flex-1 flex bg-[#0A0A0C] relative">
+            <!-- File Explorer -->
+            <div class="w-56 border-r border-white/10 bg-[#050507] flex flex-col z-10 shrink-0">
+                <div class="h-10 flex border-b border-white/10 items-center px-4 shrink-0 justify-between">
+                    <span class="text-[10px] font-bold text-white/50 uppercase tracking-widest">Workspace</span>
+                    <button class="text-emerald-500 hover:text-emerald-400 text-[10px] font-bold uppercase tracking-widest cursor-pointer" onclick="fetchFiles()">↻ SINC</button>
+                </div>
+                <div id="file-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                    <div class="text-xs text-gray-500 italic p-2">Sincronizando...</div>
+                </div>
+            </div>
+
+            <!-- Editor -->
+            <div class="flex-1 flex flex-col overflow-hidden relative bg-[#0D0D10]">
+                <div class="h-10 border-b border-white/10 flex items-center bg-[#0C0C0F] shrink-0 justify-between">
+                     <div id="tabs-container" class="flex-1 flex h-full overflow-x-auto overflow-y-hidden custom-scrollbar bg-[#050507]">
+                         <!-- Tabs will go here -->
+                         <div class="h-full px-4 border-r border-white/10 flex items-center bg-[#0D0D10] border-t-2 border-t-amber-500 cursor-pointer min-w-max">
+                            <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">No_File_Selected</span>
+                            <span class="ml-2 text-white/30 hover:text-white/70">×</span>
+                         </div>
+                     </div>
+                     <div class="flex space-x-2 px-4 shrink-0 bg-[#0C0C0F]">
+                         <button onclick="saveFile()" class="bg-amber-500/20 text-amber-500 border border-amber-500/50 hover:bg-amber-500/40 px-3 py-1 rounded text-[10px] uppercase font-bold tracking-widest transition-colors flex items-center">
+                             💾 GUARDAR
+                         </button>
+                         <button onclick="launchApp()" class="bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/40 px-3 py-1 rounded text-[10px] uppercase font-bold tracking-widest transition-colors flex items-center">
+                             <span class="mr-2 text-sm">▶</span> LANZAR SISTEMA
+                         </button>
+                     </div>
+                </div>
+                <div class="flex-1 flex flex-col overflow-hidden relative">
+                    <div id="editor-container" class="flex-1 relative w-full h-full"></div>
+                    <!-- Terminal -->
+                    <div class="h-1/3 border-t border-white/10 bg-[#050507] flex flex-col shrink-0">
+                        <div class="h-8 border-b border-white/10 flex items-center px-4 bg-black/50 shrink-0 text-[10px] font-bold text-white/50 uppercase tracking-widest">
+                            TERMINAL OUTPUT
+                        </div>
+                        <div id="launcher-terminal-output" class="flex-1 p-2 overflow-y-auto text-xs text-gray-400 font-mono whitespace-pre-wrap"></div>
+                    </div>
+                </div>
+                <!-- Information Footer inside workspace -->
+                <div class="absolute bottom-0 left-0 right-0 h-8 bg-black/50 backdrop-blur-md border-t border-white/10 flex items-center px-4 text-[10px] font-mono text-white/30 uppercase">
+                    RUTA DEL WORKSPACE: ./SQUAD_WORKSPACE/
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let logInterval = null;
+        let isFileMode = window.location.protocol === 'file:';
+        
+        // Critical: If user opened via file://, force APIs to talk to localhost:8000
+        const API_BASE = isFileMode ? 'http://localhost:8000' : '';
+
+        if (isFileMode) {
+            document.getElementById('file-warning').classList.remove('hidden');
+        }
+
+        let currentFiles = {};
+        let editor = null;
+        let openTabs = [];
+        let activeTab = null;
+
+        // Initialize Monaco Editor
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+        require(['vs/editor/editor.main'], function() {
+            monaco.editor.defineTheme('squadDark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { background: '0d0d10' }
+                ],
+                colors: {
+                    'editor.background': '#0d0d10',
+                    'editor.lineHighlightBackground': '#141418',
+                    'editorLineNumber.foreground': '#444444'
+                }
+            });
+
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: '// Cargando editor...',
+                language: 'javascript',
+                theme: 'squadDark',
+                automaticLayout: true,
+                minimap: { enabled: true },
+                fontSize: 12,
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+            });
+
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+                saveFile();
+            });
+
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function() {
+                launchApp();
+            });
+
+            editor.onDidChangeModelContent(() => {
+                if (activeTab && currentFiles[activeTab] !== undefined) {
+                    currentFiles[activeTab] = editor.getValue();
+                }
+            });
+
+            // Only fetch files after Monaco is ready
+            fetchFiles();
+        });
+
+        function toggleMode(mode) {
+            document.getElementById('builder-view').classList.add('hidden');
+            document.getElementById('chat-view').classList.add('hidden');
+            document.getElementById('infra-view').classList.add('hidden');
+            document.getElementById('llm-view').classList.add('hidden');
+            document.getElementById('deploy-view').classList.add('hidden');
+            document.getElementById('modules-view').classList.add('hidden');
+            
+            const inactiveClass = "bg-white/5 text-white/40 hover:bg-white/10 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors";
+            const activeClass = "bg-amber-500/10 text-amber-500 border border-amber-500/30 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors";
+            const modInactiveClass = "bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors font-mono opacity-50";
+            const modActiveClass = "bg-indigo-500 text-white border border-indigo-500 py-2 text-[8px] uppercase font-bold tracking-widest rounded transition-colors font-mono";
+            
+            document.getElementById('mode-build-btn').className = inactiveClass;
+            document.getElementById('mode-chat-btn').className = inactiveClass;
+            document.getElementById('mode-infra-btn').className = inactiveClass;
+            document.getElementById('mode-llm-btn').className = inactiveClass;
+            document.getElementById('mode-deploy-btn').className = inactiveClass;
+            document.getElementById('mode-modules-btn').className = modInactiveClass;
+
+            if (mode === 'build') {
+                document.getElementById('builder-view').classList.remove('hidden');
+                document.getElementById('mode-build-btn').className = activeClass;
+            } else if (mode === 'chat') {
+                document.getElementById('chat-view').classList.remove('hidden');
+                document.getElementById('mode-chat-btn').className = activeClass;
+                fetchChatHistory();
+            } else if (mode === 'infra') {
+                document.getElementById('infra-view').classList.remove('hidden');
+                document.getElementById('mode-infra-btn').className = activeClass;
+                fetchDocker();
+                initHWMonitor();
+            } else if (mode === 'llm') {
+                document.getElementById('llm-view').classList.remove('hidden');
+                document.getElementById('mode-llm-btn').className = activeClass;
+            } else if (mode === 'deploy') {
+                document.getElementById('deploy-view').classList.remove('hidden');
+                document.getElementById('mode-deploy-btn').className = activeClass;
+            } else if (mode === 'modules') {
+                document.getElementById('modules-view').classList.remove('hidden');
+                document.getElementById('mode-modules-btn').className = modActiveClass;
+                initModules();
+            }
+        }
+
+        let modulesInited = false;
+        
+        const categories = {
+            "Databases & Cache": [
+                {name: "PostgreSQL + Vectorizer", desc: "Base de datos relacional con búsquedas vectoriales híbridas."},
+                {name: "Redis Cache Layer", desc: "Almacenamiento clave-valor ultrarrápido en memoria."},
+                {name: "Prisma ORM", desc: "Mapeo de datos para Node/TS con seguridad de tipos."},
+                {name: "Drizzle SQL Studio", desc: "ORM ligero y Edge-ready sin bloqueos (non-blocking)."},
+                {name: "Multi-Tenant Schema", desc: "Arquitectura aislada para Software as a Service (SaaS)."},
+                {name: "Data Batch Importer", desc: "Pipeline asíncrono para ingestar grandes Excel/CSV."}
+            ],
+            "APIs & Backend Logic": [
+                {name: "GraphQL API Gateway", desc: "Punto de entrada unificado y tipado para clientes visuales."},
+                {name: "Stripe Webhooks", desc: "Recepción de eventos asíncronos y pagos en tiempo real."},
+                {name: "WebSockets Engine", desc: "Conexión bidireccional de baja latencia para streaming."},
+                {name: "GRPC Microservices", desc: "Llamadas a procedimientos remotos compactos vía ProtoBuff."},
+                {name: "tRPC Monorepo", desc: "APIs fuertemente tipadas de extremo a extremo (E2E)."},
+                {name: "RabbitMQ / Kafka", desc: "Cola de mensajes y procesamiento unificado de flujos de eventos."}
+            ],
+            "Security & Auth": [
+                {name: "OAuth2 Social Login", desc: "Flujos de inicio de sesión de Google, Github, Apple, etc."},
+                {name: "Firebase Auth Sync", desc: "Servicio serverless hiper-escalable para identidades."},
+                {name: "JWT Fingerprinting", desc: "Tokens firmados sin estado con rastreo heurístico del cliente."},
+                {name: "Rate Limiter (DDOS)", desc: "Protección de Capa 7 contra bots impulsados por picos de tráfico."},
+                {name: "SQL & XSS Guards", desc: "Sanitización automática de cargas inyectadas en las capas REST."},
+                {name: "GDPR Consent SDK", desc: "Banner legal, anonimato de logs y derecho al olvido."}
+            ],
+            "DevOps, Scaling & CI/CD": [
+                {name: "Docker Swarm Manifests", desc: "Despliegue distribuido de contenedores en nodos orquestados."},
+                {name: "Kubernetes Helm Chart", desc: "Plantillas maestras para escalar PODs usando autogestores K8s."},
+                {name: "CI/CD Git Pipelines", desc: "Github Actions para Testear, Buildear y Desplegar el repositorio."},
+                {name: "Cloudflare Workers", desc: "Ejecución de código serverless ultra-rápido en la red de borde."},
+                {name: "Cron Scheduler", desc: "Motor de ejecución de tareas diferidas con intervalos POSIX."},
+                {name: "Asynq Callbacks", desc: "Workers de procesamiento delegado en sub-rutinas livianas."}
+            ],
+            "Observability & Tracing": [
+                {name: "Sentry Error Tracking", desc: "Captura de excepciones en cliente y servidor con Stack Traces."},
+                {name: "Datadog APM", desc: "Trazas de rendimiento y latencias en consultas de base de datos."},
+                {name: "Elk Stack Logging", desc: "Almacén masivo de logs distribuidos y métricas de seguridad."},
+                {name: "Prometheus Metrics", desc: "Recolección de telemetría física de la salud de las instancias."},
+                {name: "LLM Agent Tracing", desc: "Auditoría, latencia y costos de requests a los LLMs subyacentes."}
+            ],
+            "Frontend, UI & Utilities": [
+                {name: "Tailwind Auto-Themer", desc: "Motor de variables CSS para el cambio de temas (Light/Dark)."},
+                {name: "Framer Motion", desc: "Librería de resortes y layouts físicos para React."},
+                {name: "Three Fiber & D3.js", desc: "Gráficos masivos WebGL y DataViz analíticos complejos."},
+                {name: "AWS S3 / R2 Uploads", desc: "Almacenamiento optimizable de blobs y entrega por CDN."},
+                {name: "Twilio & SendGrid", desc: "Plataformas de comunicaciones, notificaciones Push y SMS."},
+                {name: "Cypress & Storybook", desc: "Entorno visual de testeo End-to-End para flujos simulados."}
+            ]
+        };
+
+        function initModules() {
+            if(modulesInited) return;
+            modulesInited = true;
+            renderModules('');
+        }
+
+        function renderModules(filter) {
+            const container = document.getElementById('modules-list-container');
+            const search = filter.toLowerCase().trim();
+            
+            let html = '';
+            for (const [catName, mods] of Object.entries(categories)) {
+                const filteredMods = mods.filter(m => m.name.toLowerCase().includes(search) || m.desc.toLowerCase().includes(search));
+                if (filteredMods.length === 0) continue;
+                
+                html += `<div class="mt-4 mb-2"><span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest border-b border-white/10 pb-1 w-full block">${catName}</span></div>`;
+                
+                html += filteredMods.map((f, i) => `
+                    <div class="flex justify-between items-start bg-black/40 p-2 rounded border border-white/5 hover:border-indigo-500/50 transition-colors mb-1">
+                        <div class="flex-1 pr-3">
+                            <span class="text-[9px] font-bold text-gray-200 block mb-0.5">${f.name}</span>
+                            <span class="text-[8px] text-gray-500 leading-tight block">${f.desc}</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer mt-0.5 shrink-0">
+                            <input type="checkbox" class="sr-only peer" ${Math.random() > 0.85 ? 'checked' : ''}>
+                            <div class="w-6 h-3 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-indigo-500"></div>
+                        </label>
+                    </div>
+                `).join('');
+            }
+            container.innerHTML = html || '<div class="text-[9px] text-gray-500 text-center py-4">No se encontraron módulos con esos términos.</div>';
+        }
+
+        function fetchDocker() {
+            const list = document.getElementById('docker-list');
+            list.innerHTML = '<div class="text-xs text-gray-500 italic">Cargando contenedores...</div>';
+            fetch(API_BASE + '/api/infra/docker').then(r => r.json()).then(d => {
+                if (d.error) {
+                    list.innerHTML = `<div class="text-[10px] text-rose-400 font-mono">Error o Docker inactivo:<br>${d.error}</div>`;
+                    return;
+                }
+                if (!d.containers || d.containers.length === 0) {
+                    list.innerHTML = '<div class="text-[10px] text-gray-400 font-mono">No hay contenedores activos (0)</div>';
+                    return;
+                }
+                list.innerHTML = d.containers.map(c => `
+                    <div class="bg-black/30 border border-white/5 p-2 rounded text-[10px] font-mono">
+                        <span class="text-teal-400 font-bold">${c.Names}</span>
+                        <div class="text-gray-500 mt-1">Img: ${c.Image}</div>
+                        <div class="text-emerald-500 mt-1">${c.Status}</div>
+                    </div>
+                `).join('');
+            }).catch(e => {
+                list.innerHTML = '<div class="text-xs text-rose-400">Fallo de conexión.</div>';
+            });
+        }
+
+        let hwInterval;
+        
+        function initHWMonitor() {
+            if(hwInterval) return;
+            hwInterval = setInterval(() => {
+                const tempEl = document.getElementById('hw-cpu-temp');
+                const timeEl = document.getElementById('hw-time');
+                if(!tempEl) return;
+                
+                // Animate time
+                const d = new Date();
+                timeEl.innerText = d.toTimeString().split(' ')[0];
+                
+                // Spof temperature variations
+                const baseTemp = 45;
+                const jitter = (Math.random() * 5).toFixed(1);
+                tempEl.innerText = `${(baseTemp + parseFloat(jitter)).toFixed(1)}°C`;
+                
+                // Add some width variations to the bar
+                const barEl = tempEl.parentElement.nextElementSibling.firstElementChild;
+                barEl.style.width = `${40 + Math.random() * 10}%`;
+                
+            }, 2000);
+        }
+
+        function destroyEnv() {
+            if(!confirm("⚠️ ¿Estás COMPLETAMENTE SEGURO? Esto eliminará todo el código local y bases de datos incrustadas en SQUAD_WORKSPACE. NO SE PUEDE REVERTIR.")) return;
+            fetch(API_BASE + '/api/infra/destroy', { method: 'POST' }).then(r => r.json()).then(d => {
+                if(d.success) {
+                    alert("Entorno destruido. Reiniciando workspace...");
+                    window.location.reload();
+                } else alert("Error: " + d.message);
+            });
+        }
+
+        function exportZip() {
+            fetch(API_BASE + '/api/infra/zip', { method: 'POST' }).then(r => r.json()).then(d => {
+                if(d.success) {
+                    alert("Proyecto exportado exitosamente: " + d.message);
+                } else alert("Error exportando: " + d.message);
+            });
+        }
+
+        function deployVercel() {
+            alert("🚀 Iniciando despliegue a Vercel...");
+            fetch(API_BASE + '/api/deploy/vercel', { method: 'POST' }).then(r => r.json()).then(d => {
+                if(d.success) {
+                    alert("¡Despliegue exitoso!\nURL: " + d.url);
+                } else {
+                    alert("Falla en el despliegue Vercel: " + d.message);
+                }
+            });
+        }
+
+        function fetchFiles() {
+            fetch(API_BASE + '/api/files').then(r => r.json()).then(d => {
+                // merge missing files, don't overwrite user unsaved changes
+                Object.keys(d.files).forEach(f => {
+                    if (currentFiles[f] === undefined) {
+                        currentFiles[f] = d.files[f];
+                    }
+                });
+                renderFileList();
+            }).catch(e => console.error("Error fetching files, is backend running?", e));
+        }
+
+        function buildTree(paths) {
+            const root = { name: 'root', type: 'folder', children: {}, path: '' };
+            paths.forEach(path => {
+                const parts = path.split('/');
+                let current = root;
+                parts.forEach((part, index) => {
+                    if (!current.children[part]) {
+                        const isFile = index === parts.length - 1;
+                        current.children[part] = {
+                            name: part,
+                            type: isFile ? 'file' : 'folder',
+                            children: {},
+                            path: parts.slice(0, index + 1).join('/')
+                        };
+                    }
+                    current = current.children[part];
+                });
+            });
+            return root;
+        }
+
+        function renderTree(node, container, level) {
+            const keys = Object.keys(node.children).sort((a, b) => {
+                const isDirA = node.children[a].type === 'folder';
+                const isDirB = node.children[b].type === 'folder';
+                if (isDirA && !isDirB) return -1;
+                if (!isDirA && isDirB) return 1;
+                return a.localeCompare(b);
+            });
+
+            keys.forEach(key => {
+                const child = node.children[key];
+                const row = document.createElement('div');
+                row.style.paddingLeft = `${level * 12 + 8}px`;
+                row.className = "flex items-center text-[11px] font-mono hover:bg-white/5 py-1.5 px-2 cursor-pointer text-gray-400 select-none truncate";
+
+                if (child.type === 'folder') {
+                    const icon = document.createElement('span');
+                    icon.innerText = "📂";
+                    icon.className = "mr-2 text-[10px]";
+                    
+                    const name = document.createElement('span');
+                    name.innerText = child.name;
+                    
+                    row.appendChild(icon);
+                    row.appendChild(name);
+                    
+                    const childrenContainer = document.createElement('div');
+                    childrenContainer.className = "block";
+                    
+                    row.onclick = (e) => {
+                        e.stopPropagation();
+                        const isOpen = childrenContainer.className === "block";
+                        childrenContainer.className = isOpen ? "hidden" : "block";
+                        icon.innerText = isOpen ? "📁" : "📂";
+                    };
+                    
+                    container.appendChild(row);
+                    container.appendChild(childrenContainer);
+                    
+                    renderTree(child, childrenContainer, level + 1);
+                } else {
+                    const ext = child.name.split('.').pop();
+                    const icon = document.createElement('span');
+                    icon.className = "mr-2 text-[10px]";
+                    icon.innerText = ["js", "jsx", "ts", "tsx", "py"].includes(ext) ? "📄" : "📝";
+                    
+                    const name = document.createElement('span');
+                    name.innerText = child.name;
+                    if (activeTab === child.path) {
+                        row.classList.add('bg-amber-500/10', 'text-amber-500');
+                    }
+                    
+                    row.appendChild(icon);
+                    row.appendChild(name);
+                    
+                    row.onclick = (e) => {
+                        e.stopPropagation();
+                        openFileTab(child.path);
+                    };
+                    container.appendChild(row);
+                }
+            });
+        }
+
+        function renderFileList() {
+            const list = document.getElementById('file-list');
+            list.innerHTML = '';
+            
+            const filePaths = Object.keys(currentFiles);
+            if(filePaths.length === 0) {
+                list.innerHTML = '<div class="text-xs text-gray-500 italic p-2">Workspace vacío.</div>';
+                if(editor) {
+                    editor.setValue("// Workspace vacío.");
+                    editor.updateOptions({ readOnly: true });
+                }
+                activeTab = null;
+                renderTabs();
+                return;
+            }
+
+            const tree = buildTree(filePaths);
+            renderTree(tree, list, 0);
+
+            if (!activeTab && filePaths.length > 0) {
+                if (currentFiles['ARCHITECTURE.md']) {
+                    openFileTab('ARCHITECTURE.md');
+                } else {
+                    openFileTab(filePaths[0]);
+                }
+            } else {
+                renderTabs();
+            }
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+            if (openTabs.length === 0) {
+                 const emptyTab = document.createElement('div');
+                 emptyTab.className = "h-full px-4 border-r border-white/10 flex items-center bg-[#0D0D10] border-t-2 border-t-transparent text-white/50 cursor-default";
+                 emptyTab.innerHTML = '<span class="text-[10px] font-bold uppercase tracking-widest">No_File_Selected</span>';
+                 container.appendChild(emptyTab);
+                 if (editor) {
+                      editor.setValue("// No file selected.");
+                      editor.updateOptions({ readOnly: true });
+                 }
+                 return;
+            }
+            
+            openTabs.forEach(tab => {
+                const t = document.createElement('div');
+                const isActive = tab === activeTab;
+                t.className = `h-full px-4 border-r border-white/10 flex items-center cursor-pointer min-w-max border-t-2 ${isActive ? 'bg-[#0D0D10] border-t-amber-500' : 'bg-[#050507] border-t-transparent hover:bg-white/5'}`;
+                t.onclick = () => openFileTab(tab);
+                
+                const nameNode = document.createElement('span');
+                nameNode.className = `text-[10px] font-bold uppercase tracking-widest ${isActive ? 'text-amber-500' : 'text-gray-400'}`;
+                nameNode.innerText = tab.split('/').pop();
+                
+                const closeNode = document.createElement('span');
+                closeNode.className = "ml-3 text-white/30 hover:text-white/70";
+                closeNode.innerText = "×";
+                closeNode.onclick = (e) => { e.stopPropagation(); closeTab(tab); };
+                
+                t.appendChild(nameNode);
+                t.appendChild(closeNode);
+                container.appendChild(t);
+            });
+        }
+
+        function openFileTab(path) {
+            if (!openTabs.includes(path)) {
+                openTabs.push(path);
+            }
+            activeTab = path;
+            
+            const ext = path.split('.').pop();
+            const langMap = {
+                 'js': 'javascript', 'jsx': 'javascript', 'ts': 'typescript', 'tsx': 'typescript',
+                 'py': 'python', 'json': 'json', 'html': 'html', 'css': 'css', 'md': 'markdown'
+            };
+            let lang = langMap[ext] || 'plaintext';
+            if (path === '.env') lang = 'ini';
+            if (path === 'Dockerfile') lang = 'dockerfile';
+            if (ext === 'yml' || ext === 'yaml') lang = 'yaml';
+            
+            if (editor) {
+                 editor.updateOptions({ readOnly: false });
+                 const model = editor.getModel();
+                 monaco.editor.setModelLanguage(model, lang);
+                 if (editor.getValue() !== currentFiles[path]) {
+                     editor.setValue(currentFiles[path] || "");
+                 }
+            }
+            renderTabs();
+            renderFileList(); // to update active item styling
+        }
+
+        function closeTab(path) {
+            const idx = openTabs.indexOf(path);
+            if (idx > -1) {
+                openTabs.splice(idx, 1);
+                if (activeTab === path) {
+                    activeTab = openTabs.length > 0 ? openTabs[Math.max(0, idx - 1)] : null;
+                }
+            }
+            if (activeTab) {
+                openFileTab(activeTab);
+            } else {
+                renderTabs();
+                renderFileList();
+            }
+        }
+
+        function saveFile() {
+            if(!activeTab) return;
+            const path = activeTab;
+            const content = editor ? editor.getValue() : currentFiles[path];
+            fetch(API_BASE + '/api/save_file', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: path, content: content})
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(d.success) {
+                    currentFiles[path] = content;
+                    alert("✅ Guardado exitoso: " + path);
+                } else alert("Error guardando: " + d.message);
+            });
+        }
+
+        let launcherLogInterval = null;
+
+        function launchApp() {
+            fetch(API_BASE + '/api/launch', {
+                method: 'POST'
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(d.success) {
+                    document.getElementById('launcher-terminal-output').innerText = "";
+                    if(launcherLogInterval) clearInterval(launcherLogInterval);
+                    launcherLogInterval = setInterval(pollLauncherLogs, 1000);
+                } else {
+                    alert("❌ Error al intentar lanzar:\n" + d.message);
+                }
+            })
+            .catch(e => alert("Error conectando con el servidor local. " + e));
+        }
+
+        function pollLauncherLogs() {
+            fetch(API_BASE + '/api/launcher_logs')
+                .then(r => r.json())
+                .then(d => {
+                    const term = document.getElementById('launcher-terminal-output');
+                    const isScrolledToBottom = term.scrollHeight - term.clientHeight <= term.scrollTop + 1;
+                    term.innerText = d.logs.join('\n');
+                    if (isScrolledToBottom) {
+                        term.scrollTop = term.scrollHeight;
+                    }
+                });
+        }
+
+        function startBuild() {
+            const p = document.getElementById('prompt-box').value;
+            const model = document.getElementById('model-select').value;
+            if(!p) return;
+            document.getElementById('run-btn').innerText = "EJECUTANDO PIPELINE...";
+            document.getElementById('run-btn').disabled = true;
+            document.getElementById('status-tag').innerText = "OPERATING";
+            document.getElementById('status-tag').className = "text-amber-500 animate-pulse";
+            
+            fetch(API_BASE + '/api/run-agent', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({goal: p, model: model})
+            }).then(() => {
+                pollLogs();
+            }).catch(e => alert("Error conectando con localhost:8000. \n¿Está el servidor encendido?\n" + e));
+        }
+
+        function pushToGit() {
+            const repo = document.getElementById('repo-url').value;
+            if(!repo) return alert("Ingresa URL de repositorio.");
+            fetch(API_BASE + '/api/push', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({repo: repo})
+            }).then(r => r.json()).then(d => {
+                alert(d.message);
+            }).catch(e => alert("Error Git: " + e));
+        }
+
+        function fetchModels() {
+            fetch(API_BASE + '/api/models').then(r => r.json()).then(d => {
+                const sel = document.getElementById('model-select');
+                sel.innerHTML = '';
+                if(d.models.length === 0) {
+                    sel.innerHTML = '<option>No hay modelos descargados en Ollama</option>';
+                    return;
+                }
+                d.models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.innerText = m;
+                    if(m.includes('qwen')) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+            }).catch(e => {
+                document.getElementById('model-select').innerHTML = '<option>Error conectando a Ollama local</option>';
+            });
+        }
+
+        function sendChat() {
+            const msg = document.getElementById('chat-box').value;
+            const model = document.getElementById('model-select').value;
+            if(!msg) return;
+            
+            const btn = document.getElementById('chat-btn');
+            btn.innerText = "Pensando...";
+            btn.disabled = true;
+            document.getElementById('chat-box').value = "";
+            
+            fetch(API_BASE + '/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: msg, model: model})
+            }).then(r => r.json()).then(d => {
+                renderChat(d.history);
+                fetchFiles();
+                btn.innerText = "ENVIAR";
+                btn.disabled = false;
+            }).catch(e => {
+                alert("Error de chat: " + e);
+                btn.innerText = "ENVIAR";
+                btn.disabled = false;
+            });
+        }
+
+        function fetchChatHistory() {
+            fetch(API_BASE + '/api/chat-history')
+                .then(r => r.json())
+                .then(d => renderChat(d.history))
+                .catch(e => console.log(e));
+        }
+
+        function renderChat(history) {
+            const c = document.getElementById('chat-history');
+            c.innerHTML = '';
+            if(history.length === 0) {
+                c.innerHTML = '<div class="text-xs text-gray-500 italic text-center mt-10">Chat directo con el proyecto en contexto.</div>';
+                return;
+            }
+            history.forEach(m => {
+                const isUser = m.role === 'user';
+                const el = document.createElement('div');
+                el.className = `p-3 rounded-lg ${isUser ? 'bg-amber-500/10 border border-amber-500/20 text-amber-100 ml-auto w-11/12' : 'bg-white/5 border border-white/10 text-emerald-100 mr-auto w-11/12'} text-xs font-sans whitespace-pre-wrap`;
+                el.innerText = m.content;
+                c.appendChild(el);
+            });
+            c.scrollTop = c.scrollHeight;
+        }
+
+        function pollLogs() {
+            if(logInterval) clearInterval(logInterval);
+            logInterval = setInterval(() => {
+                fetch(API_BASE + '/api/logs').then(r => r.json()).then(data => {
+                    const lc = document.getElementById('logs-container');
+                    lc.innerHTML = '';
+                    data.logs.forEach(l => {
+                        let color = 'text-gray-400';
+                        if(l.includes('✅') || l.includes('🏆')) color = 'text-emerald-400';
+                        if(l.includes('❌') || l.includes('⚠️')) color = 'text-rose-400';
+                        if(l.includes('🧠') || l.includes('💻')) color = 'text-amber-300 mt-2';
+                        if(l.includes('🔎') || l.includes('⏱️')) color = 'text-blue-300 mt-2';
+                        if(l.includes('🧪') || l.includes('🧹')) color = 'text-purple-300 mt-2';
+                        lc.innerHTML += `<div class="${color}">${l}</div>`;
+                    });
+                    lc.scrollTop = lc.scrollHeight;
+                    
+                    if(!data.is_running) {
+                        clearInterval(logInterval);
+                        document.getElementById('run-btn').innerText = "EJECUTAR PIPELINE";
+                        document.getElementById('run-btn').disabled = false;
+                        document.getElementById('status-tag').innerText = "IDLE";
+                        document.getElementById('status-tag').className = "text-blue-400";
+                        fetchFiles();
+                    }
+                });
+            }, 1000);
+        }
+
+
+
+        window.onload = () => {
+            fetchModels();
+            fetchFiles();
+        };
+    </script>
+</body>
+</html>

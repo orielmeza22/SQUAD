@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Turnos</title>
+    <style>
+        /* Estilos básicos */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestión de Turnos</h1>
+
+    <!-- Tabla para mostrar los turnos -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre del Turno</th>
+                <th>Días de Actividad</th>
+            </tr>
+        </thead>
+        <tbody id="turnosTable">
+            <!-- Los datos se mostrarán aquí -->
+        </tbody>
+    </table>
+
+    <!-- Formulario para agregar un nuevo turno -->
+    <form action="/turnos" method="post">
+        <label for="nombreTurno">Nombre del Turno:</label>
+        <input type="text" id="nombreTurno" name="nombreTurno"><br><br>
+        <label for="diasActividad">Días de Actividad (separados por comas):</label>
+        <input type="text" id="diasActividad" name="diasActividad"><br><br>
+        <button type="submit">Agregar Turno</button>
+    </form>
+
+    <!-- Script para manejar la interacción con el servidor -->
+    <script src="main.js"></script>
+</body>
+</html>
