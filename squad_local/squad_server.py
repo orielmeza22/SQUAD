@@ -20,16 +20,25 @@ if sys.platform == 'win32':
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def load_env():
-    for fn in [".env", ".env.local"]:
-        p = os.path.join(os.path.dirname(BASE_DIR), fn)
-        if os.path.exists(p):
-            print(f"📡 [ENV] Cargando variables desde: {p}")
-            with open(p, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        k, v = line.split("=", 1)
-                        os.environ[k.strip()] = v.strip().strip('"\'')
+    paths_to_check = [
+        os.path.dirname(BASE_DIR),
+        BASE_DIR,
+        os.path.join(BASE_DIR, "SQUAD_WORKSPACE")
+    ]
+    for path in paths_to_check:
+        for fn in [".env", ".env.local"]:
+            p = os.path.join(path, fn)
+            if os.path.exists(p):
+                print(f"📡 [ENV] Cargando variables desde: {p}")
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith("#") and "=" in line:
+                                k, v = line.split("=", 1)
+                                os.environ[k.strip()] = v.strip().strip('"\'')
+                except Exception as e:
+                    print(f"Error cargando variables desde {p}: {e}")
 
 # Load immediately on import as well
 load_env()
@@ -916,7 +925,7 @@ class SysTools:
             return ""
 
     @staticmethod
-    def write(name, c):
+    def write(name, c, force=False):
         clean_name = name.lstrip("\\/")
         if ":" in clean_name:
             clean_name = clean_name.split(":", 1)[-1].lstrip("\\/")
@@ -926,7 +935,7 @@ class SysTools:
 
         # Critical file write interception logic
         is_critical = clean_name in ["app.py", "package.json", "index.html", ".env", "docker-compose.yml", "requirements.txt", "main_output.py", "main_output.js", "main_output.tsx"]
-        if getattr(state, "interception_enabled", True) and is_critical:
+        if not force and getattr(state, "interception_enabled", True) and is_critical:
             if not hasattr(state, "pending_writes"):
                 state.pending_writes = {}
             state.pending_writes[clean_name] = c
@@ -3136,7 +3145,9 @@ def api_save_file(data: dict = Body(default={})):
     content = data.get('content', '')
     if not name: raise HTTPException(status_code=400, detail="Nombre de archivo vacío")
     try:
-        SysTools.write(name, content)
+        SysTools.write(name, content, force=True)
+        if name == ".env" or name.endswith(".env"):
+            load_env()
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
