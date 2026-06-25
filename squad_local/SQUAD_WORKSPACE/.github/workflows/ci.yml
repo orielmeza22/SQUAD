@@ -1,0 +1,18 @@
+# archivo .github/workflows/main.yml
+name: Pruebas y construcción
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  pruebas-y-construccion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar dependencias
+        run: npm install
+      - name: Ejecutar pruebas con Jest
+        run: npm test
+      - name: Construir la aplicación
+        run: npm run build
