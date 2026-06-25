@@ -617,6 +617,163 @@ class SysTools:
         if not os.path.exists(SysTools.WORKSPACE): os.makedirs(SysTools.WORKSPACE)
 
     @staticmethod
+    def cleanup_workspace_processes():
+        if not os.path.exists(SysTools.WORKSPACE):
+            return
+        ws_abs = os.path.abspath(SysTools.WORKSPACE)
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                if proc.pid == os.getpid():
+                    continue
+                pname = proc.name().lower()
+                if not any(x in pname for x in ["python", "node", "npm", "pip", "cmd", "powershell", "bash"]):
+                    continue
+                try:
+                    cwd = os.path.abspath(proc.cwd())
+                    if cwd.startswith(ws_abs):
+                        print(f"🧹 [SISTEMA] Matando proceso residual en workspace: PID {proc.pid} ({proc.name()})")
+                        proc.kill()
+                        continue
+                except:
+                    pass
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+    @staticmethod
+    def auto_heal_esm_commonjs():
+        pkg_path = os.path.join(SysTools.WORKSPACE, "package.json")
+        if not os.path.exists(pkg_path):
+            return
+        has_import = False
+        has_require = False
+        for root, _, files in os.walk(SysTools.WORKSPACE):
+            if "node_modules" in root or ".git" in root or "venv" in root: continue
+            for f in files:
+                if f.endswith(('.js', '.jsx', '.ts', '.tsx')):
+                    try:
+                        with open(os.path.join(root, f), 'r', encoding='utf-8') as file_obj:
+                            content = file_obj.read()
+                        if re.search(r'^\s*import\s+[\'\"]|^\s*import\s+.*\s+from\s+[\'\"]', content, re.MULTILINE):
+                            has_import = True
+                        if re.search(r'\brequire\s*\(', content):
+                            has_require = True
+                    except:
+                        pass
+        try:
+            with open(pkg_path, 'r', encoding='utf-8') as f_pkg:
+                pkg_data = json.load(f_pkg)
+        except:
+            pkg_data = {}
+        if not isinstance(pkg_data, dict):
+            pkg_data = {}
+        if has_import and not has_require:
+            pkg_data["type"] = "module"
+            print("📦 [SISTEMA] Proyecto detectado como ESM. Ajustando type=module en package.json.")
+        elif has_require and not has_import:
+            pkg_data["type"] = "commonjs"
+            print("📦 [SISTEMA] Proyecto detectado como CommonJS. Ajustando type=commonjs en package.json.")
+        try:
+            with open(pkg_path, 'w', encoding='utf-8') as f_pkg:
+                json.dump(pkg_data, f_pkg, indent=2)
+        except:
+            pass
+
+    @staticmethod
+    def auto_heal_sqlite_connections():
+        if not os.path.exists(SysTools.WORKSPACE):
+            return
+        for root, _, files_in_dir in os.walk(SysTools.WORKSPACE):
+            if "node_modules" in root or ".git" in root or "venv" in root or "__pycache__" in root:
+                continue
+            for f in files_in_dir:
+                if f.endswith('.py'):
+                    path = os.path.join(root, f)
+                    try:
+                        with open(path, 'r', encoding='utf-8') as file_obj:
+                            content = file_obj.read()
+                        pattern = r'(\b(\w+)\s*=\s*sqlite3\.connect\([^\n]+)'
+                        def repl_py(m):
+                            line = m.group(1)
+                            var_name = m.group(2)
+                            return f'{line}\n    try:\n        {var_name}.execute("PRAGMA journal_mode=WAL")\n        {var_name}.execute("PRAGMA busy_timeout=5000")\n    except Exception: pass'
+                        new_content, count = re.subn(pattern, repl_py, content)
+                        if count > 0:
+                            with open(path, 'w', encoding='utf-8') as file_obj:
+                                file_obj.write(new_content)
+                    except Exception:
+                        pass
+                elif f.endswith(('.js', '.ts')):
+                    path = os.path.join(root, f)
+                    try:
+                        with open(path, 'r', encoding='utf-8') as file_obj:
+                            content = file_obj.read()
+                        pattern = r'(\b(const|let|var)\s+(\w+)\s*=\s*new\s+sqlite3\.Database\([^\n]+)'
+                        def repl_js(m):
+                            line = m.group(1)
+                            var_name = m.group(3)
+                            return f'{line}\n{var_name}.run("PRAGMA journal_mode=WAL;");\n{var_name}.run("PRAGMA busy_timeout=5000;");'
+                        new_content, count = re.subn(pattern, repl_js, content)
+                        if count > 0:
+                            with open(path, 'w', encoding='utf-8') as file_obj:
+                                file_obj.write(new_content)
+                    except Exception:
+                        pass
+
+    @staticmethod
+    def dry_parse_multifile(text):
+        lines = text.split("\n")
+        current_file = None
+        current_content = []
+        files = {}
+        for line in lines:
+            if line.startswith("@@FILE:"):
+                if current_file:
+                    files[current_file] = "\n".join(current_content).strip("`\n ")
+                current_file = line.replace("@@FILE:", "").strip()
+                current_content = []
+            elif line.startswith("@@ENDFILE@@") or line.startswith("@@ENDFILE"):
+                if current_file:
+                    files[current_file] = "\n".join(current_content).strip("`\n ")
+                    current_file = None
+            else:
+                if current_file is not None:
+                    if line.strip().startswith("```") and len(line.strip()) <= 15:
+                        continue
+                    current_content.append(line)
+        if current_file:
+            files[current_file] = "\n".join(current_content).strip("`\n ")
+        return files
+
+    @staticmethod
+    def check_syntax(name, c):
+        if name.endswith('.py'):
+            try:
+                compile(c, name, 'exec')
+                return True, ""
+            except SyntaxError as e:
+                return False, f"SyntaxError: {e.msg} en la línea {e.lineno}"
+            except Exception as e:
+                return False, str(e)
+        elif name.endswith(('.js', '.jsx', '.ts', '.tsx')):
+            if shutil.which('node'):
+                import tempfile
+                try:
+                    suffix = os.path.splitext(name)[1]
+                    with tempfile.NamedTemporaryFile(suffix=suffix, mode='w', encoding='utf-8', delete=False) as temp_f:
+                        temp_f.write(c)
+                        temp_f_name = temp_f.name
+                    res = subprocess.run(['node', '--check', temp_f_name], capture_output=True, text=True)
+                    os.remove(temp_f_name)
+                    if res.returncode != 0:
+                        err = res.stderr.replace(temp_f_name, name)
+                        return False, err.strip()
+                    return True, ""
+                except:
+                    try: os.remove(temp_f_name)
+                    except: pass
+        return True, ""
+
+    @staticmethod
     def setup_venv(logger_list=None):
         venv_dir = os.path.join(SysTools.WORKSPACE, "venv")
         if sys.platform == "win32":

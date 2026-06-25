@@ -103,7 +103,7 @@ function MainLayout() {
     isApplyingTemplate, applyProjectTemplate,
     models, selectedModel, setSelectedModel,
     promptInput, setPromptInput,
-    isPipelineRunning, startBuildPipeline,
+    pipelineLogs, isPipelineRunning, startBuildPipeline,
     chatMessage, setChatMessage, chatHistory, isChatThinking, chatTarget, setChatTarget, sendChatMessage,
     vercelUrl, isDeployingVercel, deployToVercel,
     tokenIn, tokenOut, costUsd, cacheHits, saveToVault,
@@ -1109,7 +1109,12 @@ function MainLayout() {
                       ))}
                       {isChatThinking && (
                         <div className="bg-white/5 border border-white/5 rounded-lg p-3 text-[10px] text-gray-400 italic mr-6 animate-pulse font-sans">
-                          El enjambre está analizando y respondiendo...
+                          <div>El enjambre está analizando y respondiendo...</div>
+                          {pipelineLogs.length > 0 && (
+                            <div className="text-[9px] text-amber-400 font-mono border-t border-white/5 pt-1.5 mt-1.5 break-all not-italic">
+                              {pipelineLogs[pipelineLogs.length - 1]}
+                            </div>
+                          )}
                         </div>
                       )}
                       <div ref={chatHistoryRef} />
