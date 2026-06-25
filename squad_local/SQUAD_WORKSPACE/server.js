@@ -9,6 +9,8 @@ app.use(express.static('public')); // Servir archivos estáticos desde la carpet
 
 // Conectar a la base de datos SQLite y crear la tabla si no existe
 let db = new sqlite3.Database('db.sqlite3', (err) => {
+db.run("PRAGMA journal_mode=WAL;");
+db.run("PRAGMA busy_timeout=5000;");
   if (err) {
     return console.error(err.message);
   }
