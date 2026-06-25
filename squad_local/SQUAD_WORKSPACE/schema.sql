@@ -1,5 +1,0 @@
-CREATE TABLE IF NOT EXISTS turnos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombreTurno TEXT NOT NULL,
-    diasActividad TEXT NOT NULL
-);
