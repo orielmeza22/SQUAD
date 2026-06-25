@@ -3658,15 +3658,24 @@ def api_chat(data: dict = Body(default={})):
             except Exception as e:
                 state.chat_history.append({"role": "assistant", "content": f"Fallo en debate: {e}"})
         else:
-            system_ctx = "Eres un asistente IA de SQUAD ayudando a modificar un proyecto."
+            system_ctx = (
+                "Eres un agente inteligente dentro del ecosistema SQUAD (Software Quick Autonomous Development).\n"
+                "SQUAD es una plataforma para la generación, ejecución y autocuración autónoma de aplicaciones locales en la PC del usuario.\n"
+                "Tu objetivo es ayudar al usuario a entender, construir, desplegar o modificar la aplicación en su máquina local.\n"
+                "La arquitectura actual de SQUAD consta de:\n"
+                "1. Un backend en Python con FastAPI (squad_server.py) sirviendo como orquestador y sirviendo las APIs en http://localhost:8000.\n"
+                "2. Una UI web en React/Vite para el dashboard y la interacción.\n"
+                "3. Un Workspace local aislado (SQUAD_WORKSPACE) donde se aloja el código de la app generada por el usuario (Node.js, Express, Python, FastAPI, SQLite, etc.).\n"
+                "Cuando el usuario hable del 'sistema' o 'app squad', se refiere a este ecosistema en el que estás ejecutándote actualmente."
+            )
             if target == 'architect':
-                system_ctx += " Actúas como el Agente Arquitecto. Concéntrate en la estructura general, patrones de diseño y decisiones arquitectónicas."
+                system_ctx += "\nActúas como el Agente Arquitecto. Concéntrate en la estructura general, patrones de diseño y decisiones arquitectónicas."
             elif target == 'qa':
-                system_ctx += " Actúas como el Agente Senior QA. Concéntrate en diseñar planes de prueba, encontrar casos límite, bugs y escribir tests."
+                system_ctx += "\nActúas como el Agente Senior QA. Concéntrate en diseñar planes de prueba, encontrar casos límite, bugs y escribir tests."
             elif target == 'devops':
-                system_ctx += " Actúas como el Agente DevOps. Concéntrate en configurar Docker, dependencias, scripts de ejecución, CI/CD y automatizaciones."
+                system_ctx += "\nActúas como el Agente DevOps. Concéntrate en configurar Docker, dependencias, scripts de ejecución, CI/CD y automatizaciones."
             
-            system_ctx += f"\n\nLos archivos actuales del proyecto son:\n{files_ctx_str}"
+            system_ctx += f"\n\nLos archivos actuales del proyecto en el workspace son:\n{files_ctx_str}"
             system_ctx += f"\n\n{OptTools.CODE_GUIDELINES}"
             
             messages = [{"role": "system", "content": system_ctx}] + state.chat_history[:-1] + [{"role": "user", "content": msg}]
