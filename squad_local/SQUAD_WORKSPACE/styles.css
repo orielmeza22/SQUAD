@@ -9,4 +9,5 @@ body {
 }
 
 input, textarea {
-    width: calc(100% - 24px
+    width: calc(100% - 24px);
+}

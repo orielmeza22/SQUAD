@@ -1,0 +1,13 @@
+{
+  "name": "squad-workspace-project",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node main_output.js"
+  },
+  "dependencies": {
+    "sqlite": "*",
+    "body-parser": "*",
+    "sqlite3": "*",
+    "express": "*"
+  }
+}
