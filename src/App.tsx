@@ -135,9 +135,10 @@ function MainLayout() {
   const [isRealDeploying, setIsRealDeploying] = useState(false);
   const [specFeedback, setSpecFeedback] = useState('');
   const [isRefiningSpec, setIsRefiningSpec] = useState(false);
+  const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [activeRightTab, setActiveRightTab] = useState<'prompt' | 'chat' | 'settings' | 'ux'>('prompt');
-  const [showBottomPanel, setShowBottomPanel] = useState(true);
+  const [showBottomPanel, setShowBottomPanel] = useState(false);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(260);
   const [activeBottomTab, setActiveBottomTab] = useState<'console' | 'database' | 'infra' | 'deploy'>('console');
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
@@ -336,7 +337,14 @@ function MainLayout() {
           </div>
           
           <div className="flex items-center space-x-1 border-l border-white/10 pl-3">
-            {/* View toggles */}
+            <button 
+              onClick={() => setShowLeftPanel(!showLeftPanel)}
+              className={`p-1.5 rounded cursor-pointer flex items-center space-x-1 ${showLeftPanel ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-500 hover:text-white'}`}
+              title="Alternar Explorador de Archivos (Explorador/Git)"
+            >
+              <Folder size={10} />
+              <span className="text-[8px] font-bold">Explorador</span>
+            </button>
             <button 
               onClick={() => setShowBottomPanel(!showBottomPanel)}
               className={`p-1.5 rounded cursor-pointer flex items-center space-x-1 ${showBottomPanel ? 'bg-amber-500/20 text-amber-400' : 'text-gray-500 hover:text-white'}`}
@@ -456,104 +464,108 @@ function MainLayout() {
         </nav>
 
         {/* Left Workspace Panel: File Explorer + Shadow Git History */}
-        <section 
-          style={{ width: `${fileTreeWidth}px` }}
-          className={`border-r ${tc.border} ${tc.card} flex flex-col shrink-0 overflow-hidden`}
-        >
-          {/* File Tree Section */}
-          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <FileTree />
-          </div>
-
-          {/* Divider */}
-          <div className="h-[1px] bg-white/5 border-t border-black" />
-
-          {/* Shadow Git History Section */}
-          <div className="h-64 flex flex-col overflow-hidden shrink-0 bg-black/20">
-            <div className="h-8 bg-black/40 border-b border-white/5 flex items-center justify-between px-3 shrink-0 select-none">
-              <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest font-mono flex items-center">
-                <GitBranch size={10} className="mr-1.5 text-blue-400" />
-                Línea Temporal Shadow Git
-              </span>
-              <div className="flex space-x-2">
-                <button
-                  onClick={fetchGitHistory}
-                  className="text-[8px] text-gray-500 hover:text-white font-mono cursor-pointer"
-                >
-                  ↻
-                </button>
-                <button
-                  onClick={triggerTimeTravelRevert}
-                  className="text-[8px] text-amber-400 hover:text-amber-300 font-mono cursor-pointer"
-                  title="Retroceder 1 Snapshot"
-                >
-                  ⏪ Revert
-                </button>
+        {showLeftPanel && (
+          <>
+            <section 
+              style={{ width: `${fileTreeWidth}px` }}
+              className={`border-r ${tc.border} ${tc.card} flex flex-col shrink-0 overflow-hidden`}
+            >
+              {/* File Tree Section */}
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                <FileTree />
               </div>
-            </div>
 
-            <div className="flex-1 overflow-y-auto p-2 min-h-0">
-              {gitCommits.length === 0 ? (
-                <div className="flex flex-col items-center py-6 space-y-2 text-white/20">
-                  <GitBranch size={20} />
-                  <span className="text-[8px] italic">No hay commits en la línea temporal.</span>
+              {/* Divider */}
+              <div className="h-[1px] bg-white/5 border-t border-black" />
+
+              {/* Shadow Git History Section */}
+              <div className="h-64 flex flex-col overflow-hidden shrink-0 bg-black/20">
+                <div className="h-8 bg-black/40 border-b border-white/5 flex items-center justify-between px-3 shrink-0 select-none">
+                  <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest font-mono flex items-center">
+                    <GitBranch size={10} className="mr-1.5 text-blue-400" />
+                    Línea Temporal Shadow Git
+                  </span>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={fetchGitHistory}
+                      className="text-[8px] text-gray-500 hover:text-white font-mono cursor-pointer"
+                    >
+                      ↻
+                    </button>
+                    <button
+                      onClick={triggerTimeTravelRevert}
+                      className="text-[8px] text-amber-400 hover:text-amber-300 font-mono cursor-pointer"
+                      title="Retroceder 1 Snapshot"
+                    >
+                      ⏪ Revert
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <div className="relative pl-3.5 space-y-0">
-                  {/* Vertical timeline line */}
-                  <div className="absolute left-[9px] top-1.5 bottom-1.5 w-[1px] bg-blue-500/20"></div>
 
-                  {gitCommits.map((c, i) => (
-                    <div key={i} className="relative flex items-start space-x-2 py-1 group">
-                      {/* Timeline node dot */}
-                      <div className={`relative z-10 w-3 h-3 rounded-full border flex-shrink-0 flex items-center justify-center mt-1 transition-all ${
-                        i === 0
-                          ? 'bg-blue-500 border-blue-400 shadow-md shadow-blue-500/20'
-                          : 'bg-[#0d0d11] border-blue-500/30 group-hover:border-blue-400'
-                      }`}>
-                        <div className={`w-1 h-1 rounded-full ${i === 0 ? 'bg-white' : 'bg-blue-500/60'}`}></div>
-                      </div>
+                <div className="flex-1 overflow-y-auto p-2 min-h-0">
+                  {gitCommits.length === 0 ? (
+                    <div className="flex flex-col items-center py-6 space-y-2 text-white/20">
+                      <GitBranch size={20} />
+                      <span className="text-[8px] italic">No hay commits en la línea temporal.</span>
+                    </div>
+                  ) : (
+                    <div className="relative pl-3.5 space-y-0">
+                      {/* Vertical timeline line */}
+                      <div className="absolute left-[9px] top-1.5 bottom-1.5 w-[1px] bg-blue-500/20"></div>
 
-                      {/* Commit info card */}
-                      <div className="flex-1 min-w-0 bg-black/30 border border-white/5 rounded p-1.5 group-hover:border-blue-500/20 transition-all">
-                        <div className="flex justify-between items-start">
-                          <div className="min-w-0 pr-1">
-                            <span className={`text-[9px] font-bold block truncate font-mono ${
-                              i === 0 ? 'text-blue-300' : 'text-gray-300'
-                            }`}>
-                              {c.message || 'Auto-commit'}
-                            </span>
-                            <div className="flex items-center space-x-1.5 mt-0.5 text-[7px] text-gray-600 font-mono">
-                              <span>{c.hash?.slice(0, 7) || '???????'}</span>
-                              <span>·</span>
-                              <span className="truncate">{c.time || 'N/A'}</span>
-                              {i === 0 && (
-                                <span className="text-[6px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1 py-0.2 rounded font-bold">HEAD</span>
-                              )}
+                      {gitCommits.map((c, i) => (
+                        <div key={i} className="relative flex items-start space-x-2 py-1 group">
+                          {/* Timeline node dot */}
+                          <div className={`relative z-10 w-3 h-3 rounded-full border flex-shrink-0 flex items-center justify-center mt-1 transition-all ${
+                            i === 0
+                              ? 'bg-blue-500 border-blue-400 shadow-md shadow-blue-500/20'
+                              : 'bg-[#0d0d11] border-blue-500/30 group-hover:border-blue-400'
+                          }`}>
+                            <div className={`w-1 h-1 rounded-full ${i === 0 ? 'bg-white' : 'bg-blue-500/60'}`}></div>
+                          </div>
+
+                          {/* Commit info card */}
+                          <div className="flex-1 min-w-0 bg-black/30 border border-white/5 rounded p-1.5 group-hover:border-blue-500/20 transition-all">
+                            <div className="flex justify-between items-start">
+                              <div className="min-w-0 pr-1">
+                                <span className={`text-[9px] font-bold block truncate font-mono ${
+                                  i === 0 ? 'text-blue-300' : 'text-gray-300'
+                                }`}>
+                                  {c.message || 'Auto-commit'}
+                                </span>
+                                <div className="flex items-center space-x-1.5 mt-0.5 text-[7px] text-gray-600 font-mono">
+                                  <span>{c.hash?.slice(0, 7) || '???????'}</span>
+                                  <span>·</span>
+                                  <span className="truncate">{c.time || 'N/A'}</span>
+                                  {i === 0 && (
+                                    <span className="text-[6px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1 py-0.2 rounded font-bold">HEAD</span>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => revertGitCommit(c.hash)}
+                                className="text-[7px] bg-blue-500/10 text-blue-300 border border-blue-500/20 px-1 py-0.2 rounded hover:bg-blue-500/25 shrink-0 cursor-pointer font-mono transition-all opacity-0 group-hover:opacity-100"
+                              >
+                                Go
+                              </button>
                             </div>
                           </div>
-                          <button
-                            onClick={() => revertGitCommit(c.hash)}
-                            className="text-[7px] bg-blue-500/10 text-blue-300 border border-blue-500/20 px-1 py-0.2 rounded hover:bg-blue-500/25 shrink-0 cursor-pointer font-mono transition-all opacity-0 group-hover:opacity-100"
-                          >
-                            Go
-                          </button>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        </section>
+              </div>
+            </section>
 
-        {/* Drag handle for Left Sidebar */}
-        <div
-          onMouseDown={startResizingFileTree}
-          className="w-1 cursor-col-resize hover:bg-amber-500/40 active:bg-amber-500 transition-colors z-20 shrink-0 -ml-[2px]"
-          title="Arrastra para regular el tamaño del explorador"
-        />
+            {/* Drag handle for Left Sidebar */}
+            <div
+              onMouseDown={startResizingFileTree}
+              className="w-1 cursor-col-resize hover:bg-amber-500/40 active:bg-amber-500 transition-colors z-20 shrink-0 -ml-[2px]"
+              title="Arrastra para regular el tamaño del explorador"
+            />
+          </>
+        )}
 
         {/* Editor & Console Central Column */}
         <section className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -1018,14 +1030,22 @@ function MainLayout() {
                     />
                     <div className="flex space-x-2 pt-1">
                       <button 
-                        onClick={startBuildPipeline}
+                        onClick={() => {
+                          startBuildPipeline();
+                          setActiveBottomTab('console');
+                          setShowBottomPanel(true);
+                        }}
                         disabled={isPipelineRunning || !promptInput.trim()}
                         className={`flex-1 ${tc.accentBg} ${tc.accentHoverBg} text-black font-bold text-[10px] uppercase tracking-widest py-3 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed ${tc.accentGlow}`}
                       >
                         {isPipelineRunning ? 'Orquestando...' : 'Ejecutar Enjambre'}
                       </button>
                       <button
-                        onClick={launchAppSystem}
+                        onClick={() => {
+                          launchAppSystem();
+                          setActiveBottomTab('console');
+                          setShowBottomPanel(true);
+                        }}
                         disabled={isAppLaunching || isPipelineRunning}
                         className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-black font-bold text-[10px] uppercase tracking-widest px-3 rounded transition-all cursor-pointer flex items-center justify-center space-x-1"
                         title="Lanzar aplicación local (Ejecutar scripts de inicio / Ctrl+Enter)"
