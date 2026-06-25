@@ -1,2 +1,1 @@
-@echo off
-node server.js
+pip install urllib3 rich

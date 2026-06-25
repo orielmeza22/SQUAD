@@ -1,0 +1,13 @@
+/* Importa la hoja de estilos de Tailwind CSS */
+@import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
+
+/* Establece los colores principales */
+:root {
+  --primary-color: #2f343d; /* Slate */
+  --secondary-color: #34c759; /* Emerald accents */
+}
+
+/* Establece la tipografía principal */
+body {
+  font-family: 'Inter', sans-serif;
+}
