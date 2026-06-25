@@ -7,6 +7,18 @@ from .backend import BackendAgent
 from .frontend import FrontendAgent
 from .qa import QAAgent
 from .devops import DevOpsAgent
+from .prompts import (
+    architect_prompt,
+    dba_prompt,
+    frontend_prompt,
+    backend_prompt,
+    code_review_prompt,
+    fix_prompt,
+    ux_audit_prompt,
+    qa_devops_prompt,
+    linter_prompt,
+    style_memory_str,
+)
 
 __all__ = [
     "BaseAgent",
@@ -16,4 +28,14 @@ __all__ = [
     "FrontendAgent",
     "QAAgent",
     "DevOpsAgent",
+    "architect_prompt",
+    "dba_prompt",
+    "frontend_prompt",
+    "backend_prompt",
+    "code_review_prompt",
+    "fix_prompt",
+    "ux_audit_prompt",
+    "qa_devops_prompt",
+    "linter_prompt",
+    "style_memory_str",
 ]

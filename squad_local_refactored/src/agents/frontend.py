@@ -1,32 +1,46 @@
 """Frontend Agent for SQUAD."""
 
 from typing import Dict, Any
+
 from .base import BaseAgent
+from .prompts import frontend_prompt
+from ..tools.sys_tools import SysTools
 
 
 class FrontendAgent(BaseAgent):
-    """Agent responsible for frontend code generation."""
-    
+    """Agent responsible for frontend/UI generation.
+
+    Phase 2 (parallel): generates ``index.html``, ``styles.css`` and ``app.js``
+    following strict HTML5 + relative-path + CDN rules.
+    """
+
     def __init__(self):
         super().__init__(
             name="Frontend",
-            description="Generates frontend UI components and pages"
+            description="Generates frontend UI components and styles"
         )
-    
+
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate frontend code based on requirements and backend API.
-        
+        """Generate frontend UI based on the plan.
+
         Args:
-            context: Contains requirements and API specifications
-            
+            context: Must contain ``plan``; should contain ``existing_context``
+                and ``style_mem_str``.
+
         Returns:
-            Generated frontend code files
+            Dictionary with ``status``, the raw ``output`` and the list of
+            written files.
         """
-        requirements = context.get("requirements", "")
-        api_spec = context.get("api_spec", {})
-        
-        # TODO: Implement LLM-based frontend code generation
-        return {
-            "status": "success",
-            "files": []
-        }
+        plan = context.get("plan", "")
+        existing_context = context.get("existing_context", "")
+        style_mem_str = context.get("style_mem_str", "")
+        model = self._resolve_model(context)
+
+        full_prompt = frontend_prompt(plan, existing_context, style_mem_str)
+        output = self.generate(model=model, prompt=full_prompt)
+
+        files: list = []
+        if output:
+            files = SysTools.extract_and_write_multifile(output)
+
+        return {"status": "success", "output": output, "files": files}
