@@ -3209,6 +3209,38 @@ async def api_open_explorer():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/fs/clear-workspace")
+def api_clear_workspace():
+    try:
+        if state.active_process and state.active_process.poll() is None:
+            try: SysTools.kill_process_tree(state.active_process.pid)
+            except: pass
+            state.active_process = None
+            
+        SysTools.cleanup_workspace_processes()
+        
+        state.pending_writes = {}
+        state.chat_history = []
+        state.logs = []
+        state.launcher_logs = []
+        state.active_diagnostic = None
+        
+        if os.path.exists(SysTools.WORKSPACE):
+            for item in os.listdir(SysTools.WORKSPACE):
+                if item == ".git":
+                    continue
+                path = os.path.join(SysTools.WORKSPACE, item)
+                try:
+                    if os.path.isdir(path): shutil.rmtree(path, ignore_errors=True)
+                    else: os.remove(path)
+                except Exception as ex:
+                    print(f"Error removing {path}: {ex}")
+                    
+        SysTools.git_init_and_commit("Clean workspace snapshot")
+        return {"success": True, "message": "Workspace limpiado completamente."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/fs/create")
 def api_create_file(data: dict = Body(default={})):
     path_param = data.get('path', '')

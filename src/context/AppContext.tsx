@@ -137,6 +137,7 @@ interface AppContextType {
   isAppLaunching: boolean;
   setIsAppLaunching: (l: boolean) => void;
   launchAppSystem: () => void;
+  clearWorkspaceAction: () => void;
   
   // Chatbot Agent
   chatMessage: string;
@@ -863,6 +864,28 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
   };
 
+  const clearWorkspaceAction = () => {
+    if (!confirm("⚠️ ¿Estás seguro de que deseas borrar por completo el Workspace?\nSe eliminarán todos los archivos y bases de datos del proyecto actual para iniciar uno nuevo.")) return;
+    showToast("🧹 Limpiando Workspace...", "info");
+    fetch(API_BASE + '/api/fs/clear-workspace', { method: 'POST' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          showToast("🧹 Workspace limpio y listo para un proyecto nuevo.", "success");
+          setPromptInput('');
+          setChatHistory([]);
+          setPipelineLogs([]);
+          setLauncherLogs([]);
+          fetchFiles();
+        } else {
+          showToast(`❌ Error al limpiar workspace: ${d.message}`, "error");
+        }
+      })
+      .catch(e => {
+        showToast(`❌ Error de red: ${e.message}`, "error");
+      });
+  };
+
   const optimizePrompt = async (promptText: string) => {
     if (!promptText.trim()) return;
     showToast("✨ Optimizando prompt con IA...", "info");
@@ -1514,7 +1537,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       deployToRealProvider, refactorCodeAction, runDockerCompose,
       deleteVaultPrompt, providersList, fetchProvidersList, pullOllamaModel,
       pipelineStatus, activePort, activeDiagnostic, designIdentity, setDesignIdentity, smartRouting, setSmartRouting,
-      optimizePrompt, adjustSpec, approveSpec, seedDb, runUxAudit, runUxFix, extractUxStyle, gitCheckout, gitRestoreHead
+      optimizePrompt, adjustSpec, approveSpec, seedDb, runUxAudit, runUxFix, extractUxStyle, gitCheckout, gitRestoreHead,
+      clearWorkspaceAction
     }}>
       {children}
     </AppContext.Provider>

@@ -103,7 +103,7 @@ function MainLayout() {
     isApplyingTemplate, applyProjectTemplate,
     models, selectedModel, setSelectedModel,
     promptInput, setPromptInput,
-    pipelineLogs, isPipelineRunning, startBuildPipeline,
+    pipelineLogs, isPipelineRunning, startBuildPipeline, clearWorkspaceAction,
     chatMessage, setChatMessage, chatHistory, isChatThinking, chatTarget, setChatTarget, sendChatMessage,
     vercelUrl, isDeployingVercel, deployToVercel,
     tokenIn, tokenOut, costUsd, cacheHits, saveToVault,
@@ -991,14 +991,24 @@ function MainLayout() {
                       <span className={`text-[10px] font-bold ${tc.accentText} uppercase tracking-widest block`}>
                         Requisitos del Prompt
                       </span>
-                      <button
-                        onClick={() => optimizePrompt(promptInput)}
-                        disabled={isPipelineRunning || !promptInput.trim()}
-                        className="text-[8px] bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded transition-all cursor-pointer font-bold flex items-center space-x-1"
-                        title="Optimizar prompt con IA para hacerlo detallado"
-                      >
-                        <span>✨ Optimizar</span>
-                      </button>
+                      <div className="flex space-x-1.5">
+                        <button
+                          onClick={clearWorkspaceAction}
+                          disabled={isPipelineRunning || isAppLaunching}
+                          className="text-[8px] bg-rose-500/20 hover:bg-rose-500/35 border border-rose-500/30 text-rose-300 px-2 py-0.5 rounded transition-all cursor-pointer font-bold flex items-center space-x-1"
+                          title="Limpiar Workspace y reiniciar proyecto"
+                        >
+                          <span>🧹 Limpiar</span>
+                        </button>
+                        <button
+                          onClick={() => optimizePrompt(promptInput)}
+                          disabled={isPipelineRunning || !promptInput.trim()}
+                          className="text-[8px] bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded transition-all cursor-pointer font-bold flex items-center space-x-1"
+                          title="Optimizar prompt con IA para hacerlo detallado"
+                        >
+                          <span>✨ Optimizar</span>
+                        </button>
+                      </div>
                     </div>
                     <textarea 
                       value={promptInput}
