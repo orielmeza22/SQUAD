@@ -13,6 +13,8 @@ async function connectToDatabase() {
   try {
     db = await new Promise((resolve, reject) => {
       const database = new sqlite3.Database('./database.sqlite', (err) => {
+database.run("PRAGMA journal_mode=WAL;");
+database.run("PRAGMA busy_timeout=5000;");
         if (err) {
           console.error("Error al conectar a la base de datos:", err.message);
           reject(err);
@@ -93,14 +95,6 @@ app.post('/api/experiencia-laboral', async (req, res) => {
   }
 
   try {
-    const result = await new Promise((resolve, reject) => {
-      db.run('INSERT INTO ExperienciaLaboral (candidato_id, titulo_puesto, empresa) VALUES (?, ?, ?)', [candidato_id, titulo_puesto, empresa], function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({ id: this.lastID });
-        }
-      });
     });
     res.send(result);
   } catch (error) {
@@ -116,14 +110,6 @@ app.post('/api/educacion', async (req, res) => {
   }
 
   try {
-    const result = await new Promise((resolve, reject) => {
-      db.run('INSERT INTO Educacion (candidato_id, nombre_institucion, titulo_obtenido) VALUES (?, ?, ?)', [candidato_id, nombre_institucion, titulo_obtenido], function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({ id: this.lastID });
-        }
-      });
     });
     res.send(result);
   } catch (error) {
@@ -139,14 +125,6 @@ app.post('/api/habilidades-certificaciones', async (req, res) => {
   }
 
   try {
-    const result = await new Promise((resolve, reject) => {
-      db.run('INSERT INTO HabilidadesCertificaciones (candidato_id, habilidad_certificacion) VALUES (?, ?)', [candidato_id, habilidad_certificacion], function(err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({ id: this.lastID });
-        }
-      });
     });
     res.send(result);
   } catch (error) {
@@ -158,14 +136,6 @@ app.get('/api/generar-cv/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const row = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM Candidato WHERE id = ?', [id], function(err, row) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
     });
 
     if (!row) {
