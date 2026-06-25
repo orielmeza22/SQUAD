@@ -416,6 +416,28 @@ def verify_password(password, hashed):
                 rel = os.path.relpath(p, SysTools.WORKSPACE).replace('\\', '/')
                 all_files.append(rel)
                 
+        # Heurística para consultas conversacionales o generales sin intención de código
+        query_lower = query.lower()
+        conversational_keywords = [
+            "hola", "buenos", "tardes", "noches", "quién eres", "como estas", "cómo estás", "gracias", 
+            "ejemplos", "ejemplo", "qué es", "que es", "qué puede", "que puede", "para qué", "para que", 
+            "ayuda", "help", "squad", "opinas", "opinión", "bienvenido", "saludos"
+        ]
+        is_conversational = any(kw in query_lower for kw in conversational_keywords)
+        
+        code_related = [
+            "código", "code", "archivo", "file", "escribe", "write", "modifica", "modify", "cambia", "change", 
+            "error", "bug", "falla", "función", "clase", "class", "import", "require", "npm", "pip", "python", "node",
+            "html", "css", "js", "ts", "app.py", "index.html", "package.json", "base de datos", "db", "sqlite",
+            "crea", "crear", "create", "agrega", "agregar", "add", "borra", "elimina", "delete", "implementa",
+            "implementar", "diseña", "diseñar", "refactor", "optimiza", "arregla", "fix", "corrige", "compila"
+        ]
+        has_code_intent = any(w in query_lower for w in code_related) or any(f.lower() in query_lower for f in all_files)
+        
+        if is_conversational and not has_code_intent:
+            state.log("💡 [CONTEXTO] Consulta general detectada. Omitiendo archivos del workspace para velocidad rápida.")
+            return f"Lista de archivos del proyecto (los archivos no se incluyen en el contexto por ser una consulta general): {', '.join(all_files)}"
+
         total_size = sum(os.path.getsize(os.path.join(SysTools.WORKSPACE, f)) for f in all_files if os.path.exists(os.path.join(SysTools.WORKSPACE, f)))
         if total_size < max_tokens * 3:
             return "\n\n".join(f"Archivo: {f}\n{SysTools.read(f)}" for f in all_files)
