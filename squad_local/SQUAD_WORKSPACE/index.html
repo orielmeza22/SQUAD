@@ -1,117 +1,167 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de CV</title>
-    <!-- Estilos CSS -->
-    <link rel='stylesheet' href='styles.css'>
-    
-    <!-- Script de Tailwind -->
-    <script src='https://cdn.tailwindcss.com'></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV Builder · Help Desk Junior</title>
+  <meta name="description" content="Generador de currículos personalizados para profesionales de Help Desk Junior.">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-900 text-white">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-center mb-6">Generador de CV</h1>
-        
-        <!-- Formulario de Datos Personales -->
-        <form id="personal-form" class="mb-6">
-            <label for="nombre" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Nombre:</label>
-            <input type="text" id="nombre" name="nombre" required placeholder="Ejemplo: Juan" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="apellido" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Apellido:</label>
-            <input type="text" id="apellido" name="apellido" required placeholder="Ejemplo: Pérez" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="email" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Email:</label>
-            <input type="email" id="email" name="email" required placeholder="Ejemplo: juan.perez@example.com" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="telefono" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Teléfono:</label>
-            <input type="tel" id="telefono" name="telefono" placeholder="Ejemplo: 1234567890" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="direccion" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Dirección:</label>
-            <input type="text" id="direccion" name="direccion" placeholder="Ejemplo: Calle Ejemplo 123, Ciudad Ejemplo" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="fecha_nacimiento" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Fecha de Nacimiento:</label>
-            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required placeholder="Ejemplo: 2001-04-25" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="ciudad_residencia" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Ciudad de Residencia:</label>
-            <input type="text" id="ciudad_residencia" name="ciudad_residencia" required placeholder="Ejemplo: Ciudad Ejemplo" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="nacionalidad" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Nacionalidad:</label>
-            <input type="text" id="nacionalidad" name="nacionalidad" required placeholder="Ejemplo: Ejemplano" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <button type="submit" class="block w-full mt-6 bg-emerald-900 hover:bg-emerald-800 focus:outline-none focus:text-gray-300 transition duration-150 ease-in-out">Guardar Datos</button>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <h1>🗂️ CV Builder · Help Desk Junior</h1>
+  <p>Creá tu currículum profesional en minutos</p>
+</header>
+
+<!-- LAYOUT -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Formulario</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" class="active" data-section="personal" id="nav-personal"><span class="icon">👤</span> Datos Personales</a></li>
+      <li><a href="#" data-section="experiencia" id="nav-experiencia"><span class="icon">💼</span> Experiencia Laboral</a></li>
+      <li><a href="#" data-section="educacion" id="nav-educacion"><span class="icon">🎓</span> Educación</a></li>
+      <li><a href="#" data-section="habilidades" id="nav-habilidades"><span class="icon">⚡</span> Habilidades</a></li>
+    </ul>
+    <div class="sidebar-section" style="margin-top:12px;">Acciones</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" data-section="descargar" id="nav-descargar"><span class="icon">📄</span> Generar &amp; Exportar</a></li>
+    </ul>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Personal -->
+    <section class="section active" id="section-personal">
+      <div class="section-header">
+        <h2>Datos Personales</h2>
+        <p>Tu información de contacto e identidad</p>
+      </div>
+      <div class="card">
+        <form id="form-personal">
+          <div class="form-grid">
+            <div class="form-group"><label for="nombre">Nombre</label><input type="text" id="nombre" placeholder="Juan" required></div>
+            <div class="form-group"><label for="apellido">Apellido</label><input type="text" id="apellido" placeholder="Pérez" required></div>
+            <div class="form-group"><label for="email">Email</label><input type="email" id="email" placeholder="juan@ejemplo.com" required></div>
+            <div class="form-group"><label for="telefono">Teléfono</label><input type="tel" id="telefono" placeholder="+54 11 1234-5678"></div>
+            <div class="form-group"><label for="direccion">Dirección</label><input type="text" id="direccion" placeholder="Av. Ejemplo 123, CABA"></div>
+            <div class="form-group"><label for="fecha_nacimiento">Fecha de Nacimiento</label><input type="date" id="fecha_nacimiento"></div>
+            <div class="form-group"><label for="ciudad">Ciudad</label><input type="text" id="ciudad" placeholder="Buenos Aires"></div>
+            <div class="form-group"><label for="nacionalidad">Nacionalidad</label><input type="text" id="nacionalidad" placeholder="Argentina"></div>
+          </div>
+          <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary" id="btn-guardar-personal">💾 Guardar Datos</button>
+          </div>
         </form>
+      </div>
+    </section>
 
-        <!-- Formulario de Experiencia Laboral -->
-        <div id="experience-form" class="mt-6">
-            <h2 class="text-xl font-bold mb-4">Experiencia Laboral</h2>
-            
-            <label for="titulo_puesto" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Título del Puesto:</label>
-            <input type="text" id="titulo_puesto" name="titulo_puesto" required placeholder="Ejemplo: Analista de Sistemas" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="empresa" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Empresa:</label>
-            <input type="text" id="empresa" name="empresa" required placeholder="Ejemplo: Ejemplo S.A." class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="lugar_trabajo" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Lugar de Trabajo:</label>
-            <input type="text" id="lugar_trabajo" name="lugar_trabajo" placeholder="Ejemplo: Ciudad Ejemplo" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="fecha_inicio" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Fecha de Inicio:</label>
-            <input type="date" id="fecha_inicio" name="fecha_inicio" required placeholder="Ejemplo: 2015-06-01" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="fecha_fin" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Fecha Fin:</label>
-            <input type="date" id="fecha_fin" name="fecha_fin" required placeholder="Ejemplo: 2019-05-31" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="descripcion_responsabilidades" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Descripción de las Responsabilidades:</label>
-            <textarea id="descripcion_responsabilidades" name="descripcion_responsabilidades" required placeholder="Ejemplo: Desarrollar y mantener sistemas informáticos." class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4"></textarea>
-            
-            <button type="submit" id="add-experience-btn" class="block w-full mt-6 bg-emerald-900 hover:bg-emerald-800 focus:outline-none focus:text-gray-300 transition duration-150 ease-in-out">Agregar Experiencia</button>
-        </div>
+    <!-- Experiencia -->
+    <section class="section" id="section-experiencia">
+      <div class="section-header">
+        <h2>Experiencia Laboral</h2>
+        <p>Agregá tus trabajos anteriores</p>
+      </div>
+      <div class="card">
+        <form id="form-experiencia">
+          <div class="form-grid">
+            <div class="form-group"><label for="exp-puesto">Puesto</label><input type="text" id="exp-puesto" placeholder="Help Desk Analyst" required></div>
+            <div class="form-group"><label for="exp-empresa">Empresa</label><input type="text" id="exp-empresa" placeholder="Empresa S.A." required></div>
+            <div class="form-group"><label for="exp-lugar">Lugar de Trabajo</label><input type="text" id="exp-lugar" placeholder="Buenos Aires / Remoto"></div>
+            <div class="form-group"><label for="exp-inicio">Fecha de Inicio</label><input type="date" id="exp-inicio" required></div>
+            <div class="form-group"><label for="exp-fin">Fecha de Fin</label><input type="date" id="exp-fin" placeholder="Dejar vacío si es actual"></div>
+            <div class="form-group full"><label for="exp-desc">Descripción de Responsabilidades</label><textarea id="exp-desc" placeholder="- Soporte técnico de 1er nivel&#10;- Gestión de tickets en ServiceNow&#10;- Resolución de incidentes de red"></textarea></div>
+          </div>
+          <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary" id="btn-agregar-exp">➕ Agregar Experiencia</button>
+          </div>
+        </form>
+      </div>
+      <div class="items-list" id="lista-experiencia"></div>
+    </section>
 
-        <!-- Formulario de Educación -->
-        <div id="education-form" class="mt-6">
-            <h2 class="text-xl font-bold mb-4">Educación</h2>
-            
-            <label for="nombre_institucion" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Nombre de la Institución:</label>
-            <input type="text" id="nombre_institucion" name="nombre_institucion" required placeholder="Ejemplo: Universidad Ejemplo" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="titulo_obtenido" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Título Obtenido:</label>
-            <input type="text" id="titulo_obtenido" name="titulo_obtenido" required placeholder="Ejemplo: Licenciatura en Informática" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <label for="anio_graduacion" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Año Graduación:</label>
-            <input type="number" id="anio_graduacion" name="anio_graduacion" required min="1900" max="2050" placeholder="Ejemplo: 2010" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <button type="submit" id="add-education-btn" class="block w-full mt-6 bg-emerald-900 hover:bg-emerald-800 focus:outline-none focus:text-gray-300 transition duration-150 ease-in-out">Agregar Educación</button>
-        </div>
+    <!-- Educación -->
+    <section class="section" id="section-educacion">
+      <div class="section-header">
+        <h2>Educación</h2>
+        <p>Formación académica y cursos</p>
+      </div>
+      <div class="card">
+        <form id="form-educacion">
+          <div class="form-grid">
+            <div class="form-group"><label for="edu-institucion">Institución</label><input type="text" id="edu-institucion" placeholder="Universidad de Buenos Aires" required></div>
+            <div class="form-group"><label for="edu-titulo">Título Obtenido</label><input type="text" id="edu-titulo" placeholder="Técnico en Redes" required></div>
+            <div class="form-group"><label for="edu-anio">Año de Graduación</label><input type="number" id="edu-anio" min="1970" max="2035" placeholder="2023"></div>
+          </div>
+          <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary" id="btn-agregar-edu">➕ Agregar Educación</button>
+          </div>
+        </form>
+      </div>
+      <div class="items-list" id="lista-educacion"></div>
+    </section>
 
-        <!-- Formulario de Habilidades y Certificaciones -->
-        <div id="skills-form" class="mt-6">
-            <h2 class="text-xl font-bold mb-4">Habilidades y Certificaciones</h2>
-            
-            <label for="habilidad_certificacion" class="block text-gray-300 font-bold md:text-lg lg:text-xl">Habilidad/Certificación:</label>
-            <input type="text" id="habilidad_certificacion" name="habilidad_certificacion" required placeholder="Ejemplo: Excel Profesional" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <button type="submit" id="add-skill-btn" class="block w-full mt-6 bg-emerald-900 hover:bg-emerald-800 focus:outline-none focus:text-gray-300 transition duration-150 ease-in-out">Agregar Habilidad/Certificación</button>
+    <!-- Habilidades -->
+    <section class="section" id="section-habilidades">
+      <div class="section-header">
+        <h2>Habilidades y Certificaciones</h2>
+        <p>Competencias técnicas, herramientas y certificados</p>
+      </div>
+      <div class="card">
+        <div style="display:flex; gap:12px; align-items:flex-end;">
+          <div class="form-group" style="flex:1;margin:0;">
+            <label for="input-habilidad">Habilidad / Certificación</label>
+            <input type="text" id="input-habilidad" placeholder="Windows 10/11, Active Directory, Cisco CCNA…">
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-agregar-hab" style="flex-shrink:0;">➕ Agregar</button>
         </div>
+        <div class="tags-container" id="lista-habilidades"></div>
+        <p style="color:var(--muted);font-size:0.8rem;margin-top:8px;">Ejemplos: Windows 10, Active Directory, ServiceNow, Office 365, Soporte Remoto, ITIL Foundation…</p>
+      </div>
+    </section>
 
-        <!-- Botón para generar CV -->
-        <div id="generate-cv-form" class="mt-6">
-            <h2 class="text-xl font-bold mb-4">Generar CV</h2>
-            
-            <label for="id-candidato" class="block text-gray-300 font-bold md:text-lg lg:text-xl">ID del Candidato:</label>
-            <input type="number" id="id-candidato" name="id-candidato" required placeholder="Ejemplo: 123456789" class="w-full bg-gray-800 border-b-2 border-green-700 focus:border-green-500 text-white p-4">
-            
-            <button type="submit" id="generate-cv-btn" class="block w-full mt-6 bg-emerald-900 hover:bg-emerald-800 focus:outline-none focus:text-gray-300 transition duration-150 ease-in-out">Generar CV</button>
-        </div>
+    <!-- Descargar -->
+    <section class="section" id="section-descargar">
+      <div class="section-header">
+        <h2>Generar &amp; Exportar</h2>
+        <p>Descargá tu CV en formato imprimible</p>
+      </div>
+      <div class="download-area">
+        <div class="big-icon">📄</div>
+        <h3>Tu CV está listo para descargar</h3>
+        <p>El CV se generará con toda la información que ingresaste. Podés imprimirlo o guardarlo como PDF.</p>
+        <button class="btn btn-primary" id="btn-print">🖨️ Imprimir / Guardar PDF</button>
+      </div>
+    </section>
 
-        <!-- Vista previa del CV -->
-        <div id="cv-preview" class="mt-6">
-            <h2 class="text-xl font-bold mb-4">Vista Previa del CV</h2>
-            <p class="text-gray-300 text-lg">Este es un ejemplo de vista previa del currículum. Puedes editar el contenido antes de descargar.</p>
-        </div>
+  </main>
+
+  <!-- CV LIVE PREVIEW -->
+  <aside class="cv-panel">
+    <h3>👁️ Vista Previa</h3>
+    <div class="cv-doc" id="cv-preview">
+      <div class="cv-name" id="cv-nombre-preview">Tu Nombre</div>
+      <div class="cv-contact" id="cv-contact-preview">email@ejemplo.com · Buenos Aires</div>
+      <hr class="cv-divider">
+      <div id="cv-exp-preview"></div>
+      <div id="cv-edu-preview"></div>
+      <div id="cv-hab-preview"></div>
     </div>
+  </aside>
 
-    <!-- Script para manejar la lógica del frontend -->
-    <script src='app.js'></script>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- PRINT TEMPLATE (hidden) -->
+<div id="print-area" style="display:none;"></div>
+
+<script src="app.js"></script>
 </body>
 </html>

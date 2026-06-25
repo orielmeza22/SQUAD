@@ -489,7 +489,7 @@ def get_fallback_model(ollama_models):
 # ----------------- AI PROVIDER UNIFIED -----------------
 class AIProvider:
     @staticmethod
-    def generate(model, prompt=None, messages=None, is_json=False, temp=None):
+    def generate(model, prompt=None, messages=None, is_json=False, temp=None, no_cache=False):
         # Swarm Multi-Model Routing
         if getattr(state, "smart_routing", False):
             content_to_check = prompt or ""
@@ -509,7 +509,7 @@ class AIProvider:
                     model = "gemini-2.5-flash"
                 elif model.startswith(("gpt-", "o1-", "o3-")):
                     model = "gpt-4o-mini"
-
+ 
         if temp is None:
             linter_retries = getattr(state, "linter_retries", 0)
             temp = max(0.0, state.temperature - (linter_retries * 0.15))
@@ -526,7 +526,7 @@ class AIProvider:
                     {"role": "user", "content": prompt}
                 ]
                 prompt = None
-
+ 
         prompt_tokens = 0
         if prompt:
             prompt_tokens = len(prompt) // 4
@@ -534,13 +534,15 @@ class AIProvider:
             prompt_tokens = sum(len(m.get('content', '')) for m in messages) // 4
             
         # Check cache first
-        cached_res, cache_key = OptTools.get_cache(model, prompt or messages, temp)
-        if cached_res is not None:
-            state.cache_hits += 1
-            state.token_in += prompt_tokens
-            state.token_out += len(cached_res) // 4
-            print("⚡ [LLM CACHE HIT] Retornando respuesta guardada de caché local.")
-            return cached_res
+        cache_key = None
+        if not no_cache:
+            cached_res, cache_key = OptTools.get_cache(model, prompt or messages, temp)
+            if cached_res is not None:
+                state.cache_hits += 1
+                state.token_in += prompt_tokens
+                state.token_out += len(cached_res) // 4
+                print("⚡ [LLM CACHE HIT] Retornando respuesta guardada de caché local.")
+                return cached_res
 
         state.token_in += prompt_tokens
         num_ctx = OptTools.calculate_dynamic_ctx()
@@ -624,7 +626,8 @@ class AIProvider:
             output_cost = (response_tokens / 1_000_000) * 10.00
             state.cost_usd += input_cost + output_cost
             
-        OptTools.set_cache(cache_key, res)
+        if not no_cache and cache_key:
+            OptTools.set_cache(cache_key, res)
         return res
 
 # ----------------- SYSTEM TOOLS -----------------
@@ -632,7 +635,40 @@ class SysTools:
     WORKSPACE = os.path.join(BASE_DIR, "SQUAD_WORKSPACE")
     git_lock = threading.Lock()
 
-    
+    @staticmethod
+    def find_node_entry_point():
+        if not os.path.exists(SysTools.WORKSPACE):
+            return "main_output.js"
+        workspace_files = os.listdir(SysTools.WORKSPACE)
+        main_files = [f for f in workspace_files if f.startswith("main_output.") and f.endswith(('.js', '.ts', '.jsx', '.tsx'))]
+        if main_files:
+            return main_files[0]
+        commons = [f for f in ["server.js", "app.js", "index.js", "main.js"] if f in workspace_files]
+        if commons:
+            return commons[0]
+        recursive_commons = []
+        for root, _, files in os.walk(SysTools.WORKSPACE):
+            if "node_modules" in root or ".git" in root or "venv" in root or "__pycache__" in root:
+                continue
+            for f in files:
+                if f in ["server.js", "app.js", "index.js", "main.js"]:
+                    rel_path = os.path.relpath(os.path.join(root, f), SysTools.WORKSPACE).replace('\\', '/')
+                    recursive_commons.append(rel_path)
+        if recursive_commons:
+            recursive_commons.sort(key=lambda x: (
+                x.count('/'),
+                0 if 'app.js' in x else 1 if 'server.js' in x else 2
+            ))
+            return recursive_commons[0]
+        for root, _, files in os.walk(SysTools.WORKSPACE):
+            if "node_modules" in root or ".git" in root or "venv" in root or "__pycache__" in root:
+                continue
+            for f in files:
+                if f.endswith(('.js', '.ts')):
+                    rel_path = os.path.relpath(os.path.join(root, f), SysTools.WORKSPACE).replace('\\', '/')
+                    return rel_path
+        return "main_output.js"
+
     @staticmethod
     def setup():
         load_settings()
@@ -891,23 +927,30 @@ class SysTools:
             pkg_data["scripts"] = {}
             changed = True
             
-        workspace_files = os.listdir(SysTools.WORKSPACE) if os.path.exists(SysTools.WORKSPACE) else []
-        main_files = [f for f in workspace_files if f.startswith("main_output.") and f.endswith(('.js', '.ts', '.jsx', '.tsx'))]
-        if main_files:
-            target_f = main_files[0]
-        else:
-            commons = [f for f in ["server.js", "app.js", "index.js", "main.js"] if f in workspace_files]
-            target_f = commons[0] if commons else "main_output.js"
-            
+        target_f = SysTools.find_node_entry_point()
         correct_start_cmd = f"node {target_f}"
         
         current_start = pkg_data["scripts"].get("start", "")
+        ref_file = None
+        if current_start.strip().startswith("node "):
+            ref_file = current_start.strip()[5:].strip()
+        elif current_start.strip().startswith("nodemon "):
+            ref_file = current_start.strip()[8:].strip()
+            
+        file_missing = False
+        if ref_file:
+            ref_file = ref_file.replace('"', '').replace("'", "")
+            ref_path = os.path.join(SysTools.WORKSPACE, ref_file)
+            if not os.path.exists(ref_path):
+                file_missing = True
+                
         is_invalid = (
             not current_start 
             or ".bat" in current_start 
             or ".sh" in current_start 
             or ".py" in current_start 
             or ".md" in current_start
+            or file_missing
         )
         if is_invalid:
             pkg_data["scripts"]["start"] = correct_start_cmd
@@ -1222,6 +1265,7 @@ class SysTools:
                 current_patch_file = line.replace("@@PATCH:", "").strip()
                 current_patch_content = []
                 files.append(current_patch_file)
+                continue
             elif line.startswith("@@FILE:"):
                 if current_file:
                     SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
@@ -1231,20 +1275,51 @@ class SysTools:
                 current_file = line.replace("@@FILE:", "").strip()
                 current_content = []
                 files.append(current_file)
-            elif line.startswith("@@ENDFILE@@") or line.startswith("@@ENDFILE") or line.startswith("@@ENDPATCH"):
+                continue
+            elif line.startswith("@@DELETE:"):
                 if current_file:
                     SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
                     current_file = None
                 if current_patch_file:
                     SysTools.apply_patch(current_patch_file, "\n".join(current_patch_content))
                     current_patch_file = None
-            else:
+                del_file = line.replace("@@DELETE:", "").strip()
+                del_path = os.path.abspath(os.path.join(SysTools.WORKSPACE, del_file.lstrip("\\/")))
+                if del_path.startswith(os.path.abspath(SysTools.WORKSPACE)) and os.path.exists(del_path):
+                    try:
+                        os.remove(del_path)
+                    except:
+                        pass
+                continue
+            
+            has_endfile = "@@ENDFILE" in line
+            has_endpatch = "@@ENDPATCH" in line
+            
+            if has_endfile or has_endpatch:
+                tag = "@@ENDFILE" if has_endfile else "@@ENDPATCH"
+                parts = line.split(tag, 1)
+                before_tag = parts[0]
+                before_tag = before_tag.replace(">>>>>>> END", "").rstrip()
+                
                 if current_file is not None:
-                    if line.strip().startswith("```") and len(line.strip()) <= 15:
-                        continue
-                    current_content.append(line)
+                    if before_tag.strip():
+                        if not (before_tag.strip().startswith("```") and len(before_tag.strip()) <= 15):
+                            current_content.append(before_tag)
+                    SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
+                    current_file = None
                 elif current_patch_file is not None:
-                    current_patch_content.append(line)
+                    if before_tag.strip():
+                        current_patch_content.append(before_tag)
+                    SysTools.apply_patch(current_patch_file, "\n".join(current_patch_content))
+                    current_patch_file = None
+                continue
+            
+            if current_file is not None:
+                if line.strip().startswith("```") and len(line.strip()) <= 15:
+                    continue
+                current_content.append(line)
+            elif current_patch_file is not None:
+                current_patch_content.append(line)
 
         if current_file:
              SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
@@ -1405,6 +1480,49 @@ class SysTools:
         return True, "Correcto"
 
     @staticmethod
+    def auto_fix_css(file_path, content):
+        """Intenta reparar problemas de sintaxis CSS comunes de forma determinística."""
+        lines = content.splitlines()
+        fixed_lines = []
+        open_parens = 0
+        open_braces = 0
+        in_string = None
+        changed = False
+        for line in lines:
+            new_line = list(line)
+            for i, ch in enumerate(line):
+                if in_string:
+                    if ch == in_string:
+                        in_string = None
+                elif ch in ('"', "'"):
+                    in_string = ch
+                elif ch == '(':
+                    open_parens += 1
+                elif ch == ')':
+                    if open_parens > 0:
+                        open_parens -= 1
+                elif ch == '{':
+                    open_braces += 1
+                elif ch == '}':
+                    if open_braces > 0:
+                        open_braces -= 1
+            fixed_lines.append(line)
+        # Close any unclosed parens/braces at end of file
+        if open_parens > 0:
+            fixed_lines[-1] = fixed_lines[-1] + (')' * open_parens)
+            changed = True
+        if open_braces > 0:
+            fixed_lines.append('}' * open_braces)
+            changed = True
+        if changed:
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write('\n'.join(fixed_lines))
+            except Exception:
+                pass
+        return changed
+
+    @staticmethod
     def run_linter(file_path):
         content = ""
         try:
@@ -1414,15 +1532,27 @@ class SysTools:
             return False, f"No se pudo leer el archivo: {e}"
 
         if file_path.endswith('.py'):
-            # Guard: if the file looks like YAML/CI content, rename it and skip Python linting
             stripped = content.strip()
+            # Guard: env var file (KEY=value format, not Python) → delete it
+            env_var_pattern = bool(re.match(r'^[A-Z_][A-Z0-9_]*=[^\s]', stripped))
+            only_env_lines = all(
+                re.match(r'^[A-Z_][A-Z0-9_]*=', l.strip()) or not l.strip() or l.strip().startswith('#')
+                for l in stripped.splitlines()
+            )
+            if env_var_pattern and only_env_lines:
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
+                return True, "Archivo de variables de entorno eliminado (no es Python válido)."
+
+            # Guard: YAML content → rename
             yaml_indicators = (
                 stripped.startswith(("name:", "on:", "jobs:", "steps:", "- name:"))
                 or "runs-on:" in stripped
                 or bool(re.search(r'^name:\s+\S', stripped, re.MULTILINE))
             )
             if yaml_indicators:
-                # Rename file from .py to .yml and skip
                 new_path = re.sub(r'\.py$', '.yml', file_path)
                 try:
                     os.rename(file_path, new_path)
@@ -1430,7 +1560,7 @@ class SysTools:
                     pass
                 return True, "Archivo YAML renombrado de .py a .yml correctamente."
             
-            # Guard: if the file looks like Markdown, rename it and skip Python linting
+            # Guard: Markdown content → rename
             markdown_indicators = (
                 stripped.startswith(("- ", "* ", "1. ", "2. ", "3. ", "### ", "# ", "## ", "---"))
                 or "**" in stripped
@@ -1449,13 +1579,52 @@ class SysTools:
                 return True, "Síntaxis correcta."
             except subprocess.CalledProcessError as e:
                 return False, e.stderr
-        elif file_path.endswith(('.js', '.jsx', '.ts', '.tsx', '.css', '.html')):
+        elif file_path.endswith('.css'):
+            ok, msg = SysTools.check_brackets_and_quotes(content)
+            if not ok:
+                # Attempt deterministic auto-fix for CSS
+                fixed = SysTools.auto_fix_css(file_path, content)
+                if fixed:
+                    return True, "CSS auto-reparado (paréntesis/llaves cerradas)."
+                return False, msg
+            return True, "Sintaxis CSS correcta."
+        elif file_path.endswith(('.js', '.jsx', '.ts', '.tsx', '.html')):
+            # Auto-fix JS: remove duplicate const declarations at end of file
+            if file_path.endswith('.js') and not file_path.endswith(('.jsx', '.tsx')):
+                # Detect and remove duplicate const/var/let declarations
+                lines = content.splitlines()
+                declared_consts = {}
+                clean_lines = []
+                skip_block = False
+                for i, line in enumerate(lines):
+                    m = re.match(r'\s*(const|let|var)\s+(\w+)\s*=', line)
+                    if m:
+                        name = m.group(2)
+                        if name in declared_consts:
+                            # This is a redeclaration - skip this line and potentially next block
+                            skip_block = True
+                            continue
+                        else:
+                            declared_consts[name] = i
+                    elif skip_block and line.strip() == '});':
+                        skip_block = False
+                        continue
+                    if not skip_block:
+                        clean_lines.append(line)
+                fixed_js = '\n'.join(clean_lines)
+                if fixed_js != content:
+                    try:
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write(fixed_js)
+                        content = fixed_js
+                    except Exception:
+                        pass
             ok, msg = SysTools.check_brackets_and_quotes(content)
             if not ok:
                 return False, msg
             if file_path.endswith('.js') and not file_path.endswith(('.jsx', '.tsx')):
                 try:
-                    res = subprocess.run(["node", "--check", file_path], check=True, capture_output=True, text=True)
+                    subprocess.run(["node", "--check", file_path], check=True, capture_output=True, text=True)
                     return True, "Sintaxis de Node.js correcta."
                 except subprocess.CalledProcessError as e:
                     return False, e.stderr + "\n" + e.stdout
@@ -1665,12 +1834,28 @@ REGLA DE IMPORTACIÓN: Si el error se debe a una importación local de un archiv
 REGLA DE PUERTO: El servidor siempre debe escuchar en el puerto definido por la variable de entorno PORT (process.env.PORT o os.environ.get('PORT')), utilizando un fallback adecuado si no está definida.
 {OptTools.CODE_GUIDELINES}
 
-No expliques nada. Solo genera las correcciones de archivos."""
+REGLA DE FORMATO OBLIGATORIA: Debes responder ÚNICAMENTE utilizando uno de los siguientes formatos para cada archivo que modifiques o crees:
+
+Para reemplazar o crear un archivo completo:
+@@FILE: nombre_del_archivo
+código completo aquí
+@@ENDFILE@@
+
+Para aplicar un parche específico en un archivo existente:
+@@PATCH: nombre_del_archivo
+<<<<<<< SEARCH
+código original exacto a reemplazar
+=======
+código de reemplazo
+>>>>>>> END
+@@ENDPATCH
+
+No agregues ninguna explicación ni texto introductorio ni conclusiones. Solo genera las correcciones de archivos con el formato indicado."""
     
     try:
         orig_val = getattr(state, "interception_enabled", True)
         state.interception_enabled = False
-        fixed_output = AIProvider.generate(model=model, prompt=prompt)
+        fixed_output = AIProvider.generate(model=model, prompt=prompt, no_cache=True)
         corrected_files = SysTools.extract_and_write_multifile(fixed_output)
         state.launcher_logs.append(f"🧹 [LINTER AUTÓNOMO]: Reparación aplicada sobre archivos: {str(corrected_files)}")
     except Exception as e:
@@ -1882,13 +2067,7 @@ def run_launch_sequence(model):
         pkg_path = os.path.join(SysTools.WORKSPACE, "package.json")
         if not os.path.exists(pkg_path):
             try:
-                workspace_files = os.listdir(SysTools.WORKSPACE) if os.path.exists(SysTools.WORKSPACE) else []
-                main_files = [f for f in workspace_files if f.startswith("main_output.") and f.endswith(('.js', '.ts', '.jsx', '.tsx'))]
-                if main_files:
-                    target_f = main_files[0]
-                else:
-                    commons = [f for f in ["server.js", "app.js", "index.js", "main.js"] if f in workspace_files]
-                    target_f = commons[0] if commons else "main_output.js"
+                target_f = SysTools.find_node_entry_point()
                 start_cmd = f"node {target_f}"
                 with open(pkg_path, "w", encoding="utf-8") as f_pkg:
                     json.dump({

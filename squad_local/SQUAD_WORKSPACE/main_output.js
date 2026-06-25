@@ -1,18 +1,22 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
 
+// Servir archivos estáticos (index.html, styles.css, scripts.js)
+app.use(express.static(path.join(__dirname)));
+
 // Conectar a la base de datos SQLite
-let db = new sqlite3.Database('./database.sqlite', (err) => {
-db.run("PRAGMA journal_mode=WAL;");
-db.run("PRAGMA busy_timeout=5000;");
+const db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'), (err) => {
   if (err) {
     return console.error(err.message);
   }
-  console.log('Connected to the SQlite database.');
+  db.run("PRAGMA journal_mode=WAL;");
+  db.run("PRAGMA busy_timeout=5000;");
+  console.log('Connected to the SQLite database.');
 });
 
 // Ruta para crear un candidato
