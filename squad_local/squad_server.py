@@ -858,7 +858,12 @@ class SysTools:
                             r'.listen(process.env.PORT || \1\2',
                             new_content
                         )
-                        if count1 > 0 or count2 > 0:
+                        new_content, count3 = re.subn(
+                            r'http://localhost:\d+/api',
+                            r'((typeof window !== "undefined" ? window.location.origin : "") + "/api")',
+                            new_content
+                        )
+                        if count1 > 0 or count2 > 0 or count3 > 0:
                             with open(path, 'w', encoding='utf-8') as file_obj:
                                 file_obj.write(new_content)
                     except Exception:
@@ -1604,6 +1609,35 @@ def run_system_installer(tool_name):
 
 def run_launch_sequence(model):
     try:
+        # 1. Clean residual files lock and processes in SQUAD_WORKSPACE
+        state.launcher_logs.append("🧹 [SISTEMA] Liberando bloqueos de archivos y procesos residuales...")
+        SysTools.cleanup_workspace_processes()
+
+        # 2. SQLite old DB auto-backup if schema files changed
+        schema_keywords = ["models.py", "schema.sql", "database.py", "db.py", "models.ts"]
+        db_changed = any(any(kw in f for kw in schema_keywords) for f in getattr(state, "file_changes", []))
+        if db_changed and os.path.exists(SysTools.WORKSPACE):
+            for file_name in os.listdir(SysTools.WORKSPACE):
+                if file_name.endswith(('.db', '.sqlite', '.sqlite3')):
+                    db_path = os.path.join(SysTools.WORKSPACE, file_name)
+                    backup_path = db_path + ".backup"
+                    try:
+                        if os.path.exists(db_path):
+                            state.launcher_logs.append(f"📡 [SISTEMA] Cambios en el modelo de datos. Archivando DB vieja en: {backup_path}")
+                            if os.path.exists(backup_path):
+                                os.remove(backup_path)
+                            os.rename(db_path, backup_path)
+                    except Exception as ex:
+                        state.launcher_logs.append(f"⚠️ [SISTEMA] Error al archivar base de datos: {ex}")
+
+        # 3. Dynamic ESM/CommonJS healing
+        state.launcher_logs.append("📦 [SISTEMA] Validando tipos CommonJS/ESM...")
+        SysTools.auto_heal_esm_commonjs()
+
+        # 4. SQLite WAL auto-injection
+        state.launcher_logs.append("📡 [SISTEMA] Optimizando conexiones SQLite (WAL / busy_timeout)...")
+        SysTools.auto_heal_sqlite_connections()
+
         # Pre-launch workspace syntax scan
         state.launcher_logs.append("🧹 [LINTER]: Verificando sintaxis de archivos en el workspace antes de lanzar...")
         syntax_errors = []
