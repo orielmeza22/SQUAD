@@ -26,4 +26,3 @@ document.getElementById('user-form').addEventListener('submit', function(event){
     .catch((error) => console.error('Error:', error));
 });
 
-Con estos cambios, el archivo `index.html` ahora incluye una referencia al script `scripts.js`, y este script captura el evento del formulario para enviar los datos al backend.
