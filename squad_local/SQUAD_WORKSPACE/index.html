@@ -1,4 +1,12 @@
 <div id="usuarios">
   <!-- Listado de usuarios -->
 </div>
-<button onmouseover="mostrarInformacion('Gestionar Usuarios', 'Este botón permite gestionar usuarios (médicos y pacientes).')" onclick="gestionarUsuarios()">Gestionar Usuarios</button>
+<button id="boton-gestion-usuarios">Gestionar Usuarios</button>
+
+<script>
+document.getElementById('boton-gestion-usuarios').addEventListener('mouseover', function() {
+    mostrarInformacion('Gestionar Usuarios', 'Este botón permite gestionar usuarios (médicos y pacientes).');
+});
+
+document.getElementById('boton-gestion-usuarios').addEventListener('click', gestionarUsuarios);
+</script>
