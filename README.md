@@ -43,7 +43,7 @@ La finalidad última de SQUAD es **eliminar la fricción técnica y de infraestr
 ### ¿Qué hay que hacer / Cómo colaborar?
 1. **Configurar el Modelo LLM**: Asegúrate de descargar un modelo apto para codificación en Ollama (ej. `qwen2.5-coder:14b` o `qwen2.5-coder:7b`) o configurar tu API Key de Gemini en el archivo `.env` para garantizar la mejor tasa de acierto y respuestas completas.
 2. **Reportar Errores**: Si el linter autónomo entra en bucle infinito o no logra resolver un error específico, copia el log de consola de SQUAD y abre un *Issue* en el repositorio.
-3. **Contribuir con Prompts/Agentes**: Puedes sugerir mejoras en la lógica de los agentes modificando las directivas del sistema en el archivo `squad_server.py`.
+3. **Contribuir con Prompts/Agentes**: Puedes sugerir mejoras en la lógica de los agentes modificando las directivas del sistema en `squad_local_refactored/src/agents/prompts.py`.
 
 ---
 
@@ -81,7 +81,7 @@ Para arrancar el panel de control frontend y el backend del orquestador:
 
 3. **Iniciar servidor de orquestación backend (FastAPI):**
    ```bash
-   python squad_local/squad_server.py
+   python squad_local_refactored/main.py
    ```
    *(Disponible en http://localhost:8000)*
 

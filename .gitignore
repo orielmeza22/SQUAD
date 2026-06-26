@@ -31,6 +31,9 @@ htmlcov/
 .pytest_cache/
 .mypy_cache/
 .tox/
+test_workspace/
+test_workspace_tools/
+
 
 # Logs
 *.log

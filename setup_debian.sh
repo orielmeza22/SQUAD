@@ -8,7 +8,8 @@ python3 -m venv venv
 source venv/bin/activate
 
 echo "🐍 Instalando dependencias de Python..."
-pip install fastapi uvicorn psutil
+pip install -r squad_local_refactored/requirements.txt
 
 echo "🚀 Iniciando SQUAD..."
-python squad_local/squad_server.py
+python squad_local_refactored/main.py
+
