@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
 
-from .routes import streaming, settings, files, static
+from .routes import streaming, settings, files, static, git, llm
 
 
 def create_app() -> FastAPI:
@@ -33,6 +33,8 @@ def create_app() -> FastAPI:
     app.include_router(settings.router)
     app.include_router(files.router)
     app.include_router(static.router)
+    app.include_router(git.router)
+    app.include_router(llm.router)
 
     @app.get("/health")
     async def health_check() -> Dict[str, str]:
