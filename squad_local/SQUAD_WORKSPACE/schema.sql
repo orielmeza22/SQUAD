@@ -37,6 +37,21 @@ VALUES
     (2, 'Server 2', '192.168.1.2', 8081, 'OFFLINE'),
     (3, 'Server 3', '192.168.1.3', 8082, 'ONLINE');
 
+-- Crear tabla products si no existe
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    price REAL NOT NULL
+);
+
+-- Insertando datos de prueba en la tabla productos
+INSERT INTO products (title, description, price)
+VALUES 
+    ('Product 1', 'Description of Product 1', 9.99),
+    ('Product 2', 'Description of Product 2', 19.99),
+    ('Product 3', 'Description of Product 3', 29.99);
+
 -- Creando tabla de arquitecturas
 CREATE TABLE IF NOT EXISTS architectures (
     id INT PRIMARY KEY,
