@@ -1,8 +1,7 @@
-import streamlit as st
+import uvicorn
+from backend.crud import app
 
-def test_streamlit_app():
-    # Configuración inicial del Streamlit
-    st.title("Prueba de Aplicación Streamlit")
-    
-    # Verificación de la configuración
-    assert st.title() == "Prueba de Aplicación Streamlit"
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get('PORT', 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
