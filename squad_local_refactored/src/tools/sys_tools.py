@@ -768,6 +768,42 @@ class SysTools:
         if current_file:
             files[current_file] = "\n".join(current_content).strip("`\n ")
 
+        # Fallback: Parse standard Markdown code blocks if no @@FILE: tags were found (SQUAD 2.0 Robustness)
+        if not files:
+            import re
+            # Find all markdown code blocks: ```[lang]\n[content]\n```
+            blocks = re.findall(r'```(\w*)\n(.*?)\n```', text, re.DOTALL)
+            
+            # Find all mentions of filenames in the text
+            file_mentions = re.findall(r'([\w\/\.\-_]+\.(?:py|js|html|css|sql|ejs))', text)
+            known_files = ["main_output.py", "app.py", "server.js", "index.html", "styles.css", "schema.sql", "index.ejs", "package.json", "requirements.txt"]
+            valid_mentions = [m for m in file_mentions if any(kf in m for kf in known_files)]
+            
+            if len(blocks) == 1 and len(valid_mentions) == 1:
+                target_file = os.path.basename(valid_mentions[0])
+                files[target_file] = blocks[0][1].strip("`\n ")
+            else:
+                for lang, content in blocks:
+                    content_clean = content.strip("`\n ")
+                    first_line = content_clean.splitlines()[0] if content_clean else ""
+                    match_filename = re.search(r'(?:#|//|<!--)\s*([\w\.\-_]+\.(?:py|js|html|css|sql|ejs))', first_line)
+                    if match_filename:
+                        files[match_filename.group(1)] = content_clean
+                    else:
+                        if lang in ['py', 'python'] or 'import ' in content_clean or 'def ' in content_clean:
+                            if 'streamlit' in content_clean or 'st.' in content_clean:
+                                files['app.py'] = content_clean
+                            else:
+                                files['main_output.py'] = content_clean
+                        elif lang in ['html', 'xml'] or '<html' in content_clean or '<div' in content_clean:
+                            files['index.html'] = content_clean
+                        elif lang in ['css'] or 'body {' in content_clean or 'margin:' in content_clean:
+                            files['styles.css'] = content_clean
+                        elif lang in ['sql'] or 'CREATE TABLE' in content_clean:
+                            files['schema.sql'] = content_clean
+                        elif lang in ['js', 'javascript'] or 'const ' in content_clean or 'require(' in content_clean:
+                            files['server.js'] = content_clean
+
         return files
 
     @staticmethod
@@ -857,78 +893,61 @@ class SysTools:
             SysTools.apply_patch(current_patch_file, "\n".join(current_patch_content))
 
         if not files:
-            # Fallback: parse fenced code blocks when no @@FILE markers present.
-            import urllib.parse as _up  # noqa: F401 (kept for parity with legacy imports)
+            # Fallback: parse fenced code blocks when no @@FILE markers present (SQUAD 2.0 Stack-Aware Fallback)
+            import json
+            current_stack = "FASTAPI_HTMX"
+            manifest_path = os.path.join(SysTools.WORKSPACE, "build_manifest.json")
+            if os.path.exists(manifest_path):
+                try:
+                    with open(manifest_path, "r", encoding="utf-8") as f_manifest:
+                        manifest_data = json.load(f_manifest)
+                    current_stack = manifest_data.get("stack", "FASTAPI_HTMX")
+                except Exception:
+                    pass
+
             blocks = re.findall(r'```([a-zA-Z0-9_-]*)\s*(.*?)(?:```|$)', text, re.DOTALL)
             if not blocks:
-                if "```" not in text:
-                    return []
-                blocks = [("", text.strip())]
+                return []
 
             for lang_tag, code in blocks:
                 lang_tag = lang_tag.lower()
-                ext = "py"
+                code_clean = code.strip("`\n ")
                 fname = None
 
-                first_lines = [line.strip() for line in code.splitlines()[:2]]
+                # Check if the code block starts with a comment specifying the filename
+                first_lines = [line.strip() for line in code_clean.splitlines()[:2]]
                 for line in first_lines:
                     m = re.search(r'(?:#|//|/\*|<!--)\s*@FILE:?\s*([a-zA-Z0-9_\-\./]+)', line, re.IGNORECASE)
                     if m:
                         fname = m.group(1).strip()
                         break
 
-                if lang_tag in ["html"]:
-                    ext = "html"
-                    fname = "index.html"
-                elif lang_tag in ["css"]:
-                    ext = "css"
-                    fname = "styles.css"
-                elif lang_tag in ["javascript", "js", "react", "jsx", "node"]:
-                    ext = "js"
-                    is_server = ("require(" in code or "express()" in code or "app.listen(" in code
-                                 or "module.exports" in code or "import express" in code or "fastify" in code)
-                    fname = "main_output.js" if is_server else "app.js"
-                elif lang_tag in ["typescript", "ts", "tsx"]:
-                    ext = "tsx"
-                    fname = "main_output.tsx"
-                elif lang_tag in ["json"]:
-                    ext = "json"
-                    fname = "main_output.json"
-                elif lang_tag in ["bash", "sh", "shell", "bat", "cmd"]:
-                    ext = "bat" if sys.platform.startswith("win") else "sh"
-                    fname = f"main_output.{ext}"
-                elif lang_tag in ["sql"]:
-                    ext = "sql"
-                    fname = "schema.sql"
-                else:
-                    if "import React" in code or "console.log" in code or "const " in code:
-                        ext = "js"
-                        is_server = ("require(" in code or "express()" in code or "app.listen(" in code
-                                     or "module.exports" in code or "import express" in code or "fastify" in code)
-                        fname = "main_output.js" if is_server else "app.js"
-                    elif "<!doctype html" in code.lower() or "<html" in code.lower():
-                        ext = "html"
-                        fname = "index.html"
-                    elif "body {" in code or "margin:" in code or "padding:" in code or "@keyframes" in code:
-                        ext = "css"
-                        fname = "styles.css"
-                    elif (code.strip().startswith(("name:", "on:", "jobs:", "steps:", "- name:"))
-                          or "runs-on:" in code or "github.com/actions" in code
-                          or re.search(r'^name:\s+\S', code, re.MULTILINE)):
-                        ext = "yml"
-                        if "github" in code.lower() or "workflows" in lang_tag.lower():
-                            fname = ".github/workflows/ci.yml"
-                        else:
-                            fname = "pipeline.yml"
-                    elif code.strip().startswith(("- ", "* ", "1. ", "2. ", "3. ", "### ", "# ")) or "**" in code:
-                        ext = "md"
-                        fname = "main_output.md"
-                    else:
-                        ext = "py"
-                        fname = "main_output.py"
+                if not fname:
+                    if current_stack == "FASTAPI_HTMX":
+                        if lang_tag in ["py", "python", "py3"]:
+                            fname = "main_output.py"
+                        elif lang_tag in ["html", "xml"] or "<html" in code_clean.lower() or "<div" in code_clean.lower():
+                            fname = "index.html"
+                        elif lang_tag in ["css"] or "body {" in code_clean or "margin:" in code_clean:
+                            fname = "styles.css"
+                        elif lang_tag in ["sql"] or "CREATE TABLE" in code_clean:
+                            fname = "schema.sql"
+                    elif current_stack == "NODE_EJS":
+                        if lang_tag in ["js", "javascript"]:
+                            is_server = "express" in code_clean or "require(" in code_clean or "listen(" in code_clean
+                            fname = "server.js" if is_server else "public/app.js"
+                        elif lang_tag in ["html", "ejs"] or "<html" in code_clean.lower() or "<div" in code_clean.lower():
+                            fname = "views/index.ejs"
+                        elif lang_tag in ["css"] or "body {" in code_clean or "margin:" in code_clean:
+                            fname = "public/styles.css"
+                        elif lang_tag in ["sql"] or "CREATE TABLE" in code_clean:
+                            fname = "schema.sql"
+                    elif current_stack == "PYTHON_STREAMLIT":
+                        if lang_tag in ["py", "python"]:
+                            fname = "app.py"
 
                 if fname:
-                    SysTools.write(fname, code)
+                    SysTools.write(fname, code_clean)
                     files.append(fname)
         return files
 
