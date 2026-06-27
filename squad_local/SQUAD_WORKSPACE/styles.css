@@ -1,48 +1,11 @@
-/* Estilos para el frontend */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: Arial, sans-serif;
 }
 
-#app {
-    display: flex;
-    min-height: 100vh;
-    background-color: #2a2d35;
+h1 {
+    text-align: center;
 }
 
-nav {
-    padding: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-nav a {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-nav .block:hover {
-    background-color: #3a3d45;
-}
-
-#sidebar {
-    position: fixed;
-    top: 64px;
-    left: -280px;
-    width: 280px;
-    height: calc(100vh - 64px);
-    transition: all 0.3s ease-in-out;
-}
-
-#content {
-    margin-left: 280px;
-    padding: 2rem;
-}
-
-#sidebar .block:hover {
-    background-color: #3a3d45;
-}
-
-#sidebarCollapse,
-#sidebarCollapseMobile {
-    display: none;
+#server-list {
+    margin-top: 20px;
 }
