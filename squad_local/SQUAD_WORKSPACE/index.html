@@ -2,14 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Server Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto</title>
+    <!-- Referencia a los archivos estáticos -->
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/scripts.js"></script>
 </head>
 <body>
-    <h1>Server Management Dashboard</h1>
-    <div id="server-list"></div>
+    <h1>Bienvenido al Proyecto</h1>
+    <button id="btn">Hacer algo</button>
 
-    <!-- HTMX will be used for interactivity -->
-    <script src="/static/scripts.js"></script>
+    <!-- HTMX para actualizaciones dinámicas -->
+    <div hx-get="/api/data" hx-target="#data" hx-swap="innerHTML"></div>
+
+    <script src="https://unpkg.com/htmx.org@latest"></script>
 </body>
 </html>
