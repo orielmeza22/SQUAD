@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-sqlalchemy
-# No es necesario incluir 'backend' en requirements.txt
-fastapi
-uvicorn
-sqlalchemy
