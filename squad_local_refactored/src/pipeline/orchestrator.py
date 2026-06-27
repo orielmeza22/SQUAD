@@ -294,6 +294,9 @@ def run_agent_pipeline_phase_2() -> None:
                 else:
                     state.log(f"🔄 [SHIFT-LEFT] Error de sintaxis en UI (Reintento {ui_retries}/2): {', '.join(err_details)}. Descartando y regenerando...")
 
+        # Recalculate context so that the Backend Agent can see the newly generated schema.sql and index.html (SQUAD 2.0 Cooperability)
+        existing_context = _existing_context(prompt)
+
         # Backend Agent execution with Shift-Left memory loop (SQUAD 2.0)
         state.log(f"💻 [AGENTE BACKEND DEV] ({target_model}): Escribiendo Lógica de Negocio y APIs...")
         created_back: list = []
