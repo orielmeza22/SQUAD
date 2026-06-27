@@ -1,8 +1,6 @@
-/* Estilos CSS */
+/* styles.css */
 body {
-    font-family: Inter, sans-serif;
-    background-color: #1a1a1a; /* Dark gray */
-    color: white;
+    font-family: Arial, sans-serif;
 }
 
 #app {
