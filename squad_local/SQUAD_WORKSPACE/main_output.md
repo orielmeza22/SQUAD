@@ -1,23 +1,17 @@
-# App de Gestión de Turnos
+# Usa la imagen base de Python para Flask
+FROM python:3.8-slim
 
-## Descripción
-Esta aplicación permite a los usuarios gestionar turnos de manera eficiente.
+# Establece el directorio de trabajo como /app
+WORKDIR /app
 
-## Instalación y Configuración
-1. Clona el repositorio.
-2. Ejecuta `docker-compose up` para iniciar el contenedor.
-3. Accede al frontend en http://localhost:5000
+# Copia el archivo app.py y las dependencias del sistema de archivos host al contenedor
+COPY . .
 
-## Arquitectura
-### Frontend
-- HTML5, CSS y JavaScript nativo.
+# Instala las dependencias necesarias
+RUN pip install flask sqlite3
 
-### Backend
-- Flask con SQLite como base de datos local.
+# Exponga la puerta 5000 para Flask
+EXPOSE 5000
 
-## Pruebas
-1. Ejecuta las pruebas unitarias para el backend.
-2. Realiza pruebas de integración para asegurar que todo funcione correctamente.
-
-## Documentación
-- Consulta README.md para obtener más detalles sobre la instalación y configuración del sistema.
+# Ejecuta el servidor web
+CMD ["python", "app.py"]
