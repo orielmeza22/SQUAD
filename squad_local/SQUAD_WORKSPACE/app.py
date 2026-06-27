@@ -1,9 +1,9 @@
 import os
-import sqlite3
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+import sqlite3
 
 app = FastAPI(title="SQUAD Auto-generated App")
 
@@ -15,6 +15,10 @@ DB_FILE = "app_database.db"
 
 def get_db():
     conn = sqlite3.connect(DB_FILE)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     try:
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=5000")
