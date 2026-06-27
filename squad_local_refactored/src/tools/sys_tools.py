@@ -457,15 +457,22 @@ class SysTools:
                     try:
                         with open(path, 'r', encoding='utf-8') as file_obj:
                             content = file_obj.read()
-                        pattern = r'(\b(\w+)\s*=\s*sqlite3\.connect\([^\n]+)'
+                        
+                        # Idempotency check: don't double inject
+                        if "journal_mode=WAL" in content:
+                            continue
+                            
+                        # Matches start of line, indentation, connect statement and variable name
+                        pattern = r'(^([ \t]*)((\w+)\s*=\s*sqlite3\.connect\([^\n]+))'
 
                         def repl_py(m):
-                            line = m.group(1)
-                            var_name = m.group(2)
-                            return (f'{line}\n    try:\n        {var_name}.execute("PRAGMA journal_mode=WAL")\n'
-                                    f'        {var_name}.execute("PRAGMA busy_timeout=5000")\n    except Exception: pass')
+                            indent = m.group(2)
+                            line = m.group(3)
+                            var_name = m.group(4)
+                            return (f'{indent}{line}\n{indent}try:\n{indent}    {var_name}.execute("PRAGMA journal_mode=WAL")\n'
+                                    f'{indent}    {var_name}.execute("PRAGMA busy_timeout=5000")\n{indent}except Exception: pass')
 
-                        new_content, count = re.subn(pattern, repl_py, content)
+                        new_content, count = re.subn(pattern, repl_py, content, flags=re.MULTILINE)
                         if count > 0:
                             with open(path, 'w', encoding='utf-8') as file_obj:
                                 file_obj.write(new_content)
@@ -476,6 +483,11 @@ class SysTools:
                     try:
                         with open(path, 'r', encoding='utf-8') as file_obj:
                             content = file_obj.read()
+                            
+                        # Idempotency check
+                        if "journal_mode=WAL" in content:
+                            continue
+                            
                         pattern = r'(\b(const|let|var)\s+(\w+)\s*=\s*new\s+sqlite3\.Database\([^\n]+)'
 
                         def repl_js(m):
