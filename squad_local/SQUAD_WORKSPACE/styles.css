@@ -1,11 +1,15 @@
+/* Estilos personalizados */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
-h1 {
-    text-align: center;
+h1, h2, p {
+    color: #333;
 }
 
-#server-list {
-    margin-top: 20px;
+input[type="text"] {
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 15px;
 }
