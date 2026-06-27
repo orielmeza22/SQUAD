@@ -17,34 +17,114 @@ El frontend será desarrollado utilizando HTML5, CSS y JavaScript nativos (sin f
 - **CSS**: Para estilos y diseño.
 - **JavaScript**: Para lógica del frontend, eventos y interacción con el backend.
 
-**3.2. Arquitectura Backend**
+```html
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>App de Gestión de Turnos</title>
+  <!-- Estilos personalizados -->
+  <style>
+    /* Estilos básicos */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #1a1a2e;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    input[type="text"],
+    input[type="date"] {
+      padding: 0.75rem;
+      border-radius: 4px;
+      background-color: #2a365d;
+      color: white;
+      border: none;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      background-color: #1e88e5;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover,
+    button:focus {
+      background-color: #00bcd4;
+    }
+    
+    /* Estilos para el botón de eliminación */
+    .delete-btn {
+      margin-top: 1rem;
+      color: white;
+      border: none;
+      background-color: #f44336;
+    }
+
+    .delete-btn:hover,
+    .delete-btn:focus {
+      background-color: #e57373;
+    }
+    
+    /* Estilos para el formulario de edición */
+    form#edit-form {
+      display: none;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Gestión de Turnos</h1>
+
+  <!-- Formulario para crear un turno -->
+  <form id="create-form">
+    <input type="text" name="nombre" placeholder="Nombre del turno">
+    <input type="date" name="fecha" placeholder="Fecha del turno">
+    <button type="submit">Crear Turno</button>
+  </form>
+
+  <!-- Formulario para editar un turno -->
+  <form id="edit-form">
+    <input type="text" name="nombre" placeholder="Nombre del turno">
+    <input type="date" name="fecha" placeholder="Fecha del turno">
+    <button type="submit">Guardar Cambios</button>
+  </form>
+
+  <!-- Botón para eliminar un turno -->
+  <button id="delete-btn">Eliminar Turno</button>
+
+  <!-- Script para manejar las interacciones de frontend -->
+  <script src="/static/script.js"></script>
+</body>
+</html>
+```
+
+#### 3.2. Arquitectura Backend
 El backend será desarrollado en Python utilizando Flask como framework web.
 
 - **Flask**: Framework web de Python para manejar las peticiones HTTP y responder con JSON.
 - **SQLite**: Base de datos local para almacenar los datos del sistema (turnos, usuarios).
-
-**3.3. Arquitectura de Contenedores**
-La aplicación será contenedida utilizando Docker.
-
-- **Dockerfile**: Script que define cómo se construirá el contenedor y qué imágenes base se utilizarán.
-- **docker-compose.yml**: Script para iniciar los contenedores necesarios (backend, frontend).
-
-#### 4. **Funcionalidades del Sistema**
-
-**4.1. Gestión de Turnos**
-- Crear un turno
-- Editar un turno existente
-- Eliminar un turno
-- Ver todos los turnos
-
-**4.2. Autenticación y Autorización**
-- Registro de usuarios
-- Inicio de sesión
-- Control de roles (administrador, usuario)
-
-#### 5. **Especificaciones Técnicas**
-
-**5.1. Especificaciones del Backend en Python con Flask**
 
 ```python
 # app.py
@@ -99,7 +179,50 @@ if __name__ == '__main__':
     app.run(debug=True)
 ```
 
-**5.2. Especificaciones del Frontend en HTML y JavaScript**
+#### 3.3. Arquitectura de Contenedores
+La aplicación será contenedida utilizando Docker.
+
+- **Dockerfile**: Script que define cómo se construirá el contenedor y qué imágenes base se utilizarán.
+- **docker-compose.yml**: Script para iniciar los contenedores necesarios (backend, frontend).
+
+```Dockerfile
+# Usa la imagen base de Python para Flask
+FROM python:3.8-slim
+
+# Establece el directorio de trabajo como /app
+WORKDIR /app
+
+# Copia el archivo app.py y las dependencias del sistema de archivos host al contenedor
+COPY . .
+
+# Instala las dependencias necesarias
+RUN pip install flask sqlite3
+
+# Exponga la puerta 5000 para Flask
+EXPOSE 5000
+
+# Ejecuta el servidor web
+CMD ["python", "app.py"]
+```
+
+```yaml
+version: '3'
+services:
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/var/www/html/turnos.db
+```
+
+#### 4. **Funcionalidades del Sistema**
+
+**4.1. Gestión de Turnos**
+- Crear un turno
+- Editar un turno existente
+- Eliminar un turno
+- Ver todos los turnos
 
 ```html
 <!-- index.html -->
@@ -108,8 +231,74 @@ if __name__ == '__main__':
 <head>
   <meta charset="UTF-8">
   <title>App de Gestión de Turnos</title>
+  <!-- Estilos personalizados -->
   <style>
     /* Estilos básicos */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #1a1a2e;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    input[type="text"],
+    input[type="date"] {
+      padding: 0.75rem;
+      border-radius: 4px;
+      background-color: #2a365d;
+      color: white;
+      border: none;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      background-color: #1e88e5;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover,
+    button:focus {
+      background-color: #00bcd4;
+    }
+    
+    /* Estilos para el botón de eliminación */
+    .delete-btn {
+      margin-top: 1rem;
+      color: white;
+      border: none;
+      background-color: #f44336;
+    }
+
+    .delete-btn:hover,
+    .delete-btn:focus {
+      background-color: #e57373;
+    }
+    
+    /* Estilos para el formulario de edición */
+    form#edit-form {
+      display: none;
+    }
+
   </style>
 </head>
 <body>
@@ -181,6 +370,94 @@ document.getElementById('delete-btn').addEventListener('click', function(event) 
 });
 ```
 
+```Dockerfile
+# Usa la imagen base de Python para Flask
+FROM python:3.8-slim
+
+# Establece el directorio de trabajo como /app
+WORKDIR /app
+
+# Copia el archivo app.py y las dependencias del sistema de archivos host al contenedor
+COPY . .
+
+# Instala las dependencias necesarias
+RUN pip install flask sqlite3
+
+# Exponga la puerta 5000 para Flask
+EXPOSE 5000
+
+# Ejecuta el servidor web
+CMD ["python", "app.py"]
+```
+
+```yaml
+version: '3'
+services:
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/var/www/html/turnos.db
+```
+
+#### 5. **Especificaciones Técnicas**
+
+**5.1. Especificaciones del Backend en Python con Flask**
+
+```python
+# app.py
+
+from flask import Flask, request, jsonify
+import sqlite3
+
+app = Flask(__name__)
+
+DATABASE = 'turnos.db'
+
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+@app.route('/turnos', methods=['GET'])
+def get_turnos():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM turnos')
+    rows = cur.fetchall()
+    return jsonify(rows)
+
+@app.route('/turnos/<int:turno_id>', methods=['PUT'])
+def update_turno(turno_id):
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('UPDATE turnos SET nombre=:nombre, fecha=:fecha WHERE id=:id', data)
+    conn.commit()
+    return jsonify({'message': 'Turno actualizado'})
+
+@app.route('/turnos/<int:turno_id>', methods=['DELETE'])
+def delete_turno(turno_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM turnos WHERE id=:id', {'id': turno_id})
+    conn.commit()
+    return jsonify({'message': 'Turno eliminado'})
+
+@app.route('/turnos', methods=['POST'])
+def create_turno():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('INSERT INTO turnos (nombre, fecha) VALUES (:nombre, :fecha)', data)
+    conn.commit()
+    return jsonify({'message': 'Turno creado'})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
 #### 6. **Especificaciones del Contenedor**
 
 **6.1. Dockerfile**
@@ -235,3 +512,92 @@ La aplicación se desplegará utilizando Docker, asegurando que el backend esté
 ---
 
 Este plan técnico proporciona una base sólida para desarrollar una aplicación de gestión de turnos utilizando las tecnologías disponibles. Los siguientes pasos serían seguir con el desarrollo, pruebas y despliegue según estas especificaciones.
+
+### Archivo: index.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>App de Gestión de Turnos</title>
+  <!-- Estilos personalizados -->
+  <style>
+    /* Estilos básicos */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #1a1a2e;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    input[type="text"],
+    input[type="date"] {
+      padding: 0.75rem;
+      border-radius: 4px;
+      background-color: #2a365d;
+      color: white;
+      border: none;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      background-color: #1e88e5;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover,
+    button:focus {
+      background-color: #00bcd4;
+    }
+    
+    /* Estilos para el botón de eliminación */
+    .delete-btn {
+      margin-top: 1rem;
+      color: white;
+      border: none;
+      background-color: #f44336;
+    }
+
+    .delete-btn:hover,
+    .delete-btn:focus {
+      background-color: #e57373;
+    }
+    
+    /* Estilos para el formulario de edición */
+    form#edit-form {
+      display: none;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Gestión de Turnos</h1>
+
+  <!-- Formulario para crear un turno -->
+  <form id="create-form">
+    <input type="text" name="nombre" placeholder="Nombre del turno">
+    <input type="date" name="fecha" placeholder="Fecha del turno">
+    <button type="submit">Crear Turno</button>
+  </form>
+
+  <!-- Formulario para editar un turno -->
+  <form id="edit
