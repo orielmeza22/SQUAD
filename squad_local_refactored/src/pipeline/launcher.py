@@ -180,13 +180,24 @@ def run_launch_sequence(model: str) -> Tuple[bool, str]:
         if not os.path.exists(pkg_path):
             try:
                 target_f = SysTools.find_node_entry_point()
-                start_cmd = f"node {target_f}"
-                with open(pkg_path, "w", encoding="utf-8") as f_pkg:
-                    json.dump({
-                        "name": "squad-workspace-project",
-                        "type": "commonjs",
-                        "scripts": {"start": start_cmd}
-                    }, f_pkg, indent=2)
+                has_html = os.path.exists(os.path.join(SysTools.WORKSPACE, "index.html")) or os.path.exists(os.path.join(SysTools.WORKSPACE, "main_output.html"))
+                
+                is_node_backend = False
+                target_path = os.path.join(SysTools.WORKSPACE, target_f)
+                if os.path.exists(target_path):
+                    with open(target_path, "r", encoding="utf-8") as f_target:
+                        target_code = f_target.read()
+                    if any(kw in target_code for kw in ["express", "http.createServer", "require('http')", "import http", "fastify", "koa", "app.listen"]):
+                        is_node_backend = True
+
+                if is_node_backend or not has_html:
+                    start_cmd = f"node {target_f}"
+                    with open(pkg_path, "w", encoding="utf-8") as f_pkg:
+                        json.dump({
+                            "name": "squad-workspace-project",
+                            "type": "commonjs",
+                            "scripts": {"start": start_cmd}
+                        }, f_pkg, indent=2)
             except Exception:
                 pass
 

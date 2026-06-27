@@ -39,8 +39,14 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
                 continue
             for f in files:
                 rel = os.path.relpath(os.path.join(root, f), SysTools.WORKSPACE).replace('\\', '/')
-                content = SysTools.read(rel)
+                # Use in-memory broken version if it exists, otherwise read from disk
+                content = SysTools.broken_memory_files.get(rel) or SysTools.read(rel)
                 files_context.append(f"@@FILE: {rel}\n{content}\n@@ENDFILE@@")
+
+    # Add any in-memory broken files that do not exist on disk yet
+    for rel, content in SysTools.broken_memory_files.items():
+        if not any(f.startswith(f"@@FILE: {rel}\n") for f in files_context):
+            files_context.append(f"@@FILE: {rel}\n{content}\n@@ENDFILE@@")
 
     files_context_str = "\n\n".join(files_context)
 
@@ -65,13 +71,9 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
         "de entorno PORT (process.env.PORT o os.environ.get('PORT')), utilizando un fallback "
         "adecuado si no está definida.\n"
         f"{OptTools.CODE_GUIDELINES}\n\n"
-        "REGLA DE FORMATO OBLIGATORIA: Debes responder ÚNICAMENTE utilizando uno de los "
-        "siguientes formatos para cada archivo que modifiques o crees:\n\n"
-        "Para reemplazar o crear un archivo completo:\n"
+        "REGLA DE FORMATO OBLIGATORIA (REGENERACIÓN COMPLETA): Debes responder ÚNICAMENTE utilizando el siguiente "
+        "formato para cada archivo que modifiques o crees. No utilices parches parciales, escribe siempre el archivo completo:\n\n"
         "@@FILE: nombre_del_archivo\ncódigo completo aquí\n@@ENDFILE@@\n\n"
-        "Para aplicar un parche específico en un archivo existente:\n"
-        "@@PATCH: nombre_del_archivo\n<<<<<<< SEARCH\ncódigo original exacto a reemplazar\n"
-        "=======\ncódigo de reemplazo\n>>>>>>> END\n@@ENDPATCH\n\n"
         "No agregues ninguna explicación ni texto introductorio ni conclusiones. Solo genera "
         "las correcciones de archivos con el formato indicado."
     )

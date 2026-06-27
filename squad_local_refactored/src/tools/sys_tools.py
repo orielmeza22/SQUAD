@@ -57,6 +57,8 @@ class SysTools:
 
     WORKSPACE = os.path.abspath(settings.workspace)
     git_lock = threading.Lock()
+    broken_memory_files: Dict[str, str] = {}
+
 
     # ------------------------------------------------------------------ #
     # Workspace & process management
@@ -573,6 +575,19 @@ class SysTools:
         clean_name = os.path.normpath(clean_name)
         while clean_name.startswith("..") or clean_name.startswith("/") or clean_name.startswith("\\"):
             clean_name = clean_name.replace("../", "").replace("..\\", "").replace("..", "").lstrip("\\/")
+
+        # Shift-Left Syntax validation
+        is_valid, err_msg = SysTools.check_syntax(clean_name, c)
+        if not is_valid:
+            SysTools.broken_memory_files[clean_name] = c
+            state.launcher_logs.append(
+                f"❌ [SHIFT-LEFT] Sintaxis inválida detectada en memoria para '{clean_name}': {err_msg}. Escritura bloqueada."
+            )
+            raise ValueError(f"Sintaxis inválida en {clean_name}: {err_msg}")
+        
+        # Clear previously registered broken content if now valid
+        if clean_name in SysTools.broken_memory_files:
+            SysTools.broken_memory_files.pop(clean_name)
 
         is_critical = clean_name in [
             "app.py", "package.json", "index.html", ".env", "docker-compose.yml",
