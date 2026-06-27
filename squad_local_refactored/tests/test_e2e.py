@@ -36,7 +36,7 @@ def mock_generate_fn(self, model, prompt=None, messages=None, is_json=False, tem
     elif "Frontend / UI" in prompt_str or "espectacular" in prompt_str or "Tailwind Play" in prompt_str:
         print("Selected: FRONTEND")
         return "@@FILE: index.html\n<html><body><h1>Mock App</h1></body></html>\n@@ENDFILE@@\n@@FILE: styles.css\nbody { background: #000; }\n@@ENDFILE@@"
-    elif "Backend/Archivos" in prompt_str or "PUERTO DINÁMICO" in prompt_str:
+    elif "Backend/Archivos" in prompt_str or "PUERTO DINÁMICO" in prompt_str or "BACKEND EXCLUSIVO" in prompt_str or "FASTAPI_HTMX" in prompt_str:
         print("Selected: BACKEND")
         return "@@FILE: app.py\nfrom fastapi import FastAPI\napp = FastAPI()\n@app.get('/')\ndef read_root(): return {'hello': 'world'}\n@@ENDFILE@@\n@@FILE: requirements.txt\nfastapi\nuvicorn\n@@ENDFILE@@\n@@FILE: main_output.py\nimport uvicorn\nif __name__ == '__main__': uvicorn.run('app:app')\n@@ENDFILE@@"
     elif "Code Reviewer" in prompt_str or "calidad de código" in prompt_str:

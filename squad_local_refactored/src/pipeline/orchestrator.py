@@ -124,6 +124,17 @@ def run_agent_pipeline_phase_2() -> None:
     if not plan:
         plan = data.get("plan")
 
+    # Parse stack from SPEC.md
+    stack = "FASTAPI_HTMX"
+    if plan:
+        import re
+        stack_match = re.search(r'STACK:\s*([A-Z0-9_]+)', plan)
+        if stack_match:
+            stack = stack_match.group(1).strip()
+            state.log(f"📦 [SISTEMA] Stack tecnológico detectado: {stack}")
+        else:
+            state.log("⚠️ No se detectó STACK: en SPEC.md. Usando FASTAPI_HTMX por defecto.")
+
     state.pipeline_status = "running"
     state.is_running = True
     state.log("🚀 Aprobado. Reanudando enjambre (Fase 2: DBA + UI + Backend + QA)...")
@@ -148,7 +159,7 @@ def run_agent_pipeline_phase_2() -> None:
 
         def run_ui_agent():
             try:
-                ui_p = frontend_prompt(plan, existing_context, style_mem_s)
+                ui_p = frontend_prompt(plan, existing_context, style_mem_s, stack=stack)
                 ui_output[0] = AIProvider().generate(model=target_model, prompt=ui_p)
             except Exception as e:
                 ui_output[0] = f"Error UI: {e}"
@@ -176,7 +187,7 @@ def run_agent_pipeline_phase_2() -> None:
             state.log(f"⚠️ UI Agent falló o dio error: {ui_output[0]}")
 
         state.log(f"💻 [AGENTE BACKEND DEV] ({target_model}): Escribiendo Lógica de Negocio y APIs...")
-        code_p = backend_prompt(plan, existing_context)
+        code_p = backend_prompt(plan, existing_context, stack=stack)
         full_code_output = AIProvider().generate(model=target_model, prompt=code_p)
         created_back = SysTools.extract_and_write_multifile(full_code_output)
 

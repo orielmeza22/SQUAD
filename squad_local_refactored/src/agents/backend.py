@@ -34,7 +34,7 @@ class BackendAgent(BaseAgent):
         existing_context = context.get("existing_context", "")
         model = self._resolve_model(context)
 
-        full_prompt = backend_prompt(plan, existing_context)
+        full_prompt = backend_prompt(plan, existing_context, stack=context.get("stack", "FASTAPI_HTMX"))
         output = self.generate(model=model, prompt=full_prompt)
 
         files: list = []

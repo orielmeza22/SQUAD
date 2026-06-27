@@ -36,7 +36,7 @@ class FrontendAgent(BaseAgent):
         style_mem_str = context.get("style_mem_str", "")
         model = self._resolve_model(context)
 
-        full_prompt = frontend_prompt(plan, existing_context, style_mem_str)
+        full_prompt = frontend_prompt(plan, existing_context, style_mem_str, stack=context.get("stack", "FASTAPI_HTMX"))
         output = self.generate(model=model, prompt=full_prompt)
 
         files: list = []

@@ -201,7 +201,58 @@ def run_launch_sequence(model: str) -> Tuple[bool, str]:
             except Exception:
                 pass
 
-        if os.path.exists(os.path.join(SysTools.WORKSPACE, "docker-compose.yml")):
+        # Read stack from SPEC.md to select the run command
+        stack = "FASTAPI_HTMX"
+        spec_path = os.path.join(SysTools.WORKSPACE, "SPEC.md")
+        if os.path.exists(spec_path):
+            try:
+                with open(spec_path, 'r', encoding='utf-8') as fspec:
+                    spec_content = fspec.read()
+                stack_match = re.search(r'STACK:\s*([A-Z0-9_]+)', spec_content)
+                if stack_match:
+                    stack = stack_match.group(1).strip()
+                    state.launcher_logs.append(f"📦 [SISTEMA] Stack detectado en SPEC.md: {stack}")
+            except Exception:
+                pass
+
+        if stack == "PYTHON_STREAMLIT":
+            req_path = os.path.join(SysTools.WORKSPACE, "requirements.txt")
+            if not os.path.exists(req_path):
+                try:
+                    with open(req_path, "w", encoding="utf-8") as freq:
+                        freq.write("streamlit\n")
+                except Exception:
+                    pass
+            cmd = f'"{pip_exe}" install --prefer-offline streamlit && "{python_exe}" -m streamlit run app.py --server.port 5000 --server.address 0.0.0.0'
+        elif stack == "NODE_EJS":
+            pkg_path = os.path.join(SysTools.WORKSPACE, "package.json")
+            if not os.path.exists(pkg_path):
+                try:
+                    with open(pkg_path, "w", encoding="utf-8") as f_pkg:
+                        json.dump({
+                            "name": "squad-ejs-project",
+                            "type": "commonjs",
+                            "dependencies": {
+                                "express": "^4.19.2",
+                                "ejs": "^3.1.10",
+                                "better-sqlite3": "^11.0.0"
+                            },
+                            "scripts": {"start": "node server.js"}
+                        }, f_pkg, indent=2)
+                except Exception:
+                    pass
+            cmd = "npm install --prefer-offline --no-audit --no-fund && npm start"
+        elif stack == "FASTAPI_HTMX" and (os.path.exists(os.path.join(SysTools.WORKSPACE, "main_output.py")) or os.path.exists(os.path.join(SysTools.WORKSPACE, "app.py"))):
+            req_path = os.path.join(SysTools.WORKSPACE, "requirements.txt")
+            if not os.path.exists(req_path):
+                try:
+                    with open(req_path, "w", encoding="utf-8") as freq:
+                        freq.write("fastapi\nuvicorn\njinja2\n")
+                except Exception:
+                    pass
+            entry_file = "main_output.py" if os.path.exists(os.path.join(SysTools.WORKSPACE, "main_output.py")) else "app.py"
+            cmd = f'"{pip_exe}" install --prefer-offline fastapi uvicorn jinja2 && "{python_exe}" {entry_file}'
+        elif os.path.exists(os.path.join(SysTools.WORKSPACE, "docker-compose.yml")):
             cmd = "docker-compose up --build"
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "package.json")):
             cmd = "npm install --prefer-offline --no-audit --no-fund && npm start"
