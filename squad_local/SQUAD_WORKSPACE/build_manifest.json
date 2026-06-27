@@ -1,6 +1,7 @@
 {
   "stack": "FASTAPI_HTMX",
   "files": [
+    "main_output.py",
     "app.py",
     "styles.css",
     "index.html",
