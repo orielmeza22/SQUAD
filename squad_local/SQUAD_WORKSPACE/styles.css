@@ -1,15 +1,17 @@
-/* Estilos personalizados */
+/* styles.css */
 body {
     font-family: 'Inter', sans-serif;
 }
 
-h1, h2, p {
-    color: #333;
+h1 {
+    color: #3498db; /* Dark blue */
 }
 
-input[type="text"] {
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-bottom: 15px;
+ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+li {
+    margin-bottom: 5px;
 }

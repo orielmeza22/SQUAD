@@ -1,9 +1,24 @@
-const { render } = require('react-dom/server');
-const { describe, it, expect } = require('@jest/globals');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FastAPI HTMX Example</title>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.0.2"></script>
+    <!-- CSS -->
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div id="app">
+        <h1>Welcome to FastAPI with HTMX!</h1>
+        <ul>
+            {% for user in users %}
+                <li>{{ user.name }} - {{ user.email }}</li>
+            {% endfor %}
+        </ul>
+    </div>
 
-describe('Index', () => {
-  it('renders correctly', () => {
-    const html = render('<div>Hello World</div>');
-    expect(html).toContainHTML('<div>Hello World</div>');
-  });
-});
+    <!-- JS -->
+    <script src="/main_output.js"></script>
+</body>
+</html>
