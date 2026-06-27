@@ -1,6 +1,4 @@
 import os
-import re
-import sys
 import sqlite3
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -21,12 +19,22 @@ def get_db():
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=5000")
     except Exception: pass
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     conn.row_factory = sqlite3.Row
     return conn
 
 # SQUAD_INJECT_DB_SCHEMA
 
 # SQUAD_INJECT_LOGIC
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+templates = Jinja2Templates(directory=".")
 
 if __name__ == "__main__":
     import uvicorn
