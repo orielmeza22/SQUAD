@@ -185,16 +185,7 @@ def run_agent_pipeline_phase_2() -> None:
                 except Exception:
                     pass
 
-    # Pre-initialize workspace template files to prevent basic framework setup syntax errors (SQUAD 2.0)
-    from ..core.templates import FASTAPI_HTMX_TEMPLATE, NODE_EJS_TEMPLATE, PYTHON_STREAMLIT_TEMPLATE
-    if stack == "FASTAPI_HTMX":
-        SysTools.write("main_output.py", FASTAPI_HTMX_TEMPLATE, force=True)
-        SysTools.write("requirements.txt", "fastapi\nuvicorn\njinja2\n", force=True)
-    elif stack == "NODE_EJS":
-        SysTools.write("server.js", NODE_EJS_TEMPLATE, force=True)
-    elif stack == "PYTHON_STREAMLIT":
-        SysTools.write("app.py", PYTHON_STREAMLIT_TEMPLATE, force=True)
-        SysTools.write("requirements.txt", "streamlit\n", force=True)
+
 
     state.pipeline_status = "running"
     state.is_running = True
@@ -249,12 +240,16 @@ def run_agent_pipeline_phase_2() -> None:
             extracted = SysTools.extract_multifile_in_memory(ui_output[0])
             all_ok = True
             err_details = []
-            for filepath, content in extracted.items():
-                is_ok, err_m = SysTools.check_syntax(filepath, content)
-                if not is_ok:
-                    all_ok = False
-                    err_details.append(f"{filepath}: {err_m}")
-            if all_ok and extracted:
+            if not extracted:
+                all_ok = False
+                err_details.append("No se detectó ningún bloque @@FILE: en la respuesta")
+            else:
+                for filepath, content in extracted.items():
+                    is_ok, err_m = SysTools.check_syntax(filepath, content)
+                    if not is_ok:
+                        all_ok = False
+                        err_details.append(f"{filepath}: {err_m}")
+            if all_ok:
                 for filepath, content in extracted.items():
                     SysTools.write(filepath, content)
                 created_ui = list(extracted.keys())
@@ -268,18 +263,22 @@ def run_agent_pipeline_phase_2() -> None:
         while not ui_success and ui_retries < 3:
             ui_p = frontend_prompt(plan, existing_context, style_mem_s, stack=stack)
             if ui_retries > 0:
-                ui_p += f"\n\n⚠️ REINTENTO {ui_retries}/2: La generación anterior falló la validación de sintaxis. Por favor, asegúrate de cerrar todas las llaves/paréntesis y que todo el JS de cliente sea sintácticamente correcto."
+                ui_p += f"\n\n⚠️ REINTENTO {ui_retries}/2: La generación anterior falló la validación de sintaxis. Por favor, asegúrate de cerrar todas las llaves/paréntesis y de generar el archivo completo usando @@FILE: (no uses @@PATCH:)."
             
             ui_raw = AIProvider().generate(model=target_model, prompt=ui_p)
             extracted = SysTools.extract_multifile_in_memory(ui_raw)
             all_ok = True
             err_details = []
-            for filepath, content in extracted.items():
-                is_ok, err_m = SysTools.check_syntax(filepath, content)
-                if not is_ok:
-                    all_ok = False
-                    err_details.append(f"{filepath}: {err_m}")
-            if all_ok and extracted:
+            if not extracted:
+                all_ok = False
+                err_details.append("No se detectó ningún bloque @@FILE: en la respuesta")
+            else:
+                for filepath, content in extracted.items():
+                    is_ok, err_m = SysTools.check_syntax(filepath, content)
+                    if not is_ok:
+                        all_ok = False
+                        err_details.append(f"{filepath}: {err_m}")
+            if all_ok:
                 for filepath, content in extracted.items():
                     SysTools.write(filepath, content)
                 created_ui = list(extracted.keys())
@@ -303,18 +302,22 @@ def run_agent_pipeline_phase_2() -> None:
         while not back_success and back_retries < 3:
             code_p = backend_prompt(plan, existing_context, stack=stack)
             if back_retries > 0:
-                code_p += f"\n\n⚠️ REINTENTO {back_retries}/2: La generación anterior falló la validación de sintaxis. Por favor, regenera la lógica COMPLETAMENTE desde cero asegurándote de no dejar llaves o paréntesis abiertos."
+                code_p += f"\n\n⚠️ REINTENTO {back_retries}/2: La generación anterior falló la validación de sintaxis. Por favor, regenera la lógica COMPLETAMENTE desde cero asegurándote de no dejar llaves o paréntesis abiertos y usando @@FILE: (no uses @@PATCH:)."
             
             back_raw = AIProvider().generate(model=target_model, prompt=code_p)
             extracted = SysTools.extract_multifile_in_memory(back_raw)
             all_ok = True
             err_details = []
-            for filepath, content in extracted.items():
-                is_ok, err_m = SysTools.check_syntax(filepath, content)
-                if not is_ok:
-                    all_ok = False
-                    err_details.append(f"{filepath}: {err_m}")
-            if all_ok and extracted:
+            if not extracted:
+                all_ok = False
+                err_details.append("No se detectó ningún bloque @@FILE: en la respuesta")
+            else:
+                for filepath, content in extracted.items():
+                    is_ok, err_m = SysTools.check_syntax(filepath, content)
+                    if not is_ok:
+                        all_ok = False
+                        err_details.append(f"{filepath}: {err_m}")
+            if all_ok:
                 for filepath, content in extracted.items():
                     SysTools.write(filepath, content)
                 created_back = list(extracted.keys())

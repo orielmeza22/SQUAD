@@ -223,7 +223,7 @@ def run_launch_sequence(model: str) -> Tuple[bool, str]:
                         freq.write("streamlit\n")
                 except Exception:
                     pass
-            cmd = f'"{pip_exe}" install --prefer-offline streamlit && "{python_exe}" -m streamlit run app.py --server.port 5000 --server.address 0.0.0.0'
+            cmd = f'"{pip_exe}" install streamlit && "{python_exe}" -m streamlit run app.py --server.port 5000 --server.address 0.0.0.0'
         elif stack == "NODE_EJS":
             pkg_path = os.path.join(SysTools.WORKSPACE, "package.json")
             if not os.path.exists(pkg_path):
@@ -253,13 +253,13 @@ def run_launch_sequence(model: str) -> Tuple[bool, str]:
             entry_file = "main_output.py" if os.path.exists(os.path.join(SysTools.WORKSPACE, "main_output.py")) else "app.py"
             if not os.path.exists(os.path.join(SysTools.WORKSPACE, entry_file)):
                 entry_file = "main_output.py"
-            cmd = f'"{pip_exe}" install --prefer-offline fastapi uvicorn jinja2 && "{python_exe}" {entry_file}'
+            cmd = f'"{pip_exe}" install fastapi uvicorn jinja2 && "{python_exe}" {entry_file}'
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "docker-compose.yml")):
             cmd = "docker-compose up --build"
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "package.json")):
             cmd = "npm install --prefer-offline --no-audit --no-fund && npm start"
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "requirements.txt")):
-            cmd = f'"{pip_exe}" install --prefer-offline -r requirements.txt && "{python_exe}" app.py'
+            cmd = f'"{pip_exe}" install -r requirements.txt && "{python_exe}" app.py'
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "app.py")):
             cmd = f'"{python_exe}" app.py'
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "index.html")) or os.path.exists(os.path.join(SysTools.WORKSPACE, "main_output.html")):
