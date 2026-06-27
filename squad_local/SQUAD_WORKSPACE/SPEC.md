@@ -3,106 +3,194 @@ STACK: FASTAPI_HTMX
 # Especificación de Software (SPEC)
 
 ## Resumen del Proyecto:
-El proyecto consiste en desarrollar una aplicación web para gestionar turnos, utilizando el stack tecnológico FASTAPI_HTMX. Esta aplicación permitirá a los usuarios crear, modificar y eliminar turnos, así como consultar información sobre ellos.
+El proyecto consiste en desarrollar una aplicación web para gestionar turnos, utilizando el stack tecnológico FASTAPI_HTMX. Esta arquitectura se ha seleccionado debido a su versatilidad y capacidad para manejar CRUDs y sistemas de gestión de manera eficiente.
 
-## Arquitectura del Sistema:
+## Arquitectura del Proyecto:
 
-### 1. Backend (Servidor)
-El backend se implementará usando FastAPI, una biblioteca de Python para construir APIs web rápidas y eficientes. HTMX será utilizado para proporcionar interactividad en el frontend sin necesidad de recargar la página completa.
+### Backend:
+El backend será desarrollado en Python con FastAPI, una biblioteca web moderna y rápida que permite crear APIs HTTP. El punto de entrada principal será un archivo `main_output.py` que usará Uvicorn para ejecutar el servidor.
 
 #### Archivos del Backend:
-- **/backend/app.py**: Contiene las rutas y funciones principales de FastAPI.
-- **/backend/models.py**: Define los modelos de datos que se utilizarán con SQLite.
-- **/backend/routes.py**: Contiene las rutas específicas para CRUD (Crear, Leer, Actualizar, Eliminar) de turnos.
+1. **main_output.py**: Este es el punto de entrada del backend.
+2. **models.py**: Contiene la definición de las entidades y sus relaciones (si se requiere).
+3. **database.py**: Manejo de la base de datos SQLite, incluyendo la creación de tablas y operaciones CRUD básicas.
+4. **routers.py**: Definiciones de rutas para manejar los endpoints del API.
 
-### 2. Frontend (Cliente)
-El frontend será construido utilizando HTMX y HTML5. El diseño básico se implementará usando CSS y JavaScript minimalista para manejar la interactividad con el backend.
+### Frontend:
+El frontend será manejado por FastAPI con HTMX (Hyper Textual Markup Exchange), que permite una interactividad fluida sin recargar la página completa, mejorando así el rendimiento y experiencia del usuario. El contenido HTML/CSS/JS se servirá directamente desde FastAPI.
 
 #### Archivos del Frontend:
-- **/frontend/index.html**: Contiene el HTML básico de la página principal.
-- **/frontend/styles.css**: Define los estilos CSS necesarios.
-- **/frontend/scripts.js**: Contiene el código JavaScript necesario para interactuar con el backend y HTMX.
+1. **templates/index.html**: La plantilla principal donde se renderizarán los componentes.
+2. **static/css/style.css**: Estilos CSS para la interfaz de usuario.
+3. **static/js/main.js**: Lógica JavaScript para manejar eventos y comportamientos interactivos.
 
-### 3. Base de Datos
-La base de datos se implementará usando SQLite, que es una opción ligera y fácilmente manejable para proyectos pequeños o prototipos.
+### Integración:
+- **FastAPI**: Usado para definir las rutas y endpoints del API, así como para servir el frontend HTML/CSS/JS.
+- **HTMX**: Permite la interacción fluida con el servidor sin recargar la página completa, mejorando la experiencia de usuario.
+- **SQLite**: Base de datos utilizada para almacenar los datos de los turnos.
 
-#### Archivos de la Base de Datos:
-- **/database/db.py**: Contiene las funciones para interactuar con SQLite.
-  
-### 4. Git
-Se utilizará Git para el control del código fuente, permitiendo versionar y colaborar en el desarrollo del proyecto.
+## Archivos Detallados:
 
-## Detalles Técnicos:
-
-### Backend (FastAPI_HTMX)
-1. **Modelos de Datos**:
-   - Se definirán modelos de datos usando SQLAlchemy, una biblioteca que facilita la interacción con SQLite.
-   
-2. **Rutas de FastAPI**:
+### Backend
+1. **main_output.py**
    ```python
-   from fastapi import FastAPI, HTTPException
-   
+   import uvicorn
+   from fastapi import FastAPI
+
    app = FastAPI()
-   
-   @app.post("/turnos/", response_model=Turno)
-   async def crear_turno(turno: Turno):
-       # Implementar lógica para guardar el turno en la base de datos.
-       
-   @app.get("/turnos/{id}", response_model=Turno)
-   async def obtener_turno(id: int):
-       # Implementar lógica para recuperar un turno específico.
-       
-   @app.put("/turnos/{id}", response_model=Turno)
-   async def actualizar_turno(id: int, turno: Turno):
-       # Implementar lógica para actualizar un turno en la base de datos.
-       
-   @app.delete("/turnos/{id}")
-   async def eliminar_turno(id: int):
-       # Implementar lógica para eliminar un turno de la base de datos.
+
+   @app.get("/")
+   def read_root():
+       return {"message": "Bienvenido a la aplicación de gestión de turnos"}
+
+   if __name__ == "__main__":
+       uvicorn.run(app, host="0.0.0.0", port=8000)
    ```
 
-### Frontend (HTMX)
-1. **Interacción con el Backend**:
-   - Se utilizará HTMX para enviar peticiones AJAX sin recargar la página completa, lo que mejora la interactividad del frontend.
+2. **models.py**
+   ```python
+   from typing import List
 
-2. **HTML5 y CSS**:
+   class TurnoModel:
+       id: int
+       nombre: str
+       descripcion: str
+       fecha_hora: str
+
+   turnos = [
+       TurnoModel(id=1, nombre="Turno 1", descripcion="Descripción del turno 1", fecha_hora="2023-10-05T14:00"),
+       TurnoModel(id=2, nombre="Turno 2", descripcion="Descripción del turno 2", fecha_hora="2023-10-06T15:00")
+   ]
+   ```
+
+3. **database.py**
+   ```python
+   import sqlite3
+
+   def create_connection():
+       conn = sqlite3.connect('turnos.db')
+       return conn
+
+   def create_table(conn):
+       cursor = conn.cursor()
+       cursor.execute('''CREATE TABLE IF NOT EXISTS turnos (
+                           id INTEGER PRIMARY KEY,
+                           nombre TEXT,
+                           descripcion TEXT,
+                           fecha_hora TEXT
+                       )''')
+
+   def insert_turno(conn, turno: TurnoModel):
+       cursor = conn.cursor()
+       cursor.execute("INSERT INTO turnos (nombre, descripcion, fecha_hora) VALUES (?, ?, ?)",
+                      (turno.nombre, turno.descripcion, turno.fecha_hora))
+       conn.commit()
+
+   def get_all_turnos(conn):
+       cursor = conn.cursor()
+       cursor.execute("SELECT * FROM turnos")
+       return cursor.fetchall()
+
+   def close_connection(conn):
+       conn.close()
+   ```
+
+4. **routers.py**
+   ```python
+   from fastapi import FastAPI, HTTPException, Depends
+   from sqlalchemy.orm import Session
+
+   app = FastAPI()
+
+   # Dependencia para obtener una sesión de la base de datos
+   def get_db():
+       db = sqlite3.connect('turnos.db')
+       yield db
+       db.close()
+
+   @app.get("/turnos", response_model=List[TurnoModel])
+   async def read_turnos(db: Session = Depends(get_db)):
+       turnos = []
+       for turno in db.execute("SELECT * FROM turnos"):
+           turnos.append(TurnoModel(id=turno[0], nombre=turno[1], descripcion=turno[2], fecha_hora=turno[3]))
+       return turnos
+
+   @app.post("/turnos", response_model=TurnoModel)
+   async def create_turno(turno: TurnoModel, db: Session = Depends(get_db)):
+       insert_turno(db, turno)
+       return turno
+   ```
+
+### Frontend
+1. **templates/index.html**
    ```html
    <!DOCTYPE html>
    <html lang="es">
    <head>
        <meta charset="UTF-8">
-       <title>Administración de Turnos</title>
-       <link rel="stylesheet" href="/frontend/styles.css">
+       <title>Aplicación de Gestión de Turnos</title>
+       <link rel="stylesheet" href="/static/css/style.css">
    </head>
    <body>
-       <!-- Contenido HTML básico -->
-       <script src="/frontend/scripts.js"></script>
+       <h1>Gestión de Turnos</h1>
+       <div id="turnos-list"></div>
+
+       <!-- Script para HTMX -->
+       <script src="https://unpkg.com/htmx.org@1.0.2"></script>
+       <script src="/static/js/main.js"></script>
    </body>
    </html>
    ```
 
-### Base de Datos (SQLite)
-1. **Interacción con SQLite**:
-   ```python
-   from sqlalchemy import create_engine, Column, Integer, String
-   
-   engine = create_engine('sqlite:///turnos.db')
-   
-   class Turno(Base):
-       __tablename__ = 'turnos'
-       
-       id = Column(Integer, primary_key=True)
-       nombre = Column(String(100))
-       fecha = Column(Date)
-       hora = Column(Time)
-       
-   Base.metadata.create_all(engine)
+2. **static/css/style.css**
+   ```css
+   body {
+       font-family: Arial, sans-serif;
+   }
+
+   #turnos-list {
+       list-style-type: none;
+       padding: 0;
+   }
+
+   .turno-item {
+       margin-bottom: 10px;
+   }
    ```
 
-### Git
-- **Control de Versiones**:
-  - Se utilizará Git para versionar el código y permitir colaboración en el desarrollo del proyecto.
-  
-## Conclusion
+3. **static/js/main.js**
+   ```javascript
+   document.addEventListener("DOMContentLoaded", function() {
+       const turnosList = document.getElementById('turnos-list');
 
-La arquitectura FASTAPI_HTMX proporciona una solución robusta y eficiente para la gestión de turnos, combinando la potencia de FastAPI para el backend con HTMX para mejorar la interactividad del frontend. Este stack es adecuado para proyectos que requieren una interfaz web dinámica y eficiente sin recargar páginas completas.
+       fetch('/turnos')
+           .then(response => response.json())
+           .then(data => {
+               data.forEach(turno => {
+                   const turnoItem = document.createElement('div');
+                   turnoItem.className = 'turno-item';
+                   turnoItem.innerHTML = `
+                       <h3>${turno.nombre}</h3>
+                       <p>Descripción: ${turno.descripcion}</p>
+                       <p>Fecha y Hora: ${turno.fecha_hora}</p>
+                   `;
+                   turnosList.appendChild(turnoItem);
+               });
+           })
+           .catch(error => console.error('Error:', error));
+   });
+   ```
+
+### Integración
+Para ejecutar la aplicación, asegúrate de tener instalado FastAPI y Uvicorn. Luego, ejecuta el siguiente comando en tu terminal:
+
+```bash
+uvicorn main_output:app --reload
+```
+
+Este comando iniciará el servidor FastAPI en modo desarrollo con reescritura automática.
+
+### Pruebas
+Para probar la aplicación, puedes acceder a `http://localhost:8000/turnos` y ver los turnos existentes. También puedes agregar nuevos turnos utilizando el mismo endpoint.
+
+Este esquema garantiza una separación clara entre el backend y frontend, cumpliendo con las reglas de arquitectura establecidas.
