@@ -17,12 +17,18 @@ def get_db():
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=5000")
     except Exception: pass
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     conn.row_factory = sqlite3.Row
     return conn
 
 # SQUAD_INJECT_DB_SCHEMA
 
 # SQUAD_INJECT_LOGIC
+
+import os
 
 if __name__ == "__main__":
     import uvicorn
