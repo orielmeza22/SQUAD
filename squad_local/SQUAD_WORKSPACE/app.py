@@ -22,11 +22,8 @@ def get_db():
     try:
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=5000")
-    except Exception: pass
-    try:
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA busy_timeout=5000")
-    except Exception: pass
+    except Exception as e:
+        print(f"Error setting PRAGMA: {e}")
     conn.row_factory = sqlite3.Row
     return conn
 
