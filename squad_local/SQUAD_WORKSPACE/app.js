@@ -1,15 +1,5 @@
-// script.js
-   document.getElementById('create-form').addEventListener('submit', function(event) {
-       event.preventDefault();
-       const nombre = document.querySelector('#create-form input[name="nombre"]').value;
-       const fecha = document.querySelector('#create-form input[name="fecha"]').value;
+// /frontend/scripts.js
 
-       fetch('/turnos', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ nombre, fecha })
-       }).then(response => response.json())
-         .then(data => console.log('Success:', data))
-         .catch((error) => console.error('Error:', error));
-   });
-   
+document.addEventListener('DOMContentLoaded', () => {
+    // Implementar lógica para manejar el evento hx-post y actualizar la lista de turnos
+});
