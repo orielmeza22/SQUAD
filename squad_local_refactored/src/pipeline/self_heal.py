@@ -32,6 +32,20 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
     state.launcher_logs.append("🧹 [LINTER AUTÓNOMO]: Iniciando diagnóstico de código...")
     error_summary = "\n".join(error_logs_list)
 
+    # SQUAD 2.0: Load stack manifest constraints for the linter
+    stack = "FASTAPI_HTMX"
+    allowed_files = ["main_output.py", "app.py", "styles.css", "index.html", "requirements.txt"]
+    manifest_path = os.path.join(SysTools.WORKSPACE, "build_manifest.json")
+    if os.path.exists(manifest_path):
+        try:
+            import json
+            with open(manifest_path, "r", encoding="utf-8") as f_manifest:
+                manifest_data = json.load(f_manifest)
+            stack = manifest_data.get("stack", "FASTAPI_HTMX")
+            allowed_files = manifest_data.get("files", allowed_files)
+        except Exception:
+            pass
+
     files_context: list = []
     if os.path.exists(SysTools.WORKSPACE):
         for root, _, files in os.walk(SysTools.WORKSPACE):
@@ -39,11 +53,9 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
                 continue
             for f in files:
                 rel = os.path.relpath(os.path.join(root, f), SysTools.WORKSPACE).replace('\\', '/')
-                # Use in-memory broken version if it exists, otherwise read from disk
                 content = SysTools.broken_memory_files.get(rel) or SysTools.read(rel)
                 files_context.append(f"@@FILE: {rel}\n{content}\n@@ENDFILE@@")
 
-    # Add any in-memory broken files that do not exist on disk yet
     for rel, content in SysTools.broken_memory_files.items():
         if not any(f.startswith(f"@@FILE: {rel}\n") for f in files_context):
             files_context.append(f"@@FILE: {rel}\n{content}\n@@ENDFILE@@")
@@ -60,9 +72,8 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
         )
 
     prompt = (
-        "Eres el Agente Linter de Emergencia de SQUAD. La aplicación local acaba de crashear "
-        "durante la ejecución.\n"
-        "A continuación se muestran los logs de error de la terminal:\n"
+        f"Eres el Agente Linter de Emergencia de SQUAD. La aplicación local acaba de crashear durante la ejecución.\n"
+        f"A continuación se muestran los logs de error de la terminal:\n"
         "---\n"
         f"{error_summary}\n"
         "---\n\n"
@@ -70,21 +81,17 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
         "---\n"
         f"{files_context_str}\n"
         "---\n\n"
-        f"Tu objetivo es solucionar el error. Puede ser una importación faltante, un error de "
-        f"sintaxis, dependencias desalineadas, etc.{retry_warning}\n"
-        "REGLA DE IMPORTACIÓN: Si el error se debe a una importación local de un archivo inexistente "
-        "(como require('./config')), debes reescribir el archivo importador para incorporar esa "
-        "lógica directamente (autocontenido) o generar el archivo faltante con la sintaxis "
-        "@@FILE: en tu respuesta.\n"
-        "REGLA DE PUERTO: El servidor siempre debe escuchar en el puerto definido por la variable "
-        "de entorno PORT (process.env.PORT o os.environ.get('PORT')), utilizando un fallback "
-        "adecuado si no está definida.\n"
+        f"Tu objetivo es solucionar el error. Estamos trabajando en el stack: {stack}.\n"
+        f"⚠️ REGLA DE ESCRITURA INQUEBRANTABLE (SQUAD 2.0): Solo tienes permitido escribir o modificar los siguientes archivos listados en el build_manifest.json:\n"
+        f"{', '.join(allowed_files)} (y opcionalmente schema.sql)\n"
+        "¡Cualquier otro archivo o carpeta que intentes escribir será BLOQUEADO físicamente por el sistema!\n"
+        "Si hay un error de importación local (como ModuleNotFoundError: No module named 'backend' o 'backend.crud'), NO intentes crear una carpeta o archivos nuevos. En su lugar, copia el código de ese módulo y combínalo DIRECTAMENTE dentro del archivo permitido (como main_output.py) para que sea autocontenido.{retry_warning}\n"
+        "REGLA DE PUERTO: El servidor siempre debe escuchar en el puerto definido por la variable de entorno PORT (process.env.PORT o os.environ.get('PORT')).\n"
         f"{OptTools.CODE_GUIDELINES}\n\n"
         "REGLA DE FORMATO OBLIGATORIA (REGENERACIÓN COMPLETA): Debes responder ÚNICAMENTE utilizando el siguiente "
         "formato para cada archivo que modifiques o crees. No utilices parches parciales, escribe siempre el archivo completo:\n\n"
         "@@FILE: nombre_del_archivo\ncódigo completo aquí\n@@ENDFILE@@\n\n"
-        "No agregues ninguna explicación ni texto introductorio ni conclusiones. Solo genera "
-        "las correcciones de archivos con el formato indicado."
+        "No agregues ninguna explicación ni texto introductorio ni conclusiones. Solo genera las correcciones de archivos con el formato indicado."
     )
 
     try:
