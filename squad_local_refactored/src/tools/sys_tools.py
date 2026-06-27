@@ -576,6 +576,35 @@ class SysTools:
         while clean_name.startswith("..") or clean_name.startswith("/") or clean_name.startswith("\\"):
             clean_name = clean_name.replace("../", "").replace("..\\", "").replace("..", "").lstrip("\\/")
 
+        # Manifest block validation (SQUAD 2.0)
+        manifest_path = os.path.join(SysTools.WORKSPACE, "build_manifest.json")
+        if os.path.exists(manifest_path) and clean_name not in ["build_manifest.json", "SPEC.md", "ARCHITECTURE.md", "VISUAL_REPORT.md", "SECURITY_REPORT.md"]:
+            try:
+                import json
+                with open(manifest_path, "r", encoding="utf-8") as f_manifest:
+                    manifest_data = json.load(f_manifest)
+                allowed_files = manifest_data.get("files", [])
+                norm_clean = clean_name.replace('\\', '/')
+                norm_allowed = [f.replace('\\', '/') for f in allowed_files]
+                
+                is_allowed = (
+                    norm_clean in norm_allowed or 
+                    any(norm_clean.startswith(f + "/") for f in norm_allowed) or
+                    norm_clean.startswith(".github/") or
+                    norm_clean.startswith("tests/") or
+                    norm_clean.endswith("_test.py") or
+                    norm_clean.endswith(".test.js") or
+                    norm_clean == "schema.sql"
+                )
+                
+                if not is_allowed:
+                    state.launcher_logs.append(
+                        f"🚫 [SISTEMA] Escritura BLOQUEADA para '{clean_name}' (No listado en build_manifest.json)."
+                    )
+                    return os.path.abspath(os.path.join(SysTools.WORKSPACE, clean_name))
+            except Exception as e:
+                print(f"Error validating manifest: {e}")
+
         # Shift-Left Syntax validation
         is_valid, err_msg = SysTools.check_syntax(clean_name, c)
         if not is_valid:
@@ -704,6 +733,41 @@ class SysTools:
                     current_content.append(line)
         if current_file:
             files[current_file] = "\n".join(current_content).strip("`\n ")
+        return files
+
+    @staticmethod
+    def extract_multifile_in_memory(text: str) -> Dict[str, str]:
+        """Extract @@FILE: blocks in memory without writing to disk.
+
+        Returns:
+            Dict mapping filename to file content.
+        """
+        lines = text.split("\n")
+        current_file = None
+        current_content = []
+        files = {}
+
+        for line in lines:
+            if line.startswith("@@FILE:"):
+                if current_file:
+                    files[current_file] = "\n".join(current_content).strip("`\n ")
+                current_file = line.replace("@@FILE:", "").strip()
+                current_content = []
+                continue
+            elif line.startswith("@@PATCH:") or line.startswith("@@DELETE:") or line.startswith("@@ENDFILE") or line.startswith("@@ENDPATCH"):
+                if current_file:
+                    files[current_file] = "\n".join(current_content).strip("`\n ")
+                    current_file = None
+                continue
+
+            if current_file is not None:
+                if line.strip().startswith("```") and len(line.strip()) <= 15:
+                    continue
+                current_content.append(line)
+
+        if current_file:
+            files[current_file] = "\n".join(current_content).strip("`\n ")
+
         return files
 
     @staticmethod

@@ -88,6 +88,29 @@ def run_agent_pipeline(prompt: str, model: str) -> None:
         plan = AIProvider().generate(model=target_model, prompt=arch_prompt)
         SysTools.write("SPEC.md", plan)
         SysTools.write("ARCHITECTURE.md", plan)
+
+        # Read the generated SPEC.md to find STACK and build manifest (SQUAD 2.0)
+        stack = "FASTAPI_HTMX"
+        import re
+        stack_match = re.search(r'STACK:\s*([A-Z0-9_]+)', plan)
+        if stack_match:
+            stack = stack_match.group(1).strip()
+
+        allowed_files = []
+        if stack == "FASTAPI_HTMX":
+            allowed_files = ["main_output.py", "app.py", "styles.css", "index.html", "requirements.txt"]
+        elif stack == "NODE_EJS":
+            allowed_files = ["server.js", "views/index.ejs", "public/styles.css", "public/app.js", "package.json"]
+        elif stack == "PYTHON_STREAMLIT":
+            allowed_files = ["app.py", "requirements.txt"]
+
+        import json
+        manifest_data = {
+            "stack": stack,
+            "files": allowed_files
+        }
+        SysTools.write("build_manifest.json", json.dumps(manifest_data, indent=2), force=True)
+
         state.log("✅ Especificación del Proyecto generada (SPEC.md).")
 
         # Save pipeline parameters to resume Phase 2
@@ -162,6 +185,17 @@ def run_agent_pipeline_phase_2() -> None:
                 except Exception:
                     pass
 
+    # Pre-initialize workspace template files to prevent basic framework setup syntax errors (SQUAD 2.0)
+    from ..core.templates import FASTAPI_HTMX_TEMPLATE, NODE_EJS_TEMPLATE, PYTHON_STREAMLIT_TEMPLATE
+    if stack == "FASTAPI_HTMX":
+        SysTools.write("main_output.py", FASTAPI_HTMX_TEMPLATE, force=True)
+        SysTools.write("requirements.txt", "fastapi\nuvicorn\njinja2\n", force=True)
+    elif stack == "NODE_EJS":
+        SysTools.write("server.js", NODE_EJS_TEMPLATE, force=True)
+    elif stack == "PYTHON_STREAMLIT":
+        SysTools.write("app.py", PYTHON_STREAMLIT_TEMPLATE, force=True)
+        SysTools.write("requirements.txt", "streamlit\n", force=True)
+
     state.pipeline_status = "running"
     state.is_running = True
     state.log("🚀 Aprobado. Reanudando enjambre (Fase 2: DBA + UI + Backend + QA)...")
@@ -200,23 +234,101 @@ def run_agent_pipeline_phase_2() -> None:
         t_db.join()
         t_ui.join()
 
-        created_ui: list = []
+        # DBA Write
         if db_output[0] and not db_output[0].startswith("Error DBA"):
             SysTools.extract_and_write_multifile(db_output[0])
             state.log("✅ Modelos de DB y Seguridad previstos (Paralelo).")
         else:
             state.log(f"⚠️ DBA Agent falló o dio error: {db_output[0]}")
 
+        # Validate UI output from thread in memory (Shift-Left, SQUAD 2.0)
+        created_ui: list = []
+        ui_success = False
+        ui_retries = 0
         if ui_output[0] and not ui_output[0].startswith("Error UI"):
-            created_ui = SysTools.extract_and_write_multifile(ui_output[0])
-            state.log("✅ Sistema de Diseño Frontend/UI creado (Paralelo).")
-        else:
-            state.log(f"⚠️ UI Agent falló o dio error: {ui_output[0]}")
+            extracted = SysTools.extract_multifile_in_memory(ui_output[0])
+            all_ok = True
+            err_details = []
+            for filepath, content in extracted.items():
+                is_ok, err_m = SysTools.check_syntax(filepath, content)
+                if not is_ok:
+                    all_ok = False
+                    err_details.append(f"{filepath}: {err_m}")
+            if all_ok and extracted:
+                for filepath, content in extracted.items():
+                    SysTools.write(filepath, content)
+                created_ui = list(extracted.keys())
+                ui_success = True
+                state.log("✅ Sistema de Diseño Frontend/UI creado (Paralelo).")
+            else:
+                ui_retries = 1
+                state.log(f"🔄 [SHIFT-LEFT] Error de sintaxis en UI inicial (Fase Paralela): {', '.join(err_details)}. Descartando y regenerando...")
 
+        # Sequential UI retry loop if thread output failed
+        while not ui_success and ui_retries < 3:
+            ui_p = frontend_prompt(plan, existing_context, style_mem_s, stack=stack)
+            if ui_retries > 0:
+                ui_p += f"\n\n⚠️ REINTENTO {ui_retries}/2: La generación anterior falló la validación de sintaxis. Por favor, asegúrate de cerrar todas las llaves/paréntesis y que todo el JS de cliente sea sintácticamente correcto."
+            
+            ui_raw = AIProvider().generate(model=target_model, prompt=ui_p)
+            extracted = SysTools.extract_multifile_in_memory(ui_raw)
+            all_ok = True
+            err_details = []
+            for filepath, content in extracted.items():
+                is_ok, err_m = SysTools.check_syntax(filepath, content)
+                if not is_ok:
+                    all_ok = False
+                    err_details.append(f"{filepath}: {err_m}")
+            if all_ok and extracted:
+                for filepath, content in extracted.items():
+                    SysTools.write(filepath, content)
+                created_ui = list(extracted.keys())
+                ui_success = True
+                state.log("✅ Sistema de Diseño Frontend/UI creado (Fase Secuencial).")
+            else:
+                ui_retries += 1
+                if ui_retries >= 3:
+                    state.log(f"❌ [SHIFT-LEFT] UI Agent falló la validación de sintaxis 2 veces: {', '.join(err_details)}. Abortando y guardando respuesta para depuración.")
+                    for filepath, content in extracted.items():
+                        SysTools.write(filepath, content)
+                    created_ui = list(extracted.keys())
+                else:
+                    state.log(f"🔄 [SHIFT-LEFT] Error de sintaxis en UI (Reintento {ui_retries}/2): {', '.join(err_details)}. Descartando y regenerando...")
+
+        # Backend Agent execution with Shift-Left memory loop (SQUAD 2.0)
         state.log(f"💻 [AGENTE BACKEND DEV] ({target_model}): Escribiendo Lógica de Negocio y APIs...")
-        code_p = backend_prompt(plan, existing_context, stack=stack)
-        full_code_output = AIProvider().generate(model=target_model, prompt=code_p)
-        created_back = SysTools.extract_and_write_multifile(full_code_output)
+        created_back: list = []
+        back_success = False
+        back_retries = 0
+        while not back_success and back_retries < 3:
+            code_p = backend_prompt(plan, existing_context, stack=stack)
+            if back_retries > 0:
+                code_p += f"\n\n⚠️ REINTENTO {back_retries}/2: La generación anterior falló la validación de sintaxis. Por favor, regenera la lógica COMPLETAMENTE desde cero asegurándote de no dejar llaves o paréntesis abiertos."
+            
+            back_raw = AIProvider().generate(model=target_model, prompt=code_p)
+            extracted = SysTools.extract_multifile_in_memory(back_raw)
+            all_ok = True
+            err_details = []
+            for filepath, content in extracted.items():
+                is_ok, err_m = SysTools.check_syntax(filepath, content)
+                if not is_ok:
+                    all_ok = False
+                    err_details.append(f"{filepath}: {err_m}")
+            if all_ok and extracted:
+                for filepath, content in extracted.items():
+                    SysTools.write(filepath, content)
+                created_back = list(extracted.keys())
+                back_success = True
+                state.log("✅ Lógica de Negocio Backend creada con éxito.")
+            else:
+                back_retries += 1
+                if back_retries >= 3:
+                    state.log(f"❌ [SHIFT-LEFT] Backend Agent falló la validación de sintaxis 2 veces: {', '.join(err_details)}. Abortando y guardando respuesta para depuración.")
+                    for filepath, content in extracted.items():
+                        SysTools.write(filepath, content)
+                    created_back = list(extracted.keys())
+                else:
+                    state.log(f"🔄 [SHIFT-LEFT] Error de sintaxis en Backend (Reintento {back_retries}/2): {', '.join(err_details)}. Descartando y regenerando...")
 
         created_files = list(set(created_ui + created_back))
         state.log(f"✅ Se crearon/modificaron {len(created_files)} archivos en total...")
