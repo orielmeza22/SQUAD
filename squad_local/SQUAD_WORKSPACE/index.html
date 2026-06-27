@@ -4,64 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Server Architecture Management System</title>
-    <!-- CDN de HTMX -->
-    <script src='https://unpkg.com/htmx.org@2.0.0'></script>
-    <!-- CDN de Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-900 text-white">
-    <div id="app">
-        <nav class="flex items-center justify-between flex-wrap bg-gray-800 p-6">
-            <div class="flex items-center flex-shrink-0 mr-6">
-                <span class="font-semibold text-xl tracking-tight">Server Architecture Management System</span>
-            </div>
-            <button id="sidebarCollapse" class="inline-flex items-center justify-center w-12 h-12 bg-gray-700 rounded-lg md:hidden hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2">
-                <svg class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
-        </nav>
+<body>
+    <h1>Welcome to the Server Architecture Management System</h1>
+    
+    <div id="server-list"></div>
 
-        <div id="sidebar" class="w-64 bg-gray-700 text-white p-4 hidden">
-            <!-- Menú lateral -->
-            <ul>
-                <li><a href="#" class="block px-4 py-2 hover:bg-gray-500">Home</a></li>
-                <li><a href="#servers" class="block px-4 py-2 hover:bg-gray-500">Servers</a></li>
-            </ul>
-        </div>
-
-        <!-- Contenido principal -->
-        <main id="content">
-            <h1 class="text-center text-3xl mb-6">Welcome to the Server Architecture Management System</h1>
-            <section id="servers" class="mb-8">
-                <button hx-get="/servers/" hx-target="#serversList" hx-swap="innerHTML" class="block px-4 py-2 hover:bg-gray-500">Load Servers</button>
-                <div id="serversList"></div>
-            </section>
-
-            <!-- Otros elementos de contenido -->
-        </main>
-
-        <!-- Sidebar collapse button -->
-        <button id="sidebarCollapseMobile" class="inline-flex items-center justify-center w-12 h-12 bg-gray-700 rounded-lg md:hidden hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2">
-            <svg class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
-        </button>
-
-    </div>
-
-    <!-- Script para HTMX -->
-    <script defer src='https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js'></script>
-    <script>
-        document.addEventListener('htmx:load', function(event) {
-            // Actualizar el menú lateral con los datos del servidor
-            const sidebar = document.getElementById('sidebar');
-            if (event.detail.response && event.detail.target.id === 'serversList') {
-                const servers = JSON.parse(event.detail.response);
-                const ul = document.createElement('ul');
-                ul.innerHTML = `<li><a href="#" class="block px-4 py-2 hover:bg-gray-500">Home</a></li>`;
-                for (const server of servers) {
-                    ul.innerHTML += `<li><a href="#server-${server.id}" class="block px-4 py-2 hover:bg-gray-500">${server.name}</a></li>`;
-                }
-                sidebar.appendChild(ul);
-            }
-        });
-    </script>
+    <script src="/main_output.py"></script>
 </body>
 </html>
