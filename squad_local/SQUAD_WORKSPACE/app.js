@@ -1,10 +1,10 @@
 // Este archivo ahora será solo para el backend
 
-const { createApp } = require('fastify');
+const fastify = require('fastify');
 const fastifyStatic = require('@fastify/static');
 const path = require('path');
 
-const app = createApp();
+const app = fastify();
 
 app.register(fastifyStatic, {
   root: path.join(__dirname, 'frontend'),
