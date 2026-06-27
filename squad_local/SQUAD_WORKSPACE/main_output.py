@@ -1,33 +1,26 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
-app = FastAPI()
+app = FastAPI(title="SQUAD Auto-generated App")
 
-# Rutas y modelos se definirán aquí
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to the server architecture management system"}
+# Mount static files
+app.mount("/static", StaticFiles(directory="."), name="static")
 
-@app.post("/server_architectures/")
-async def create_server_architecture(server_architecture: dict):
-    # Aquí puedes agregar lógica para enviar la arquitectura al backend
-    pass
+# Database Helper
+DB_FILE = "app_database.db"
 
-@app.get("/server_architectures/")
-async def read_server_architectures():
-    # Aquí puedes agregar lógica para obtener las arquitecturas de servidor desde el backend y renderizarlas en HTML
-    return {"message": "Server architectures list"}
+def get_db():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-@app.get("/server_architectures/{architecture_id}")
-async def read_server_architecture(architecture_id: int):
-    # Aquí puedes agregar lógica para obtener una arquitectura específica del backend y renderizarla en HTML
-    return {"message": f"Server architecture {architecture_id}"}
+# SQUAD_INJECT_DB_SCHEMA
 
-@app.put("/server_architectures/{architecture_id}")
-async def update_server_architecture(architecture_id: int, server_architecture: dict):
-    # Aquí puedes agregar lógica para enviar la arquitectura actualizada al backend
-    pass
+# SQUAD_INJECT_LOGIC
 
-@app.delete("/server_architectures/{architecture_id}")
-async def delete_server_architecture(architecture_id: int):
-    # Aquí puedes agregar lógica para eliminar una arquitectura del backend y renderizar el resultado en HTML
-    return {"message": f"Server architecture {architecture_id} deleted"}
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 5000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
