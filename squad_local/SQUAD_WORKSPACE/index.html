@@ -1,34 +1,12 @@
-<!-- /frontend/index.html -->
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Administración de Turnos</title>
-    <!-- CDN de HTMX -->
-    <script src='https://unpkg.com/htmx.org@2.0.0'></script>
-    
-    <!-- Estilos CSS -->
     <link rel="stylesheet" href="/frontend/styles.css">
-    
-    <!-- Script para HTMX y Alpine.js (opcional) -->
-    <script defer src='https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js'></script>
 </head>
 <body>
-    <h1>Administración de Turnos</h1>
-    
-    <div id="turnos-list">
-        <!-- Renderizar los turnos aquí -->
-    </div>
-
-    <form hx-post="/turnos/" hx-target="#turnos-list" hx-swap="innerHTML">
-        <input type="text" name="nombre" placeholder="Nombre del turno...">
-        <input type="date" name="fecha" placeholder="Fecha...">
-        <input type="time" name="hora" placeholder="Hora...">
-        <button type="submit">Crear Turno</button>
-    </form>
-
-    <!-- Script para HTMX y Alpine.js (opcional) -->
+    <!-- Contenido HTML básico -->
     <script src="/frontend/scripts.js"></script>
 </body>
 </html>
