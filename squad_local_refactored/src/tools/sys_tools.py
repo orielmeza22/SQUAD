@@ -965,7 +965,50 @@ class SysTools:
         """Quick in-memory syntax check for a file by extension."""
         if name.endswith('.py'):
             try:
+                # 1. Compile check
                 compile(c, name, 'exec')
+                
+                # 2. Local import validation check (SQUAD 2.0 Shift-Left Imports)
+                import ast
+                import sys
+                
+                std_libs = set(sys.builtin_module_names)
+                common_libs = {"fastapi", "uvicorn", "jinja2", "streamlit", "sqlite3", "pydantic", "sqlalchemy", "requests", "bs4", "pandas", "numpy"}
+                
+                tree = ast.parse(c, filename=name)
+                for node in ast.walk(tree):
+                    imported_module = None
+                    if isinstance(node, ast.Import):
+                        for alias in node.names:
+                            imported_module = alias.name
+                    elif isinstance(node, ast.ImportFrom):
+                        imported_module = node.module
+                    
+                    if imported_module:
+                        base_module = imported_module.split('.')[0]
+                        if base_module not in std_libs and base_module not in common_libs:
+                            local_py_file = base_module + ".py"
+                            local_dir = base_module
+                            
+                            path_py = os.path.join(SysTools.WORKSPACE, local_py_file)
+                            path_dir = os.path.join(SysTools.WORKSPACE, local_dir)
+                            if not os.path.exists(path_py) and not os.path.exists(path_dir):
+                                allowed = False
+                                manifest_path = os.path.join(SysTools.WORKSPACE, "build_manifest.json")
+                                if os.path.exists(manifest_path):
+                                    try:
+                                        import json
+                                        with open(manifest_path, "r", encoding="utf-8") as f_manifest:
+                                            m_data = json.load(f_manifest)
+                                        allowed_files = m_data.get("files", [])
+                                        if any(base_module in f for f in allowed_files):
+                                            allowed = True
+                                    except Exception:
+                                        pass
+                                
+                                if not allowed:
+                                    return False, f"ImportError: El archivo intenta importar el módulo local '{imported_module}' que no existe en el workspace ni está permitido en build_manifest.json. Todo el código debe ser autocontenido en {name}."
+                
                 return True, ""
             except SyntaxError as e:
                 return False, f"SyntaxError: {e.msg} en la línea {e.lineno}"
