@@ -1,3 +1,19 @@
+from fastapi import FastAPI, HTTPException, Depends
+import sqlite3
+
+# Inicializar FastAPI
+app = FastAPI()
+
+# Conexión a SQLite
+conn = sqlite3.connect('database.db')
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
+
+def get_db():
+    return conn
+
 @app.get("/products/{product_id}", response_model=Product)
 async def read_product(product_id: int, db=Depends(get_db)):
     cursor = db.cursor()
