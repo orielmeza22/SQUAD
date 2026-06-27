@@ -26,7 +26,7 @@ def _defaults() -> Dict[str, Any]:
         "workspace": os.path.join(os.path.dirname(SETTINGS_FILE), "SQUAD_WORKSPACE"),
         "ollama_host": "http://127.0.0.1:11434",
         "default_model": "gemini-2.5-flash",
-        "temperature": 0.3,
+        "temperature": 0.1,
         "enable_rag": True,
         "default_port": 5000,
         "system_prompt": "Eres el Orquestador V5. Responde siempre en JSON.",

@@ -50,6 +50,15 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
 
     files_context_str = "\n\n".join(files_context)
 
+    retry_warning = ""
+    if getattr(state, "linter_retries", 0) > 0:
+        retry_warning = (
+            f"\n\n⚠️ ADVERTENCIA (REINTENTO {state.linter_retries}): El intento anterior de reparación falló "
+            "debido a un error de sintaxis o bloques/llaves sin cerrar. Por favor, regenera el archivo "
+            "COMPLETAMENTE desde cero, asegurando que todos los bloques ({}, [], ()) estén perfectamente "
+            "abiertos y cerrados, y que la sintaxis sea 100% válida.\n"
+        )
+
     prompt = (
         "Eres el Agente Linter de Emergencia de SQUAD. La aplicación local acaba de crashear "
         "durante la ejecución.\n"
@@ -61,8 +70,8 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
         "---\n"
         f"{files_context_str}\n"
         "---\n\n"
-        "Tu objetivo es solucionar el error. Puede ser una importación faltante, un error de "
-        "sintaxis, dependencias desalineadas, etc.\n"
+        f"Tu objetivo es solucionar el error. Puede ser una importación faltante, un error de "
+        f"sintaxis, dependencias desalineadas, etc.{retry_warning}\n"
         "REGLA DE IMPORTACIÓN: Si el error se debe a una importación local de un archivo inexistente "
         "(como require('./config')), debes reescribir el archivo importador para incorporar esa "
         "lógica directamente (autocontenido) o generar el archivo faltante con la sintaxis "

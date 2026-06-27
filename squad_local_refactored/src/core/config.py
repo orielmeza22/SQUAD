@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     workspace: str = Field(default="./SQUAD_WORKSPACE", description="Path to the workspace directory")
     ollama_host: str = Field(default="http://127.0.0.1:11434", description="Ollama API host URL")
     default_model: str = Field(default="gemini-2.5-flash", description="Default LLM model to use")
-    temperature: float = Field(default=0.3, ge=0.0, le=2.0, description="LLM temperature")
+    temperature: float = Field(default=0.1, ge=0.0, le=2.0, description="LLM temperature")
     context_window: int = Field(default=16384, description="Context window size for LLM")
     
     # Server Configuration
