@@ -175,6 +175,61 @@ def verify_password(password, hashed):
         return code
 
     @staticmethod
+    def compress_context_headroom(code: str, file_path: str) -> str:
+        """Compress code context (inspired by Headroom) to save 60-95% tokens.
+        
+        Removes comments, blank lines, and docstrings.
+        """
+        ext = os.path.splitext(file_path)[1].lower()
+        lines = code.splitlines()
+        compressed = []
+        in_block_comment = False
+        
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+                
+            # Python compression
+            if ext == '.py':
+                if stripped.startswith('#') and not any(tag in stripped for tag in ["SQUAD_INJECT", "TODO", "FIXME"]):
+                    continue
+                if stripped.startswith(('"""', "'''")) and stripped.endswith(('"""', "'''")) and len(stripped) > 3:
+                    continue
+                if stripped.startswith(('"""', "'''")):
+                    in_block_comment = not in_block_comment
+                    continue
+                if in_block_comment:
+                    continue
+                
+            # JS/TS compression
+            elif ext in ('.js', '.ts', '.jsx', '.tsx'):
+                if stripped.startswith('//') and not any(tag in stripped for tag in ["SQUAD_INJECT", "TODO", "FIXME"]):
+                    continue
+                if stripped.startswith('/*'):
+                    if '*/' not in stripped:
+                        in_block_comment = True
+                    continue
+                if '*/' in stripped:
+                    in_block_comment = False
+                    continue
+                if in_block_comment:
+                    continue
+                    
+            # CSS/HTML compression
+            elif ext in ('.css', '.html', '.ejs'):
+                if ext == '.css':
+                    if stripped.startswith('/*') and stripped.endswith('*/'):
+                        continue
+                if ext in ('.html', '.ejs'):
+                    if stripped.startswith('<!--') and stripped.endswith('-->'):
+                        continue
+                        
+            compressed.append(line)
+            
+        return "\n".join(compressed)
+
+    @staticmethod
     def get_relevant_files_context(query: str, max_tokens: int = 15000) -> str:
         """Get context from relevant files based on query.
         
@@ -208,7 +263,7 @@ def verify_password(password, hashed):
         
         if total_size < max_tokens * 3:
             return "\n\n".join(
-                f"Archivo: {f}\n{SysTools.read(f)}"
+                f"Archivo: {f}\n{OptTools.compress_context_headroom(SysTools.read(f), f)}"
                 for f in all_files
             )
 
@@ -231,10 +286,11 @@ def verify_password(password, hashed):
         for f in sorted_files:
             try:
                 content = SysTools.read(f)
-                file_desc = f"Archivo: {f}\n{content}"
+                compressed_content = OptTools.compress_context_headroom(content, f)
+                file_desc = f"Archivo: {f}\n{compressed_content}"
                 
                 if current_chars + len(file_desc) > max_chars:
-                    pruned_content = OptTools.prune_code_agnostic(content, f)
+                    pruned_content = OptTools.prune_code_agnostic(compressed_content, f)
                     pruned_desc = f"Archivo: {f} (Poda de Contexto para Ahorro de Tokens)\n{pruned_content}"
                     if current_chars + len(pruned_desc) <= max_chars:
                         included_files.append(pruned_desc)

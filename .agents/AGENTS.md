@@ -50,5 +50,13 @@ Para ahorrar la mayor cantidad de tokens posible y evitar alcanzar los límites 
 - Nunca subir secretos/claves. Verificar `.gitignore` si se edita `.env`.
 - Confirmación explícita antes de comandos destructivos (`rm -rf`, `git reset --hard`, `DROP TABLE`, etc.).
 - Nunca saltar hooks con `--no-verify`.
+# Reglas de Estilo "Ponytail" (YAGNI)
 
+Para evitar la sobre-ingeniería y mantener el código simple y eficiente en tokens:
 
+1. **Filtrado Lazy-Senior (YAGNI)**: Antes de escribir una sola línea de código, hazte estas preguntas en orden:
+   * ¿Esta funcionalidad es estrictamente necesaria para cumplir la tarea del usuario? Si no, descártala.
+   * ¿Se puede solucionar reutilizando código o funciones que ya existen en el repositorio?
+   * ¿Se puede resolver usando la biblioteca estándar o APIs nativas del lenguaje/plataforma en lugar de agregar nuevas dependencias externas?
+2. **Código Compacto**: Mantén el código al mínimo absoluto necesario. Evita envoltorios abstractos redundantes, patrones de diseño sobre-ingenieriles (como fábricas o interfaces complejas innecesarias) y mantén la lógica lo más plana y legible posible.
+3. **No Agregar Dependencias**: Está prohibido sugerir o instalar nuevas librerías externas a menos que sea técnicamente imposible resolver el requerimiento con lo ya existente en el stack.

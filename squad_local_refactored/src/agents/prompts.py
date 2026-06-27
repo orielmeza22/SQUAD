@@ -19,6 +19,11 @@ Para evitar errores de sintaxis (SyntaxError, ReferenceError):
 3. No utilices placeholders o código elidido (ej. "// el resto del código aquí..."). Todo el código debe estar completo y listo para ejecutarse.
 4. En Javascript/Frontend, asegúrate de no usar palabras clave de Node.js (como 'require', 'module.exports') si se ejecuta en navegador, y viceversa (no uses 'document' o 'window' en código backend a menos que sea servido estáticamente al navegador).
 5. En Python, verifica que la indentación sea consistente (4 espacios por nivel) y no mezcles tabuladores y espacios.
+
+🔍 FILTRADO LAZY-SENIOR (YAGNI):
+- ¿Esta funcionalidad o función es estrictamente necesaria para cumplir el SPEC? Si no, elimínala y no la programes.
+- Prioriza las funciones nativas y la biblioteca estándar del lenguaje sobre la adición de nuevas dependencias externas.
+- Escribe la menor cantidad de código posible para lograr el objetivo. Evita sobre-ingeniería, clases accesorias o helpers redundantes.
 """
 
 
