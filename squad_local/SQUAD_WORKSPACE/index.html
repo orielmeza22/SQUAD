@@ -2,23 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FastAPI HTMX Example</title>
-    <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.0.2"></script>
-    <!-- CSS -->
-    <link rel="stylesheet" href="/styles.css">
+    <title>Server Architecture Management</title>
+    <!-- Estilos CSS -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="app">
-        <h1>Welcome to FastAPI with HTMX!</h1>
-        <ul>
-            {% for user in users %}
-                <li>{{ user.name }} - {{ user.email }}</li>
-            {% endfor %}
-        </ul>
-    </div>
+    <div id="app"></div>
 
-    <!-- JS -->
-    <script src="/main_output.js"></script>
+    <!-- JavaScript para HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <script src="scripts.js"></script>
 </body>
 </html>

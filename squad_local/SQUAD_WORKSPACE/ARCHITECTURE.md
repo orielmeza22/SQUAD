@@ -1,161 +1,216 @@
-Entiendo que necesitas crear una arquitectura de servidor para gestionar las arquitecturas de servidor, como alojamiento. A continuación, te proporciono un plan técnico y la especificación del software (SPEC) basada en los archivos y datos técnicos disponibles.
-
-### Especificación de Software (SPEC)
-
-#### 1. **Descripción General**
-El objetivo es crear una solución para gestionar arquitecturas de servidor, como alojamiento, utilizando FastAPI como framework principal. Este sistema debe ser capaz de manejar APIs RESTful y proporcionar funcionalidades interactivas a través del uso de HTMX.
-
-#### 2. **Stack Tecnológico**
 STACK: FASTAPI_HTMX
 
-#### 3. **Arquitectura Detallada**
+# Especificación de Software (SPEC)
 
-##### **Backend (Servidor)**
+## Resumen del Proyecto:
+El proyecto se enfoca en el desarrollo de un sistema de gestión de arquitecturas de servidor, como un alojamiento. Este sistema debe ser capaz de manejar y administrar diferentes arquitecturas de servidores de manera eficiente.
+
+## Arquitectura del Sistema:
+
+### Backend
+- **Lenguaje de Programación:** Python (FastAPI)
 - **Framework:** FastAPI
-- **Lenguaje:** Python
+- **Interacción Cliente-Servidor:** HTMX para interactividad vía hx-get/hx-post
 - **Base de Datos:** SQLite
-- **Interfaz de Usuario:** HTMX para interactividad en la interfaz web
 
-##### **Archivos Actuales y Dependencias**
-Se han identificado los siguientes archivos relevantes:
-1. `main_output.py`: Este archivo es el punto de entrada principal.
-2. `requirements.txt`: Contiene las dependencias necesarias para el proyecto.
+### Frontend
+- **Interfaz:** HTML/CSS/JavaScript proporcionado por FastAPI
+- **Interacción con el Servidor:** HTMX
 
-##### **Estructura del Backend**
+## Estructura del Proyecto:
 
-- **`main_output.py`**: Este archivo debe contener toda la lógica del backend, incluyendo modelos, rutas y configuraciones de FastAPI. No deben existir carpetas o archivos secundarios como `crud.py`, `models.py`, etc.
+### Backend (main_output.py)
+```plaintext
+# Este archivo es el punto de entrada para el backend.
+# Todos los endpoints, modelos y lógica del servidor deben estar aquí.
 
-##### **Modelos**
-```python
+from fastapi import FastAPI
+import sqlite3
 from pydantic import BaseModel
+from typing import List
 
-class User(BaseModel):
+app = FastAPI()
+
+class ServerArchitecture(BaseModel):
     id: int
     name: str
-    email: str
-
-class Product(BaseModel):
-    id: int
-    title: str
     description: str
-    price: float
-```
+    status: bool  # True si está activo, False si no
 
-##### **Rutas**
-```python
-from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
-import sqlite3
+# Conexión a la base de datos SQLite
+conn = sqlite3.connect('server_architectures.db')
+cursor = conn.cursor()
 
-app = FastAPI()
+# Crear tabla en la base de datos (si no existe)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS server_architectures (
+    id INTEGER PRIMARY KEY,
+    name TEXT UNIQUE,
+    description TEXT,
+    status BOOLEAN DEFAULT True
+);
+""")
+conn.commit()
 
-# Conexión a SQLite
-conn = sqlite3.connect('database.db')
+# Rutas del servidor
 
-def get_db():
-    return conn
+@app.post("/server-architectures/")
+async def create_server_architecture(server_architecture: ServerArchitecture):
+    cursor.execute("""
+        INSERT INTO server_architectures (name, description, status)
+        VALUES (?, ?, ?)
+    """, (server_architecture.name, server_architecture.description, server_architecture.status))
+    conn.commit()
+    return {"message": "Server architecture created"}
 
-@app.get("/users/{user_id}", response_model=User)
-async def read_user(user_id: int, db=Depends(get_db)):
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+@app.get("/server-architectures/")
+async def read_server_architectures():
+    cursor.execute("SELECT * FROM server_architectures")
+    rows = cursor.fetchall()
+    return [{"id": row[0], "name": row[1], "description": row[2], "status": row[3]} for row in rows]
+
+@app.get("/server-architectures/{id}")
+async def read_server_architecture(id: int):
+    cursor.execute("SELECT * FROM server_architectures WHERE id = ?", (id,))
     row = cursor.fetchone()
     if row is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"id": row[0], "name": row[1], "email": row[2]}
+        return {"error": "Server architecture not found"}
+    else:
+        return {"id": row[0], "name": row[1], "description": row[2], "status": row[3]}
 
-@app.get("/products/{product_id}", response_model=Product)
-async def read_product(product_id: int, db=Depends(get_db)):
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM products WHERE id = ?", (product_id,))
-    row = cursor.fetchone()
-    if row is None:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return {"id": row[0], "title": row[1], "description": row[2], "price": row[3]}
+@app.put("/server-architectures/{id}")
+async def update_server_architecture(id: int, server_architecture: ServerArchitecture):
+    cursor.execute("""
+        UPDATE server_architectures
+        SET name = ?, description = ?, status = ?
+        WHERE id = ?
+    """, (server_architecture.name, server_architecture.description, server_architecture.status, id))
+    conn.commit()
+    return {"message": "Server architecture updated"}
+
+@app.delete("/server-architectures/{id}")
+async def delete_server_architecture(id: int):
+    cursor.execute("DELETE FROM server_architectures WHERE id = ?", (id,))
+    conn.commit()
+    if cursor.rowcount == 0:
+        return {"error": "Server architecture not found"}
+    else:
+        return {"message": "Server architecture deleted"}
+
+# Ejecutar el servidor
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
 ```
 
-##### **Configuración de FastAPI**
-```python
-from fastapi import FastAPI
-
-app = FastAPI()
-```
-
-#### 4. **Frontend (HTML/CSS)**
-- **`index.html`**: Este archivo debe contener el HTML básico para la interfaz web.
-- **`styles.css`**: Este archivo debe contener los estilos CSS necesarios.
-
-##### **Estructura del Frontend**
-
-```plaintext
-frontend/
-├── index.html
-└── styles.css
-```
-
-#### 5. **Interactividad con HTMX**
-Para proporcionar interactividad, se utilizará HTMX en el frontend para hacer peticiones AJAX y actualizar la interfaz de manera dinámica.
-
-##### **Ejemplo de Interacción con HTMX**
-
+### Frontend (HTML/CSS/JS)
+- **HTML:** index.html
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FastAPI HTMX Example</title>
-    <link rel="stylesheet" href="/styles.css">
+    <title>Server Architecture Management</title>
+    <!-- Estilos CSS -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="app">
-        <h1>Welcome to FastAPI with HTMX!</h1>
-        <ul>
-            {% for user in users %}
-                <li>{{ user.name }} - {{ user.email }}</li>
-            {% endfor %}
-        </ul>
-    </div>
+    <div id="app"></div>
 
-    <!-- HTMX -->
-    <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.0.2"></script>
+    <!-- JavaScript para HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.0.2"></script>
+    <script src="scripts.js"></script>
 </body>
 </html>
 ```
 
-#### 6. **Configuración de FastAPI**
-```python
-from fastapi import FastAPI, HTTPException
+- **CSS:** styles.css
+```css
+/* Estilos CSS */
+body {
+    font-family: Arial, sans-serif;
+}
 
-app = FastAPI()
-
-@app.get("/users")
-async def read_users():
-    return [{"id": i, "name": f"User {i}", "email": f"user{i}@example.com"} for i in range(10)]
-
-@app.get("/products")
-async def read_products():
-    return [{"id": i, "title": f"Product {i}", "description": f"description of product {i}", "price": 9.99} for i in range(5)]
+#app {
+    margin-top: 50px;
+}
 ```
 
-#### 7. **Documentación y Endpoints**
-- **Endpoints**:
-  - `/users`: Listar usuarios.
-  - `/products`: Listar productos.
+- **JavaScript:** scripts.js
+```javascript
+// JavaScript para HTMX
+document.addEventListener("DOMContentLoaded", function() {
+    // Ejemplo de uso de HTMX en el frontend
+});
+```
 
-- **Inputs/Outputs**:
-  - Para `GET /users`: Devuelve una lista de usuarios con sus IDs, nombres y correos electrónicos.
-  - Para `GET /products`: Devuelve una lista de productos con sus IDs, títulos, descripciones y precios.
+## Documentación del Proyecto:
 
-#### 8. **Especificación de la Aplicación**
-- **Archivos Actuales**:
-  - `main_output.py`
-  - `requirements.txt`
+### Endpoints y Rutas
 
-- **Dependencias**:
-  - FastAPI
-  - SQLite
+1. **Crear una nueva arquitectura de servidor**
+   - Método: POST
+   - URL: `/server-architectures/`
+   - Input:
+     ```json
+     {
+         "name": "Nombre de la arquitectura",
+         "description": "Descripción de la arquitectura",
+         "status": true  // True si está activa, False si no
+     }
+     ```
+   - Output: JSON con el mensaje de éxito o error.
 
-### Conclusiones
-La arquitectura propuesta utiliza FastAPI como framework principal para crear una aplicación web interactiva y eficiente. El uso de HTMX permite hacer peticiones AJAX y actualizar la interfaz de manera dinámica, lo que mejora la experiencia del usuario.
+2. **Obtener todas las arquitecturas de servidor**
+   - Método: GET
+   - URL: `/server-architectures/`
+   - Input: Ninguno.
+   - Output:
+     ```json
+     [
+         {"id": 1, "name": "Arquitectura 1", "description": "Descripción 1", "status": true},
+         ...
+     ]
+     ```
 
-Este plan técnico detallado proporciona una estructura clara y organizada para el desarrollo de la aplicación, cumpliendo con las reglas establecidas en el sistema anfitrión.
+3. **Obtener una arquitectura de servidor específica**
+   - Método: GET
+   - URL: `/server-architectures/{id}`
+   - Input:
+     ```json
+     {
+         "id": 1
+     }
+     ```
+   - Output:
+     ```json
+     {"id": 1, "name": "Arquitectura 1", "description": "Descripción 1", "status": true}
+     ```
+
+4. **Actualizar una arquitectura de servidor**
+   - Método: PUT
+   - URL: `/server-architectures/{id}`
+   - Input:
+     ```json
+     {
+         "name": "Arquitectura actualizada",
+         "description": "Descripción actualizada",
+         "status": true  // True si está activa, False si no
+     }
+     ```
+   - Output: JSON con el mensaje de éxito o error.
+
+5. **Eliminar una arquitectura de servidor**
+   - Método: DELETE
+   - URL: `/server-architectures/{id}`
+   - Input:
+     ```json
+     {
+         "id": 1
+     }
+     ```
+   - Output: JSON con el mensaje de éxito o error.
+
+## Conclusiones:
+
+Este plan técnico detalla la arquitectura y especificación del sistema de gestión de arquitecturas de servidor, utilizando FastAPI para el backend y HTMX para la interactividad. El frontend se maneja a través de HTML/CSS/JavaScript proporcionados por FastAPI. Este enfoque asegura una interfaz amigable y eficiente para administrar diferentes arquitecturas de servidores.

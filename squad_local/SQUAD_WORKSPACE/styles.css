@@ -1,17 +1,10 @@
-/* styles.css */
+/* Estilos CSS */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: Inter, sans-serif;
+    background-color: #1a1a1a; /* Dark gray */
+    color: white;
 }
 
-h1 {
-    color: #3498db; /* Dark blue */
-}
-
-ul {
-    list-style-type: none;
-    padding-left: 0;
-}
-
-li {
-    margin-bottom: 5px;
+#app {
+    margin-top: 50px;
 }
