@@ -10,6 +10,18 @@ from typing import Optional
 from ..tools.cache import OptTools
 
 
+SYNTAX_SAFETY_GUIDELINES = """
+⚠️ IMPORTANTE: REGLA DE SEGURIDAD DE SINTAXIS E INTEGRIDAD ⚠️
+Para evitar errores de sintaxis (SyntaxError, ReferenceError):
+1. Asegúrate de cerrar CORRECTAMENTE todos los bloques, llaves ({}), paréntesis (()) y corchetes ([]).
+2. NUNCA trunques la generación de código. Escribe el archivo completo o el bloque de reemplazo completo.
+3. No utilices placeholders o código elidido (ej. "// el resto del código aquí..."). Todo el código debe estar completo y listo para ejecutarse.
+4. En Javascript/Frontend, asegúrate de no usar palabras clave de Node.js (como 'require', 'module.exports') si se ejecuta en navegador, y viceversa (no uses 'document' o 'window' en código backend a menos que sea servido estáticamente al navegador).
+5. En Python, verifica que la indentación sea consistente (4 espacios por nivel) y no mezcles tabuladores y espacios.
+"""
+
+
+
 def architect_prompt(prompt: str, search_ctx: str, preflight: dict, existing_context: str = "") -> str:
     """Phase 1 — Senior Architect agent prompt.
 
@@ -51,6 +63,7 @@ def dba_prompt(plan: str, existing_context: str = "") -> str:
         "ANTI-BUG: Asegúrate de que las consultas SQL sean estándar y no contengan comillas invertidas "
         "(backticks) de MySQL.\n"
         f"{OptTools.CODE_GUIDELINES}\n"
+        f"{SYNTAX_SAFETY_GUIDELINES}\n"
         f"{existing_context}"
     )
 
@@ -78,6 +91,7 @@ def frontend_prompt(plan: str, existing_context: str = "", style_mem_str: str = 
         "ANTI-BUG: Evita usar rutas absolutas de sistema (/home/user/...) o variables de entorno del "
         "servidor dentro del HTML.\n"
         f"{OptTools.CODE_GUIDELINES}\n"
+        f"{SYNTAX_SAFETY_GUIDELINES}\n"
         f"{existing_context}{style_mem_str}"
     )
 
@@ -127,6 +141,7 @@ def backend_prompt(plan: str, existing_context: str = "") -> str:
         "en bloques @@FILE: separados en la misma respuesta, pero se prefiere fuertemente un único archivo "
         "consolidado para evitar dependencias locales rotas.\n"
         f"{OptTools.CODE_GUIDELINES}\n"
+        f"{SYNTAX_SAFETY_GUIDELINES}\n"
         f"{existing_context}"
     )
 
@@ -145,7 +160,8 @@ def fix_prompt(code_review: str) -> str:
     return (
         "Corrige estos errores expuestos en el siguiente Code Review:\n"
         f"{code_review}\n"
-        "Genera el código reparado para los archivos necesarios usando formato @@FILE: o @@PATCH:"
+        f"Genera el código reparado para los archivos necesarios usando formato @@FILE: o @@PATCH:\n"
+        f"{SYNTAX_SAFETY_GUIDELINES}"
     )
 
 
@@ -171,7 +187,8 @@ def qa_devops_prompt() -> str:
     return (
         "Escribe scripts de Test (Jest, PyTest o genérico) según el stack, "
         "O un pipeline de Github Actions (.github/workflows/main.yml). "
-        "Usa formato @@FILE o @@PATCH"
+        f"Usa formato @@FILE o @@PATCH\n"
+        f"{SYNTAX_SAFETY_GUIDELINES}"
     )
 
 
