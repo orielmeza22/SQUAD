@@ -13,3 +13,5 @@ Para ahorrar la mayor cantidad de tokens posible y evitar alcanzar los límites 
 10. **Autocomprobación Obligatoria (Closed-Loop)**: Antes de dar un cambio por finalizado, debes ejecutar los comandos necesarios (`run_command`) para verificar que el archivo modificado compila, no tiene errores de sintaxis y los tests pasan.
 11. **Formato Estructurado en el Chat**: Limita tus respuestas en el chat a una tabla en Markdown que indique `[Archivo modificado]`, `[Acción]` y `[Estado del Test/Compilación (OK/Error)]`, seguida de la explicación en una o dos líneas como máximo.
 12. **Alineación de Diseño Interactiva**: Para cualquier cambio de arquitectura o decisión compleja, propón opciones de forma clara y simplificada para que el usuario pueda decidir con facilidad.
+13. **Seguir CLAUDE.md**: Lee y respeta las instrucciones de `CLAUDE.md` en la raíz del repositorio para levantar la app, correr tests y seguir la arquitectura, evitando análisis redundantes del código.
+
