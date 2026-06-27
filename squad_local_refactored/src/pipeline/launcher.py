@@ -242,7 +242,7 @@ def run_launch_sequence(model: str) -> Tuple[bool, str]:
                 except Exception:
                     pass
             cmd = "npm install --prefer-offline --no-audit --no-fund && npm start"
-        elif stack == "FASTAPI_HTMX" and (os.path.exists(os.path.join(SysTools.WORKSPACE, "main_output.py")) or os.path.exists(os.path.join(SysTools.WORKSPACE, "app.py"))):
+        elif stack == "FASTAPI_HTMX":
             req_path = os.path.join(SysTools.WORKSPACE, "requirements.txt")
             if not os.path.exists(req_path):
                 try:
@@ -251,6 +251,8 @@ def run_launch_sequence(model: str) -> Tuple[bool, str]:
                 except Exception:
                     pass
             entry_file = "main_output.py" if os.path.exists(os.path.join(SysTools.WORKSPACE, "main_output.py")) else "app.py"
+            if not os.path.exists(os.path.join(SysTools.WORKSPACE, entry_file)):
+                entry_file = "main_output.py"
             cmd = f'"{pip_exe}" install --prefer-offline fastapi uvicorn jinja2 && "{python_exe}" {entry_file}'
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "docker-compose.yml")):
             cmd = "docker-compose up --build"
