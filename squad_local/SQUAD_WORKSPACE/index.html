@@ -1,24 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Editar Turno</title>
+  <meta charset="UTF-8">
+  <title>App de Gestión de Turnos</title>
+  <!-- Estilos personalizados -->
+  <style>
+    /* Estilos básicos */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #1a1a2e;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    input[type="text"],
+    input[type="date"] {
+      padding: 0.75rem;
+      border-radius: 4px;
+      background-color: #2a365d;
+      color: white;
+      border: none;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      background-color: #1e88e5;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover,
+    button:focus {
+      background-color: #00bcd4;
+    }
+    
+    /* Estilos para el botón de eliminación */
+    .delete-btn {
+      margin-top: 1rem;
+      color: white;
+      border: none;
+      background-color: #f44336;
+    }
+
+    .delete-btn:hover,
+    .delete-btn:focus {
+      background-color: #e57373;
+    }
+    
+    /* Estilos para el formulario de edición */
+    form#edit-form {
+      display: none;
+    }
+
+  </style>
 </head>
 <body>
-    <!-- Formulario para editar un turno -->
-    <form id="edit-form">
-        <input type="text" name="id" placeholder="ID del turno">  <!-- Agregar este campo -->
-        <input type="text" name="nombre" placeholder="Nombre del turno">
-        <input type="date" name="fecha" placeholder="Fecha del turno">
-        <button type="submit">Guardar Cambios</button>
-    </form>
+  <h1>Gestión de Turnos</h1>
 
-    <!-- Formulario para agregar un nuevo turno -->
-    <form id="add-form">
-        <input type="text" name="nombre" placeholder="Nombre del turno">
-        <input type="date" name="fecha" placeholder="Fecha del turno">
-        <button type="submit">Agregar Turno</button>
-    </form>
+  <!-- Formulario para crear un turno -->
+  <form id="create-form">
+    <input type="text" name="nombre" placeholder="Nombre del turno">
+    <input type="date" name="fecha" placeholder="Fecha del turno">
+    <button type="submit">Crear Turno</button>
+  </form>
 
+  <!-- Formulario para editar un turno -->
+  <form id="edit-form">
+    <input type="text" name="nombre" placeholder="Nombre del turno">
+    <input type="date" name="fecha" placeholder="Fecha del turno">
+    <button type="submit">Guardar Cambios</button>
+  </form>
+
+  <!-- Botón para eliminar un turno -->
+  <button id="delete-btn">Eliminar Turno</button>
+
+  <!-- Script para manejar las interacciones de frontend -->
+  <script src="/static/script.js"></script>
 </body>
 </html>

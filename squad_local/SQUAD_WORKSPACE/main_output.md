@@ -1,9 +1,17 @@
-3. Verifica si la aplicación está funcionando correctamente accediendo a la URL del frontend (por ejemplo, http://localhost:8000).
+# Usa la imagen base de Python para Flask
+FROM python:3.8-slim
 
-## Documentación Adicional
-- **Arquitectura Frontend**: Asegúrate de que el formulario `index.html` esté configurado para enviar los datos al backend.
-- **Arquitectura Backend**: Verifica que la función `update_turno` en `app.py` reciba y procese correctamente los datos del formulario.
+# Establece el directorio de trabajo como /app
+WORKDIR /app
 
----
+# Copia el archivo app.py y las dependencias del sistema de archivos host al contenedor
+COPY . .
 
-Por favor, revisa estos cambios y asegúrate de que se ajusten a tus necesidades específicas.
+# Instala las dependencias necesarias
+RUN pip install flask sqlite3
+
+# Exponga la puerta 5000 para Flask
+EXPOSE 5000
+
+# Ejecuta el servidor web
+CMD ["python", "app.py"]
