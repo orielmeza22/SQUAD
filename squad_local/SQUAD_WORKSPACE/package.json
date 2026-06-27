@@ -1,0 +1,8 @@
+{
+  "name": "squad-workspace-project",
+  "type": "commonjs",
+  "scripts": {
+    "start": "echo 'Script de backend no necesario para frontend'"
+  },
+  "dependencies": {}
+}
