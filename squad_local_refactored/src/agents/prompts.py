@@ -33,8 +33,23 @@ def architect_prompt(prompt: str, search_ctx: str, preflight: dict, existing_con
         "⚠️ RESTRICCIÓN DEL SISTEMA ANFITRIÓN ⚠️\n"
         f"Host local: {preflight}. \n"
         "**DISEÑA LA ARQUITECTURA ÚNICAMENTE CON AQUELLAS MARCADAS COMO True.**\n"
+        "REGLA DE SELECCIÓN DE STACK (MANDATORIA):\n"
+        "Analiza la petición del usuario y selecciona uno de los siguientes 3 stacks tecnológicos para maximizar la fiabilidad:\n"
+        "1. FASTAPI_HTMX: Python + FastAPI + HTMX (interactividad vía hx-get/hx-post) + SQLite. Es el STACK POR DEFECTO para dashboards, CRUDs, sistemas de gestión y herramientas de administración. Úsalo siempre a menos que se requiera lo contrario.\n"
+        "2. NODE_EJS: Node.js + Express + EJS templates + SQLite. Úsalo si el usuario pide explícitamente una Web App o landing page con JavaScript unificado.\n"
+        "3. PYTHON_STREAMLIT: Python + Streamlit + SQLite. Úsalo exclusivamente si el usuario pide visualizaciones de datos pesadas, analíticas o interfaces auto-generadas basadas en datos.\n\n"
+        "Debes escribir de forma obligatoria en la primera línea de tu archivo SPEC.md una línea exacta indicando el stack elegido:\n"
+        "STACK: [FASTAPI_HTMX | NODE_EJS | PYTHON_STREAMLIT]\n\n"
+        "REGLAS ESTRICTAS DE STACK PARA EVITAR BUGS:\n"
+        "- Si el stack seleccionado es FASTAPI_HTMX:\n"
+        "  * NO generes ni planifiques NUNCA archivos .js para la lógica del servidor, ni package.json, ni node_modules.\n"
+        "  * El punto de entrada DEBE ser main_output.py usando uvicorn.\n"
+        "  * Todo el frontend (HTML/CSS) debe ser servido por FastAPI.\n"
+        "- Si el stack seleccionado es NODE_EJS:\n"
+        "  * El punto de entrada DEBE ser server.js.\n"
+        "  * Se permite usar package.json y plantillas ejs.\n\n"
         "REGLA DE SEPARACIÓN ARQUITECTÓNICA: Debes separar de forma explícita y clara en tu SPEC.md los archivos "
-        "correspondientes al Frontend (HTML, CSS, JS del cliente) de los del Backend (código del servidor). "
+        "correspondientes al Frontend (HTML, CSS, JS del cliente) de los del Backend (código del servidor) según el stack elegido. "
         "Está prohibido mezclar lógica de base de datos o APIs en archivos del cliente, o código de manipulación "
         "del DOM en archivos del servidor.\n"
         "Crea un plan técnico detallado de la arquitectura y la especificación de la aplicación. "
@@ -68,89 +83,115 @@ def dba_prompt(plan: str, existing_context: str = "") -> str:
     )
 
 
-def frontend_prompt(plan: str, existing_context: str = "", style_mem_str: str = "") -> str:
+def frontend_prompt(plan: str, existing_context: str = "", style_mem_str: str = "", stack: str = "FASTAPI_HTMX") -> str:
     """Phase 2 (parallel) — UI/Frontend agent prompt.
-
-    Generates index.html, styles.css and app.js with strict HTML5 + CDN rules.
+    
+    Generates template views / index.html / styles.css / client JS according to chosen stack.
     """
-    return (
-        f"Basado en:\n{plan}\n"
-        "Genera únicamente los componentes Frontend / UI, usando Tailwind o CSS puro. "
-        "Asegúrate de ser espectacular visualmente. "
-        "REGLA CRÍTICA DE HTML: El archivo index.html DEBE ser un HTML5 estándar autocontenido. "
-        "PROHIBIDO USAR Jinja2 o sintaxis de template Flask como {{ url_for('static', filename='archivo') }}. "
-        "Para CSS y JS usa SIEMPRE rutas relativas simples: "
-        "<link rel='stylesheet' href='styles.css'> y <script src='app.js'></script>. "
-        "REGLA CRÍTICA DE SEPARACIÓN: Si utilizas estilos CSS personalizados, DEBES escribirlos "
-        "obligatoriamente en un bloque ```css separado para generar styles.css. Si usas interactividad "
-        "JS del cliente, escríbela obligatoriamente en un bloque ```javascript separado (se guardará como app.js). "
-        "Si utilizas clases de Tailwind CSS, DEBES incluir obligatoriamente el script CDN de Tailwind Play "
-        "en la cabecera del HTML: <script src='https://cdn.tailwindcss.com'></script>. "
-        "NO escribas código Vue SFC ni React JSX en archivos .html sin bundler. Si usas React o Vue, "
-        "impórtalos vía CDN. "
-        "REGLA DE ENTORNOS (FRONTEND EXCLUSIVO): Todo el código JS generado para el cliente (como app.js) se ejecutará "
-        "únicamente en el navegador web del usuario. Está estrictamente prohibido intentar importar librerías de "
-        "Node.js/Backend (como express, sqlite3, fs, path, pg) o utilizar variables de entorno del servidor (como "
-        "process.env o os.environ). Toda comunicación con el backend debe realizarse mediante llamadas HTTP fetch() "
-        "relativas (ej: fetch('/api/turnos')).\n"
-        f"{OptTools.CODE_GUIDELINES}\n"
-        f"{SYNTAX_SAFETY_GUIDELINES}\n"
-        f"{existing_context}{style_mem_str}"
-    )
+    if stack == "PYTHON_STREAMLIT":
+        return (
+            f"Basado en:\n{plan}\n"
+            "⚠️ STACK SELECCIONADO: PYTHON_STREAMLIT ⚠️\n"
+            "El Agente Frontend NO DEBE generar ningún archivo HTML, CSS o JS, ya que Streamlit auto-genera "
+            "la UI directamente desde Python.\n"
+            "Escribe únicamente un archivo de documentación temporal indicando que el diseño visual correrá en Streamlit:\n"
+            "@@FILE: visual_notes.md\n"
+            "El proyecto utiliza Streamlit para la UI. Toda la interactividad visual se define en app.py.\n"
+            "@@ENDFILE@@\n\n"
+            f"{existing_context}{style_mem_str}"
+        )
+        
+    elif stack == "NODE_EJS":
+        return (
+            f"Basado en:\n{plan}\n"
+            "⚠️ STACK SELECCIONADO: NODE_EJS ⚠️\n"
+            "Genera la interfaz frontend usando plantillas EJS para el servidor Express.\n"
+            "1) Crea la plantilla HTML principal en: views/index.ejs.\n"
+            "2) En index.ejs, puedes usar clases de Tailwind CSS (incluyendo el script CDN en la cabecera: <script src='https://cdn.tailwindcss.com'></script>).\n"
+            "3) Si utilizas interactividad JS del cliente (navegador), escribe un bloque javascript separado para public/app.js y enlázalo en el EJS con <script src='/app.js'></script>.\n"
+            "4) Si utilizas estilos personalizados, escríbelos en public/styles.css y enlázalos con <link rel='stylesheet' href='/styles.css'>.\n"
+            "REGLA DE ENTORNOS (FRONTEND EXCLUSIVO): Todo el código JS para el navegador (como public/app.js) tiene prohibido importar librerías backend de Node o usar bases de datos directamente.\n"
+            f"{OptTools.CODE_GUIDELINES}\n"
+            f"{SYNTAX_SAFETY_GUIDELINES}\n"
+            f"{existing_context}{style_mem_str}"
+        )
+
+    else:  # FASTAPI_HTMX (default)
+        return (
+            f"Basado en:\n{plan}\n"
+            "⚠️ STACK SELECCIONADO: FASTAPI_HTMX ⚠️\n"
+            "Genera la interfaz de usuario espectacular usando HTML5, CSS y HTMX (para dinamismo sin JS complejo).\n"
+            "1) index.html debe ser un HTML5 estándar. DEBES incluir el CDN de HTMX en la cabecera:\n"
+            "<script src='https://unpkg.com/htmx.org@2.0.0'></script>\n"
+            "Y el CDN de Tailwind CSS:\n"
+            "<script src='https://cdn.tailwindcss.com'></script>\n"
+            "Y opcionalmente Alpine.js si necesitas interactividad de cliente ligera:\n"
+            "<script defer src='https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js'></script>\n"
+            "2) Utiliza atributos de HTMX (como hx-get, hx-post, hx-target, hx-swap, hx-trigger) en tus etiquetas HTML "
+            "para realizar peticiones AJAX al backend de FastAPI de forma limpia y transparente, actualizando partes "
+            "de la página de manera reactiva sin escribir JS de cliente.\n"
+            "3) Si requieres estilos personalizados, escríbelos en un archivo styles.css independiente y enlázalo con <link rel='stylesheet' href='styles.css'>.\n"
+            "4) Evita escribir archivos Javascript de cliente (como app.js) a menos que sea estrictamente necesario. HTMX y Alpine.js deben resolver el dinamismo.\n"
+            "REGLA DE ENTORNOS: Todo el código que se ejecuta en el navegador tiene prohibido acceder a bases de datos o importar librerías backend de servidor.\n"
+            f"{OptTools.CODE_GUIDELINES}\n"
+            f"{SYNTAX_SAFETY_GUIDELINES}\n"
+            f"{existing_context}{style_mem_str}"
+        )
 
 
-def backend_prompt(plan: str, existing_context: str = "") -> str:
+def backend_prompt(plan: str, existing_context: str = "", stack: str = "FASTAPI_HTMX") -> str:
     """Phase 2 — Backend Dev agent prompt.
 
     Generates business logic / APIs / main_output.{py,js} with portable-DB and dynamic-PORT rules.
     """
-    return (
-        f"Basado en:\n{plan}\n"
-        "El UI ya fue creado. Escribe el Backend/Archivos principales. "
-        "REGLAS CRÍTICAS PARA EL BACKEND: "
-        "1) Si generas una app Flask, SIEMPRE usa template_folder y static_folder apuntando al directorio "
-        "del archivo: "
-        "app = Flask(__name__, template_folder=os.path.dirname(os.path.abspath(__file__)), "
-        "static_folder=os.path.dirname(os.path.abspath(__file__)), static_url_path='') "
-        "2) Para servir index.html usa app.send_static_file('index.html') o send_from_directory(), "
-        "NO render_template() a menos que el HTML use Jinja2 correctamente. "
-        "3) Si el index.html usa rutas relativas (href='styles.css'), sirve con send_static_file. "
-        "4) BASE DE DATOS PORTABLE: Utiliza preferentemente un ORM (como SQLAlchemy o SQLModel para Python, "
-        "o Prisma/Drizzle para JS) configurado para SQLite de forma local, facilitando escalar a PostgreSQL "
-        "en producción simplemente cambiando DATABASE_URL en el .env. Evita hardcodear sentencias SQL "
-        "específicas de motor. "
-        "5) PUERTO DINÁMICO: El servidor debe escuchar en el puerto indicado por la variable de entorno PORT "
-        "(process.env.PORT para Node.js, os.environ.get('PORT') para Python), utilizando 5000 como valor por "
-        "defecto y con debug=False. "
-        "6) Asegúrate de IMPORTAR todas las librerías utilizadas (como 'os', 're', 'sys') y DEFINIR o IMPORTAR "
-        "todas las funciones y variables auxiliares referenciadas en las rutas (como validaciones de "
-        "email/contraseña, cifrado de contraseñas, etc.). El código generado debe ser 100% autoejecutable y "
-        "libre de NameError. "
-        "7) DEBES definir la ruta raíz @app.route('/') para servir la página principal index.html utilizando "
-        "app.send_static_file('index.html') en Python, o res.sendFile(path.join(__dirname, 'index.html')) en "
-        "Node.js/Express. "
-        "8) Si generas una app Node/Express, SIEMPRE sirve los archivos estáticos desde la raíz del proyecto "
-        "(el directorio actual '.'): app.use(express.static(__dirname)) o app.use(express.static('.')). "
-        "NO utilices ni crees carpetas como 'public' o 'static'. Todo debe servirse desde la raíz del workspace. "
-        "9) INTEGRACIÓN RESILIENTE: Si la aplicación requiere llaves o credenciales para APIs de terceros "
-        "(como STRIPE_API_KEY o OPENAI_API_KEY), valídalas: si la variable de entorno está vacía, la app debe "
-        "continuar ejecuténdose mostrando un mensaje en consola y utilizando mocks/servicios simulados para "
-        "pruebas locales en vez de crashear.\n"
-        "10) AUTOCONTENIDO Y SIN IMPORTACIONES HUÉRFANAS: Todo el código backend debe estar en un único archivo "
-        "principal autoejecutable (main_output.js para Node.js/Express, o main_output.py para "
-        "Python/Flask/FastAPI) que contenga la conexión a base de datos, rutas, middlewares y lógica. "
-        "NO intentes importar o requerir archivos locales inexistentes (como ./config, ./routes/auth, etc.). "
-        "Si es estrictamente necesario separar el código en múltiples archivos, debes generarlos explícitamente "
-        "en bloques @@FILE: separados en la misma respuesta, pero se prefiere fuertemente un único archivo "
-        "consolidado para evitar dependencias locales rotas.\n"
-        "REGLA DE ENTORNOS (BACKEND EXCLUSIVO): Todo el código generado en esta fase se ejecutará únicamente en el "
-        "servidor (Node.js o Python). Está estrictamente prohibido utilizar objetos globales del navegador o interactuar "
-        "con el DOM (como 'document', 'window', 'localStorage', 'alert'). Si necesitas enviar respuestas al cliente, "
-        "hazlo mediante APIs JSON o sirviendo archivos estáticos completos. El servidor no tiene entorno visual.\n"
-        f"{OptTools.CODE_GUIDELINES}\n"
-        f"{SYNTAX_SAFETY_GUIDELINES}\n"
-        f"{existing_context}"
-    )
+    if stack == "PYTHON_STREAMLIT":
+        return (
+            f"Basado en:\n{plan}\n"
+            "⚠️ STACK SELECCIONADO: PYTHON_STREAMLIT ⚠️\n"
+            "Escribe la lógica del negocio y la interfaz de usuario auto-generada por Streamlit en un único archivo: app.py.\n"
+            "REGLAS CRÍTICAS PARA STREAMLIT:\n"
+            "1) Utiliza la API de Streamlit (import streamlit as st) para construir el layout visual (st.title, st.subheader, st.sidebar, st.button, st.text_input, st.dataframe, st.success, st.error).\n"
+            "2) Toda la persistencia de datos debe ser local usando SQLite. Conéctate y crea las tablas si no existen utilizando sqlite3 al inicio.\n"
+            "3) El script debe ser 100% autoejecutable. No dejes imports sin resolver.\n"
+            "4) El servidor de Streamlit debe escuchar en el puerto indicado por la variable de entorno PORT (os.environ.get('PORT') o 5000 por defecto).\n"
+            f"{OptTools.CODE_GUIDELINES}\n"
+            f"{SYNTAX_SAFETY_GUIDELINES}\n"
+            f"{existing_context}"
+        )
+
+    elif stack == "NODE_EJS":
+        return (
+            f"Basado en:\n{plan}\n"
+            "⚠️ STACK SELECCIONADO: NODE_EJS ⚠️\n"
+            "Escribe la lógica del servidor Express y sirve las vistas EJS generadas.\n"
+            "REGLAS CRÍTICAS PARA EXPRESS + EJS:\n"
+            "1) Escribe un único archivo principal: server.js.\n"
+            "2) Configura el motor de plantillas EJS: app.set('view engine', 'ejs') y sirve los archivos estáticos desde 'public': app.use(express.static('public')).\n"
+            "3) Utiliza SQLite para la persistencia local de datos con una librería estándar (como better-sqlite3 o sqlite3).\n"
+            "4) Define las rutas requeridas por el plan para renderizar las vistas (res.render('index', { datos })) o API endpoints JSON (res.json()).\n"
+            "5) PUERTO DINÁMICO: El servidor debe escuchar en process.env.PORT || 5000.\n"
+            "6) REGLA DE ENTORNOS: El servidor se ejecuta en Node.js, está prohibido usar objetos del DOM o de navegador en server.js.\n"
+            f"{OptTools.CODE_GUIDELINES}\n"
+            f"{SYNTAX_SAFETY_GUIDELINES}\n"
+            f"{existing_context}"
+        )
+
+    else:  # FASTAPI_HTMX (default)
+        return (
+            f"Basado en:\n{plan}\n"
+            "⚠️ STACK SELECCIONADO: FASTAPI_HTMX ⚠️\n"
+            "Escribe el backend de FastAPI en un único archivo: main_output.py (o app.py).\n"
+            "REGLAS CRÍTICAS PARA FASTAPI + HTMX:\n"
+            "1) Crea la aplicación FastAPI: app = FastAPI().\n"
+            "2) Define rutas para responder a las peticiones de HTMX retornando fragmentos de HTML directos (usa fastapi.responses.HTMLResponse) o utilizando Jinja2 para renderizar index.html.\n"
+            "3) Para servir index.html estático, monta el directorio actual: app.mount('/', StaticFiles(directory='.', html=True), name='static').\n"
+            "4) Conéctate a SQLite de forma local para guardar los turnos u objetos de la app. Crea las tablas si no existen.\n"
+            "5) El servidor de Uvicorn debe escuchar en el puerto indicado por os.environ.get('PORT') o 5000 por defecto.\n"
+            "6) REGLA DE ENTORNOS: El código se ejecuta en Python. Está prohibido usar objetos de navegador (document, window, alert).\n"
+            f"{OptTools.CODE_GUIDELINES}\n"
+            f"{SYNTAX_SAFETY_GUIDELINES}\n"
+            f"{existing_context}"
+        )
 
 
 def code_review_prompt(plan: str, created_files: list) -> str:
@@ -193,9 +234,12 @@ No incluyas código de archivo completo. Solo reporta el análisis."""
 def qa_devops_prompt() -> str:
     """Phase 2 — QA & DevOps agent prompt (tests + CI/CD pipeline)."""
     return (
-        "Escribe scripts de Test (Jest, PyTest o genérico) según el stack, "
-        "O un pipeline de Github Actions (.github/workflows/main.yml). "
-        f"Usa formato @@FILE o @@PATCH\n"
+        "Escribe scripts de Test (pytest para Python/FastAPI/Streamlit, o Jest para Node/EJS) según el stack tecnológico elegido, "
+        "O un pipeline de Github Actions (.github/workflows/main.yml).\n"
+        "REGLA CRÍTICA DE EJECUCIÓN:\n"
+        "- Si el stack en SPEC.md es FASTAPI_HTMX o PYTHON_STREAMLIT: Genera pruebas y pipelines basados estrictamente en Python (pytest). Ignora por completo npm o node.\n"
+        "- Si el stack es NODE_EJS: Genera pruebas y pipelines basados en Node (Jest/npm).\n"
+        "Usa formato @@FILE o @@PATCH\n"
         f"{SYNTAX_SAFETY_GUIDELINES}"
     )
 

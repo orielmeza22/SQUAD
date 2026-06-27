@@ -135,6 +135,33 @@ def run_agent_pipeline_phase_2() -> None:
         else:
             state.log("⚠️ No se detectó STACK: en SPEC.md. Usando FASTAPI_HTMX por defecto.")
 
+    # Cleanup conflicting workspace files of other stacks (prevent model inertia and launcher confusion)
+    if stack in ["FASTAPI_HTMX", "PYTHON_STREAMLIT"]:
+        for legacy_file in ["package.json", "package-lock.json", "app.js", "server.js", "webpack.config.js"]:
+            p = os.path.join(SysTools.WORKSPACE, legacy_file)
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                    state.log(f"🧹 [SISTEMA] Eliminado archivo heredado de Node/JS: {legacy_file}")
+                except Exception:
+                    pass
+        node_modules_path = os.path.join(SysTools.WORKSPACE, "node_modules")
+        if os.path.exists(node_modules_path):
+            try:
+                shutil.rmtree(node_modules_path)
+                state.log("🧹 [SISTEMA] Eliminado directorio heredado 'node_modules'")
+            except Exception:
+                pass
+    elif stack == "NODE_EJS":
+        for legacy_file in ["main_output.py", "app.py", "requirements.txt"]:
+            p = os.path.join(SysTools.WORKSPACE, legacy_file)
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                    state.log(f"🧹 [SISTEMA] Eliminado archivo heredado de Python: {legacy_file}")
+                except Exception:
+                    pass
+
     state.pipeline_status = "running"
     state.is_running = True
     state.log("🚀 Aprobado. Reanudando enjambre (Fase 2: DBA + UI + Backend + QA)...")
