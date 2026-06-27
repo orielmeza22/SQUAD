@@ -583,7 +583,8 @@ class SysTools:
             state.launcher_logs.append(
                 f"❌ [SHIFT-LEFT] Sintaxis inválida detectada en memoria para '{clean_name}': {err_msg}. Escritura bloqueada."
             )
-            raise ValueError(f"Sintaxis inválida en {clean_name}: {err_msg}")
+            # Return absolute path to prevent pipeline crash, letting linter heal it later
+            return os.path.abspath(os.path.join(SysTools.WORKSPACE, clean_name))
         
         # Clear previously registered broken content if now valid
         if clean_name in SysTools.broken_memory_files:
@@ -1021,6 +1022,14 @@ class SysTools:
         Handles Python (py_compile), CSS (bracket check + auto-fix) and JS/TS/HTML
         (bracket check, duplicate-const removal, optional ``node --check``).
         """
+        # Check if we have a broken version in memory for this file (Shift-Left)
+        rel_path = os.path.relpath(file_path, SysTools.WORKSPACE).replace('\\', '/')
+        if rel_path in SysTools.broken_memory_files:
+            content = SysTools.broken_memory_files[rel_path]
+            ok, err_msg = SysTools.check_syntax(rel_path, content)
+            if not ok:
+                return False, err_msg
+
         content = ""
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
