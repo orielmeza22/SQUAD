@@ -434,7 +434,7 @@ def _run_with_saver(fn):
         })
         workflow.add_edge("fix", "qa")
         
-        app = workflow.compile(checkpointer=saver, interrupt_after=["architect"])
+        app = workflow.compile(checkpointer=saver, interrupt_after=["architect", "fix"])
         return fn(app)
 
 # PUBLIC APIS
@@ -489,9 +489,15 @@ def run_graph_pipeline(prompt: str, model: str) -> str:
             # Check checkpoint status to determine if we are interrupted
             state_info = app.get_state(config)
             if state_info.next:
-                state.pipeline_status = "waiting_spec_approval"
+                if "dba" in state_info.next:
+                    state.pipeline_status = "waiting_spec_approval"
+                    state.log("⏸️ Pipeline en pausa. Esperando revisión y aprobación de SPEC.md...")
+                elif "qa" in state_info.next:
+                    state.pipeline_status = "waiting_hitl_approval"
+                    state.log("⏸️ Pipeline en pausa (HITL). Esperando aprobación de comando destructivo...")
+                else:
+                    state.pipeline_status = "waiting_spec_approval"
                 state.is_running = False
-                state.log("⏸️ Pipeline en pausa. Esperando revisión y aprobación de SPEC.md...")
             else:
                 state.pipeline_status = "idle"
                 state.is_running = False
@@ -534,7 +540,12 @@ def resume_graph_pipeline(run_id: str) -> bool:
             
             state_info = app.get_state(config)
             if state_info.next:
-                state.pipeline_status = "waiting_spec_approval"
+                if "dba" in state_info.next:
+                    state.pipeline_status = "waiting_spec_approval"
+                elif "qa" in state_info.next:
+                    state.pipeline_status = "waiting_hitl_approval"
+                else:
+                    state.pipeline_status = "waiting_spec_approval"
                 state.is_running = False
             else:
                 state.pipeline_status = "idle"

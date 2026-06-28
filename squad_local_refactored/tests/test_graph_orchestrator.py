@@ -224,3 +224,64 @@ def test_fix_node_runs_benign_cmd(monkeypatch, tmp_path):
     go.node_fix(state_val)
     assert global_state.pipeline_status != "waiting_hitl_approval"  # no pausó
 
+def test_fix_node_paused_on_destructive_cmd_real_checkpoint(monkeypatch, tmp_path):
+    """Prueba que en la compilación y ejecución real, tras node_fix con comando destructivo,
+    el checkpoint del grafo queda pausado con next=['qa']."""
+    from squad_local_refactored.src.pipeline import graph_orchestrator as go
+    from squad_local_refactored.src.core.state import state as global_state
+    
+    monkeypatch.setattr(go.SysTools, "WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("GEMINI_API_KEY", "mock-key")
+    
+    # Mock de generación de LLM para cada fase
+    import json
+    malicious_cmd = json.dumps([{"tool": "execute_cmd", "parameters": {"cmd": "rm -rf /tmp/x"}}])
+    
+    def mock_generate(self, model, prompt, is_json=False):
+        with open("prompt_debug.txt", "w", encoding="utf-8") as f:
+            f.write(prompt)
+        p_lower = prompt.lower()
+        if "revisa los archivos creados" in p_lower:
+            return "SÍ_CRITICO: Failed review review"
+        elif "arquitecto" in p_lower:
+            return "STACK: FASTAPI_HTMX\nAllowed files: main_output.py"
+        elif "esquema sql" in p_lower:
+            return "@@FILE: schema.sql\nCREATE TABLE test (id INTEGER);"
+        elif "diseñador" in p_lower:
+            return "@@FILE: index.html\n<html></html>"
+        elif "escribe el backend" in p_lower or "servidor express" in p_lower or "auto-generada por streamlit" in p_lower:
+            return "@@FILE: main_output.py\nprint('Hello')"
+        elif "escribe scripts de test" in p_lower:
+            import json
+            return json.dumps([{
+                "tool": "write_file",
+                "parameters": {
+                    "path": "test_fail_test.py",
+                    "content": "def test_always_fails():\n    assert False\n"
+                }
+            }])
+        elif "corrige estos errores" in p_lower or "linter" in p_lower or "corregir" in p_lower:
+            # Devuelve comando destructivo
+            return malicious_cmd
+        return "Generic"
+        
+    monkeypatch.setattr("squad_local_refactored.src.llm.provider.AIProvider.generate", mock_generate)
+    
+    # Ejecutamos el pipeline (se pausará en architect)
+    run_id = go.run_graph_pipeline("Test project", "gemini-2.5-flash")
+    assert global_state.pipeline_status == "waiting_spec_approval"
+    
+    # Reanudamos. Debería avanzar por DBA, Frontend, Backend, Review (que falla), y entrar en Fix.
+    # En Fix, generará el comando destructivo, por lo que el grafo se pausará de verdad.
+    success = go.resume_graph_pipeline(run_id)
+    assert success is True
+    assert global_state.pipeline_status == "waiting_hitl_approval"
+    
+    # Verificamos que el checkpoint next es de verdad 'qa'
+    config = {"configurable": {"thread_id": run_id}}
+    def _check_next(app):
+        state_info = app.get_state(config)
+        assert state_info.next == ("qa",)
+    go._run_with_saver(_check_next)
+
+

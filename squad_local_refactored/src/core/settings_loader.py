@@ -42,6 +42,9 @@ def _defaults() -> Dict[str, Any]:
             "style": "Modern Minimalist",
             "preset": "default"
         },
+        "orchestrator_mode": "legacy",
+        "graph_max_retries": 3,
+        "graph_checkpoint_db": "squad_checkpoints.sqlite",
     }
 
 
@@ -85,6 +88,9 @@ def load_settings() -> Dict[str, Any]:
     pydantic_settings.docker_image_python = defaults.get("docker_image_python", "python:3.11-slim")
     pydantic_settings.docker_image_node = defaults.get("docker_image_node", "node:20-slim")
     pydantic_settings.design_identity = defaults.get("design_identity", _defaults()["design_identity"])
+    pydantic_settings.orchestrator_mode = defaults.get("orchestrator_mode", "legacy")
+    pydantic_settings.graph_max_retries = defaults.get("graph_max_retries", 3)
+    pydantic_settings.graph_checkpoint_db = defaults.get("graph_checkpoint_db", "squad_checkpoints.sqlite")
 
     return defaults
 
@@ -114,6 +120,9 @@ def save_settings(new_settings: Dict[str, Any]) -> Tuple[bool, str]:
         pydantic_settings.sandbox_mode = current.get("sandbox_mode", "local")
         pydantic_settings.docker_image_python = current.get("docker_image_python", "python:3.11-slim")
         pydantic_settings.docker_image_node = current.get("docker_image_node", "node:20-slim")
+        pydantic_settings.orchestrator_mode = current.get("orchestrator_mode", "legacy")
+        pydantic_settings.graph_max_retries = current.get("graph_max_retries", 3)
+        pydantic_settings.graph_checkpoint_db = current.get("graph_checkpoint_db", "squad_checkpoints.sqlite")
         return True, "Settings saved"
     except Exception as e:
         return False, str(e)
