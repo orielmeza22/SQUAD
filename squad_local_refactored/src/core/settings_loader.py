@@ -33,6 +33,9 @@ def _defaults() -> Dict[str, Any]:
         "context_window": 16384,
         "interception_enabled": True,
         "smart_routing": False,
+        "sandbox_mode": "local",
+        "docker_image_python": "python:3.11-slim",
+        "docker_image_node": "node:20-slim",
         "design_identity": {
             "colors": "Dark elegant (slate, emerald accents)",
             "fonts": "Inter, System Font",
@@ -78,6 +81,9 @@ def load_settings() -> Dict[str, Any]:
     pydantic_settings.enable_rag = defaults["enable_rag"]
     pydantic_settings.interception_enabled = defaults.get("interception_enabled", True)
     pydantic_settings.smart_routing = defaults.get("smart_routing", False)
+    pydantic_settings.sandbox_mode = defaults.get("sandbox_mode", "local")
+    pydantic_settings.docker_image_python = defaults.get("docker_image_python", "python:3.11-slim")
+    pydantic_settings.docker_image_node = defaults.get("docker_image_node", "node:20-slim")
     pydantic_settings.design_identity = defaults.get("design_identity", _defaults()["design_identity"])
 
     return defaults
@@ -105,6 +111,9 @@ def save_settings(new_settings: Dict[str, Any]) -> Tuple[bool, str]:
         state.interception_enabled = current.get("interception_enabled", True)
         state.smart_routing = current.get("smart_routing", False)
         state.design_identity = current.get("design_identity", _defaults()["design_identity"])
+        pydantic_settings.sandbox_mode = current.get("sandbox_mode", "local")
+        pydantic_settings.docker_image_python = current.get("docker_image_python", "python:3.11-slim")
+        pydantic_settings.docker_image_node = current.get("docker_image_node", "node:20-slim")
         return True, "Settings saved"
     except Exception as e:
         return False, str(e)

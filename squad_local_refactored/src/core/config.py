@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, ge=1, le=65535, description="Server port")
     host: str = Field(default="0.0.0.0", description="Server host")
     
+    # Sandboxing Configuration
+    sandbox_mode: str = Field(default="local", description="Sandbox mode: local or docker")
+    docker_image_python: str = Field(default="python:3.11-slim", description="Docker image for Python sandbox")
+    docker_image_node: str = Field(default="node:20-slim", description="Docker image for Node sandbox")
+    
     # Feature Flags
     enable_rag: bool = Field(default=True, description="Enable RAG (Retrieval Augmented Generation)")
     interception_enabled: bool = Field(default=True, description="Enable critical file write interception")

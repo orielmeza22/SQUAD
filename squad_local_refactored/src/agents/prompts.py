@@ -28,6 +28,35 @@ Para evitar errores de sintaxis (SyntaxError, ReferenceError):
 
 
 
+JSON_TOOL_CALLING_INSTRUCTION = """
+
+FORMATO DE SALIDA OBLIGATORIO: Responde ÚNICAMENTE con un array JSON de llamadas a herramientas usando exactamente este schema. NO uses marcadores @@FILE: ni bloques de código sueltos. Tu respuesta debe ser un JSON válido que comience con [ y termine con ].
+
+Ejemplo de formato:
+[
+  {
+    "tool": "write_file",
+    "parameters": {
+      "path": "app.py",
+      "content": "print('Hola')"
+    }
+  }
+]
+
+Si necesitas modificar partes de un archivo, puedes usar 'apply_patch':
+[
+  {
+    "tool": "apply_patch",
+    "parameters": {
+      "path": "app.py",
+      "search": "print('Hola')",
+      "replace": "print('Hola Mundo')"
+    }
+  }
+]
+"""
+
+
 def architect_prompt(prompt: str, search_ctx: str, preflight: dict, existing_context: str = "") -> str:
     """Phase 1 — Senior Architect agent prompt.
 
@@ -84,14 +113,14 @@ def dba_prompt(plan: str, existing_context: str = "") -> str:
         "4) Incluye sentencias INSERT estándar con datos de prueba realistas (al menos 3-5 filas por tabla) "
         "que funcionen tanto en SQLite como en PostgreSQL. "
         "Y adicionalmente, emite un mini reporte de seguridad sobre vulnerabilidades comunes en un archivo "
-        "de reporte de seguridad independiente en Markdown utilizando la sintaxis de bloque: "
-        "@@FILE: SECURITY_REPORT.md. NO escribas este reporte dentro del archivo de código SQL o Python, "
+        "de reporte de seguridad independiente en Markdown (SECURITY_REPORT.md). NO escribas este reporte dentro del archivo de código SQL o Python, "
         "debe ser un archivo de texto independiente. "
         "ANTI-BUG: Asegúrate de que las consultas SQL sean estándar y no contengan comillas invertidas "
         "(backticks) de MySQL.\n"
         f"{OptTools.CODE_GUIDELINES}\n"
         f"{SYNTAX_SAFETY_GUIDELINES}\n"
         f"{existing_context}"
+        f"{JSON_TOOL_CALLING_INSTRUCTION}"
     )
 
 
@@ -106,11 +135,9 @@ def frontend_prompt(plan: str, existing_context: str = "", style_mem_str: str = 
             "⚠️ STACK SELECCIONADO: PYTHON_STREAMLIT ⚠️\n"
             "El Agente Frontend NO DEBE generar ningún archivo HTML, CSS o JS, ya que Streamlit auto-genera "
             "la UI directamente desde Python.\n"
-            "Escribe únicamente un archivo de documentación temporal indicando que el diseño visual correrá en Streamlit:\n"
-            "@@FILE: visual_notes.md\n"
-            "El proyecto utiliza Streamlit para la UI. Toda la interactividad visual se define en app.py.\n"
-            "@@ENDFILE@@\n\n"
+            "Escribe únicamente un archivo de documentación temporal indicando que el diseño visual correrá en Streamlit (visual_notes.md).\n"
             f"{existing_context}{style_mem_str}"
+            f"{JSON_TOOL_CALLING_INSTRUCTION}"
         )
         
     elif stack == "NODE_EJS":
@@ -123,10 +150,10 @@ def frontend_prompt(plan: str, existing_context: str = "", style_mem_str: str = 
             "3) Si utilizas interactividad JS del cliente (navegador), escribe un bloque javascript separado para public/app.js y enlázalo en el EJS con <script src='/app.js'></script>.\n"
             "4) Si utilizas estilos personalizados, escríbelos en public/styles.css y enlázalos con <link rel='stylesheet' href='/styles.css'>.\n"
             "REGLA DE ENTORNOS (FRONTEND EXCLUSIVO): Todo el código JS para el navegador (como public/app.js) tiene prohibido importar librerías backend de Node o usar bases de datos directamente.\n"
-            "REGLA DE FORMATO OBLIGATORIA: Genera tus archivos completos utilizando @@FILE:. Está TOTALMENTE PROHIBIDO usar @@PATCH.\n"
             f"{OptTools.CODE_GUIDELINES}\n"
             f"{SYNTAX_SAFETY_GUIDELINES}\n"
             f"{existing_context}{style_mem_str}"
+            f"{JSON_TOOL_CALLING_INSTRUCTION}"
         )
 
     else:  # FASTAPI_HTMX (default)
@@ -146,10 +173,10 @@ def frontend_prompt(plan: str, existing_context: str = "", style_mem_str: str = 
             "3) Si requieres estilos personalizados, escríbelos en un archivo styles.css independiente y enlázalo con <link rel='stylesheet' href='styles.css'>.\n"
             "4) Evita escribir archivos Javascript de cliente (como app.js) a menos que sea estrictamente necesario. HTMX y Alpine.js deben resolver el dinamismo.\n"
             "REGLA DE ENTORNOS: Todo el código que se ejecuta en el navegador tiene prohibido acceder a bases de datos o importar librerías backend de servidor.\n"
-            "REGLA DE FORMATO OBLIGATORIA: Genera tus archivos completos utilizando @@FILE:. Está TOTALMENTE PROHIBIDO usar @@PATCH.\n"
             f"{OptTools.CODE_GUIDELINES}\n"
             f"{SYNTAX_SAFETY_GUIDELINES}\n"
             f"{existing_context}{style_mem_str}"
+            f"{JSON_TOOL_CALLING_INSTRUCTION}"
         )
 
 
@@ -167,10 +194,10 @@ def backend_prompt(plan: str, existing_context: str = "", stack: str = "FASTAPI_
             "1) DEBES basar tu código en la siguiente plantilla inmutable:\n"
             f"{PYTHON_STREAMLIT_TEMPLATE}\n"
             "⚠️ ADVERTENCIA CRÍTICA: Está TOTALMENTE PROHIBIDO dejar vacíos o conservar los comentarios # SQUAD_INJECT_DB_SCHEMA y # SQUAD_INJECT_LOGIC. DEBES borrarlos e inyectar en su lugar la creación de las tablas SQLite y toda la lógica de Streamlit (widgets, layouts, queries) correspondientes al SPEC.\n"
-            "2) REGLA DE FORMATO OBLIGATORIA: Genera el archivo app.py completo utilizando la etiqueta @@FILE: app.py. Está TOTALMENTE PROHIBIDO usar @@PATCH.\n"
             f"{OptTools.CODE_GUIDELINES}\n"
             f"{SYNTAX_SAFETY_GUIDELINES}\n"
             f"{existing_context}"
+            f"{JSON_TOOL_CALLING_INSTRUCTION}"
         )
 
     elif stack == "NODE_EJS":
@@ -182,10 +209,10 @@ def backend_prompt(plan: str, existing_context: str = "", stack: str = "FASTAPI_
             "1) DEBES basar tu código en la siguiente plantilla inmutable:\n"
             f"{NODE_EJS_TEMPLATE}\n"
             "⚠️ ADVERTENCIA CRÍTICA: Está TOTALMENTE PROHIBIDO dejar vacíos o conservar los comentarios // SQUAD_INJECT_DB_SCHEMA y // SQUAD_INJECT_LOGIC. DEBES borrarlos e inyectar en su lugar la creación de las tablas SQLite y todas las rutas (app.get/app.post) para renderizar las vistas EJS correspondientes al SPEC (incluyendo una ruta '/' que haga res.render('index')).\n"
-            "2) REGLA DE FORMATO OBLIGATORIA: Genera el archivo server.js completo utilizando la etiqueta @@FILE: server.js. Está TOTALMENTE PROHIBIDO usar @@PATCH.\n"
             f"{OptTools.CODE_GUIDELINES}\n"
             f"{SYNTAX_SAFETY_GUIDELINES}\n"
             f"{existing_context}"
+            f"{JSON_TOOL_CALLING_INSTRUCTION}"
         )
 
     else:  # FASTAPI_HTMX (default)
@@ -197,10 +224,10 @@ def backend_prompt(plan: str, existing_context: str = "", stack: str = "FASTAPI_
             "1) DEBES basar tu código en la siguiente plantilla inmutable:\n"
             f"{FASTAPI_HTMX_TEMPLATE}\n"
             "⚠️ ADVERTENCIA CRÍTICA: Está TOTALMENTE PROHIBIDO dejar vacíos o conservar los comentarios # SQUAD_INJECT_DB_SCHEMA y # SQUAD_INJECT_LOGIC. DEBES borrarlos e inyectar en su lugar la lógica de base de datos (creación de tablas SQLite) y todas las rutas/endpoints del backend correspondientes al SPEC (incluyendo una ruta @app.get('/') que devuelva index.html usando FileResponse o Jinja2Templates).\n"
-            "2) REGLA DE FORMATO OBLIGATORIA: Genera el archivo main_output.py completo utilizando la etiqueta @@FILE: main_output.py. Está TOTALMENTE PROHIBIDO usar @@PATCH.\n"
             f"{OptTools.CODE_GUIDELINES}\n"
             f"{SYNTAX_SAFETY_GUIDELINES}\n"
             f"{existing_context}"
+            f"{JSON_TOOL_CALLING_INSTRUCTION}"
         )
 
 
@@ -219,8 +246,8 @@ def fix_prompt(code_review: str) -> str:
     return (
         "Corrige estos errores expuestos en el siguiente Code Review:\n"
         f"{code_review}\n"
-        f"Genera el código reparado para los archivos necesarios usando formato @@FILE: o @@PATCH:\n"
         f"{SYNTAX_SAFETY_GUIDELINES}"
+        f"{JSON_TOOL_CALLING_INSTRUCTION}"
     )
 
 
@@ -249,8 +276,8 @@ def qa_devops_prompt() -> str:
         "REGLA CRÍTICA DE EJECUCIÓN:\n"
         "- Si el stack en SPEC.md es FASTAPI_HTMX o PYTHON_STREAMLIT: Genera pruebas y pipelines basados estrictamente en Python (pytest). Ignora por completo npm o node.\n"
         "- Si el stack es NODE_EJS: Genera pruebas y pipelines basados en Node (Jest/npm).\n"
-        "Usa formato @@FILE o @@PATCH\n"
         f"{SYNTAX_SAFETY_GUIDELINES}"
+        f"{JSON_TOOL_CALLING_INSTRUCTION}"
     )
 
 
@@ -259,11 +286,10 @@ def linter_prompt(error_summary: str, files_context: str) -> str:
     return (
         "Eres el Agente LINTER AUTÓNOMO de SQUAD. Se produjeron los siguientes errores:\n\n"
         f"{error_summary}\n\n"
-        "Corrige los archivos afectados para resolver TODOS los errores. "
-        "Genera el código reparado usando el formato @@FILE: para archivos completos o @@PATCH: para "
-        "ediciones incrementales (<<<<<<< SEARCH / ======= / >>>>>>> END).\n\n"
+        "Corrige los archivos afectados para resolver TODOS los errores.\n\n"
         f"Contexto actual de los archivos del proyecto:\n{files_context}\n"
-        "NO expliques, solo entrega los archivos corregidos."
+        "NO expliques, solo entrega las correcciones.\n"
+        f"{JSON_TOOL_CALLING_INSTRUCTION}"
     )
 
 

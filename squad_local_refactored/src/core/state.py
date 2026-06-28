@@ -61,8 +61,16 @@ class PipelineState:
     
     def log(self, message: str) -> None:
         """Add a message to the logs and print it."""
-        print(message)
+        try:
+            print(message)
+        except Exception:
+            try:
+                # Safe print fallback using ascii/replace
+                print(message.encode('ascii', errors='replace').decode('ascii'))
+            except Exception:
+                pass
         self.logs.append(message)
+
     
     def update_last_log(self, message: str) -> None:
         """Update the last log entry with a new message."""

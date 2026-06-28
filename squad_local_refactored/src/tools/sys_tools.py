@@ -303,7 +303,16 @@ class SysTools:
         if "dependencies" not in pkg_data or not isinstance(pkg_data["dependencies"], dict):
             pkg_data["dependencies"] = {}
             changed = True
+        
+        from .security import SecurityScanner
+        filtered_deps = set()
         for dep in detected_deps:
+            if dep.lower() in [p.lower() for p in SecurityScanner.NPM_ALLOWLIST]:
+                filtered_deps.add(dep)
+            else:
+                state.launcher_logs.append(f"🚫 [SEGURIDAD] Dependencia bloqueada: {dep}")
+
+        for dep in filtered_deps:
             if dep not in pkg_data["dependencies"]:
                 pkg_data["dependencies"][dep] = "*"
                 changed = True
@@ -374,6 +383,15 @@ class SysTools:
             for mod in detected_modules:
                 pkg = package_mapping.get(mod.lower(), mod)
                 needed_packages.add(pkg)
+
+            from .security import SecurityScanner
+            filtered_packages = set()
+            for pkg in needed_packages:
+                if pkg.lower() in [p.lower() for p in SecurityScanner.PIP_ALLOWLIST]:
+                    filtered_packages.add(pkg)
+                else:
+                    state.launcher_logs.append(f"🚫 [SEGURIDAD] Dependencia bloqueada: {pkg}")
+
             existing_packages = set()
             if os.path.exists(req_path):
                 try:
@@ -385,7 +403,7 @@ class SysTools:
                                 existing_packages.add(pkg_name.lower())
                 except Exception:
                     pass
-            missing = [pkg for pkg in needed_packages if pkg.lower() not in existing_packages]
+            missing = [pkg for pkg in filtered_packages if pkg.lower() not in existing_packages]
             if missing:
                 try:
                     with open(req_path, 'a', encoding='utf-8') as f_req:
@@ -394,7 +412,7 @@ class SysTools:
                 except Exception:
                     try:
                         with open(req_path, 'w', encoding='utf-8') as f_req:
-                            for pkg in needed_packages:
+                            for pkg in filtered_packages:
                                 f_req.write(f"{pkg}\n")
                     except Exception:
                         pass
@@ -820,6 +838,34 @@ class SysTools:
 
     @staticmethod
     def extract_and_write_multifile(text: str) -> List[str]:
+        """Parse and execute tools or fallback legacy @@FILE: operations.
+
+        Returns:
+            List of created/modified file names.
+        """
+        from .action_executor import ActionExecutor
+        import json
+        executor = ActionExecutor()
+        calls = executor.parse(text)
+        results = executor.execute_all(text)
+        
+        successful_files = []
+        for call, res in zip(calls, results):
+            if res.success:
+                if call.tool == "legacy_fallback":
+                    try:
+                        files = json.loads(res.message)
+                        successful_files.extend(files)
+                    except Exception:
+                        pass
+                else:
+                    path = call.parameters.get("path")
+                    if path:
+                        successful_files.append(path)
+        return list(set(successful_files))
+
+    @staticmethod
+    def _legacy_extract_and_write_multifile(text: str) -> List[str]:
         """Parse and execute ``@@FILE:``/``@@PATCH:``/``@@DELETE:`` operations from LLM output.
 
         Returns:
@@ -1021,12 +1067,26 @@ class SysTools:
                                 if not allowed:
                                     return False, f"ImportError: El archivo intenta importar el módulo local '{imported_module}' que no existe en el workspace ni está permitido en build_manifest.json. Todo el código debe ser autocontenido en {name}."
                 
+                # 3. Security Scan (SQUAD 2.0 Supply Chain & AST Scanning)
+                from .security import SecurityScanner
+                findings = SecurityScanner.scan_python_code(c, name)
+                for f in findings:
+                    if f.severity == "critical":
+                        return False, f"SecurityError: {f.message} (Línea {f.line})"
+                
                 return True, ""
             except SyntaxError as e:
                 return False, f"SyntaxError: {e.msg} en la línea {e.lineno}"
             except Exception as e:
                 return False, str(e)
         elif name.endswith(('.js', '.jsx', '.ts', '.tsx')):
+            # 1. Security Scan
+            from .security import SecurityScanner
+            findings = SecurityScanner.scan_javascript_code(c, name)
+            for f in findings:
+                if f.severity == "critical":
+                    return False, f"SecurityError: {f.message} (Línea {f.line})"
+
             if shutil.which('node'):
                 import tempfile
                 temp_f_name = None
@@ -1338,23 +1398,9 @@ class SysTools:
     # ------------------------------------------------------------------ #
     @staticmethod
     def run_command(cmd: List[str], cwd: Optional[str] = None, timeout: int = 300) -> Tuple[int, str, str]:
-        """Run a shell command and capture output.
-
-        Returns:
-            Tuple of (return_code, stdout, stderr).
-        """
-        if cwd is None:
-            cwd = SysTools.WORKSPACE
-        try:
-            result = subprocess.run(
-                cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout,
-                env={**os.environ, "PYTHONIOENCODING": "utf-8"}
-            )
-            return result.returncode, result.stdout, result.stderr
-        except subprocess.TimeoutExpired:
-            return -1, "", f"Command timed out after {timeout} seconds"
-        except Exception as e:
-            return -1, "", str(e)
+        from ..core.config import settings
+        from .sandbox_manager import SandboxManager
+        return SandboxManager(settings.sandbox_mode).run(cmd, cwd, timeout)
 
     @staticmethod
     def get_workspace_stats() -> Dict[str, Any]:
