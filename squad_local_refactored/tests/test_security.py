@@ -33,3 +33,10 @@ def test_validate_npm_deps():
     accepted, rejected = SecurityScanner.validate_npm_deps(package_json)
     assert "express" in accepted
     assert "malicious-npm-pkg" in rejected
+
+def test_python_syntax_error():
+    code = "eval('1+1'" # Missing closing parenthesis (SyntaxError)
+    findings = SecurityScanner.scan_python_code(code, "test.py")
+    assert len(findings) > 0
+    assert any(f.severity == "critical" and "SyntaxError" in f.pattern for f in findings)
+

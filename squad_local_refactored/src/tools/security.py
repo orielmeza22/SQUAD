@@ -115,8 +115,15 @@ class SecurityScanner:
 
             visitor = PythonSecurityVisitor(filename)
             visitor.visit(tree)
+        except SyntaxError as e:
+            findings.append(SecurityFinding(
+                filename=filename,
+                line=e.lineno or 1,
+                severity="critical",
+                pattern="SyntaxError",
+                message=f"Error de sintaxis detectado: {e.msg}."
+            ))
         except Exception:
-            # If compile/syntax errors exist, syntax checker will catch them.
             pass
 
         return findings

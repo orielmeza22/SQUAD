@@ -21,8 +21,9 @@ class SandboxManager:
 
     def find_free_port(self) -> int:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
-            s.bind(('', 0))
+            s.bind(('127.0.0.1', 0))
             port = s.getsockname()[1]
             return port
         except Exception:
@@ -35,6 +36,14 @@ class SandboxManager:
         pass
 
     def run(self, cmd: List[str], cwd: Optional[str] = None, timeout: int = 300) -> Tuple[int, str, str]:
+        # Validate command safety before execution (SQUAD 2.0 Security Bypass Fix)
+        from .security import SecurityScanner
+        import re
+        cmd_str = " ".join(cmd)
+        for pattern, reason in SecurityScanner.DANGEROUS_SHELL_PATTERNS:
+            if re.search(pattern, cmd_str):
+                return -1, "", f"SecurityError: Comando bloqueado: {reason}."
+
         if self.mode == "local":
             return self._run_local(cmd, cwd, timeout)
 
@@ -50,11 +59,14 @@ class SandboxManager:
         else:
             image = settings.docker_image_python
 
-        # Find container port and host port
-        container_port = 5000
-        for arg in cmd:
-            if arg.isdigit() and len(arg) >= 4:
-                container_port = int(arg)
+        # Find container port and host port via explicit flag scanning, fallback to default_port
+        container_port = getattr(state, "default_port", 5000)
+        for i, arg in enumerate(cmd):
+            if arg in ("--port", "-p", "-port") and i + 1 < len(cmd):
+                val = cmd[i + 1]
+                if val.isdigit():
+                    container_port = int(val)
+                    break
 
         free_port = self.find_free_port()
         workspace_abs = os.path.abspath(SysTools.WORKSPACE)

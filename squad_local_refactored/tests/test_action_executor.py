@@ -99,3 +99,21 @@ def test_action_executor_malformed_json():
     calls = executor.parse(llm_output)
     # Malformed JSON should not raise exceptions but return empty or fall back
     assert isinstance(calls, list)
+
+def test_action_executor_execute_cmd_blocked():
+    executor = ActionExecutor()
+    llm_output = """
+    [
+        {
+            "tool": "execute_cmd",
+            "parameters": {
+                "cmd": "rm -rf /"
+            }
+        }
+    ]
+    """
+    results = executor.execute_all(llm_output)
+    assert len(results) == 1
+    assert results[0].success is False
+    assert "SecurityError" in results[0].message
+

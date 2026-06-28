@@ -1080,13 +1080,7 @@ class SysTools:
             except Exception as e:
                 return False, str(e)
         elif name.endswith(('.js', '.jsx', '.ts', '.tsx')):
-            # 1. Security Scan
-            from .security import SecurityScanner
-            findings = SecurityScanner.scan_javascript_code(c, name)
-            for f in findings:
-                if f.severity == "critical":
-                    return False, f"SecurityError: {f.message} (Línea {f.line})"
-
+            # 1. Syntax check
             if shutil.which('node'):
                 import tempfile
                 temp_f_name = None
@@ -1100,13 +1094,20 @@ class SysTools:
                     if res.returncode != 0:
                         err = res.stderr.replace(temp_f_name, name)
                         return False, err.strip()
-                    return True, ""
                 except Exception:
                     try:
                         if temp_f_name:
                             os.remove(temp_f_name)
                     except Exception:
                         pass
+            
+            # 2. Security Scan
+            from .security import SecurityScanner
+            findings = SecurityScanner.scan_javascript_code(c, name)
+            for f in findings:
+                if f.severity == "critical":
+                    return False, f"SecurityError: {f.message} (Línea {f.line})"
+            return True, ""
         return True, ""
 
     @staticmethod

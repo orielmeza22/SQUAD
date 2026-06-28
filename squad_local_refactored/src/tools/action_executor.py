@@ -41,7 +41,7 @@ class ActionExecutor:
 
         # 3. Fallback compatibility: if no JSON, delegate to SysTools.extract_and_write_multifile
         # Check if any legacy markers exist to trigger fallback
-        if any(tag in llm_output for tag in ("@@FILE:", "@@PATCH:", "@@DELETE:", "```")):
+        if any(tag in llm_output for tag in ("@@FILE:", "@@PATCH:", "@@DELETE:")):
             state.launcher_logs.append("⚠️ [DEPRECACIÓN] Salida en formato legacy detectada. Migrando a JSON schemas.")
             files = SysTools._legacy_extract_and_write_multifile(llm_output)
             return [ToolCall(tool="legacy_fallback", parameters={"files": files})]
@@ -142,6 +142,15 @@ class ActionExecutor:
 
         elif tool == "execute_cmd":
             cmd = params.get("cmd", "")
+            from .security import SecurityScanner
+            import re
+            for pattern, reason in SecurityScanner.DANGEROUS_SHELL_PATTERNS:
+                if re.search(pattern, cmd):
+                    return ToolResult(
+                        tool=tool,
+                        success=False,
+                        message=f"SecurityError: Comando bloqueado: {reason}."
+                    )
             cmd_list = shlex.split(cmd)
             try:
                 rc, out, err = SysTools.run_command(cmd_list)
