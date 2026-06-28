@@ -13,8 +13,7 @@ from squad_local_refactored.src.pipeline.graph_orchestrator import (
     resume_after_spec_approval,
     route_after_review,
     route_after_qa,
-    SquadGraphState,
-    _build_graph
+    SquadGraphState
 )
 from squad_local_refactored.src.api.server import create_app
 from squad_local_refactored.src.tools.sys_tools import SysTools
@@ -146,3 +145,82 @@ def test_graph_execution_hitl_and_retry_limits(monkeypatch, tmp_path):
         
     finally:
         SysTools.WORKSPACE = original_workspace
+
+def test_review_loop_goes_directly_to_backend(monkeypatch):
+    """Tras review FAIL, el grafo vuelve a backend (no a un nodo fix fantasma)."""
+    state_v = {"review_verdict": "FAIL", "retries": {"backend": 0}, "last_errors": ["err"], "messages": []}
+    assert route_after_review(state_v) == "fix_backend"
+
+def test_review_loop_terminates_at_max_retries(monkeypatch):
+    """El bucle review->backend->review termina en max_retries+1 iteraciones."""
+    state_v = {"review_verdict": "FAIL", "retries": {"backend": 0}, "last_errors": ["err"], "messages": []}
+    steps = 0
+    backend_runs = 0
+    while steps < 20:
+        r = route_after_review(state_v)
+        if r == "fix_backend":
+            state_v["retries"]["backend"] += 1
+            backend_runs += 1
+        elif r == "qa":
+            break
+        steps += 1
+    assert backend_runs <= 3  # graph_max_retries
+    assert steps < 20          # no loop infinito
+
+def test_qa_loop_goes_to_fix():
+    state_v = {"last_errors": ["test failed"], "retries": {"fix": 0}, "messages": []}
+    assert route_after_qa(state_v) == "fix_qa"   # QA sí va a fix
+
+def test_resume_with_invalid_run_id_returns_false(monkeypatch, tmp_path):
+    """run_id inexistente retorna False sin abrir el saver."""
+    from squad_local_refactored.src.pipeline import graph_orchestrator as go
+    monkeypatch.setattr(go.SysTools, "WORKSPACE", str(tmp_path))
+    # No crear el archivo sqlite, simular que no existe
+    result = go.resume_graph_pipeline("nonexistent_run_123")
+    assert result is False
+
+def test_fix_node_paused_on_destructive_cmd(monkeypatch, tmp_path):
+    """Si el fix genera un execute_cmd destructivo, el grafo pausa para HITL."""
+    from squad_local_refactored.src.pipeline import graph_orchestrator as go
+    from squad_local_refactored.src.core.state import state as global_state
+    
+    monkeypatch.setattr(go.SysTools, "WORKSPACE", str(tmp_path))
+    # Mock del LLM: devuelve un execute_cmd con rm -rf
+    import json
+    malicious_cmd = json.dumps([{"tool": "execute_cmd", "parameters": {"cmd": "rm -rf /tmp/x"}}])
+    monkeypatch.setattr(go.AIProvider, "generate", lambda self, **kw: malicious_cmd)
+    
+    state_val = {
+        "prompt": "test", "model": "gemini", "target_model": "gemini",
+        "search_ctx": "", "plan": "", "stack": "FASTAPI_HTMX",
+        "created_files": [], "last_errors": ["some error"],
+        "review_verdict": "FAIL", "retries": {"fix": 0}, "messages": []
+    }
+    # Clear status
+    global_state.pipeline_status = "running"
+    
+    result = go.node_fix(state_val)
+    assert global_state.pipeline_status == "waiting_hitl_approval"
+    assert result["messages"][-1].startswith("HITL paused")
+
+def test_fix_node_runs_benign_cmd(monkeypatch, tmp_path):
+    """Un execute_cmd benigno se ejecuta sin pausa."""
+    from squad_local_refactored.src.pipeline import graph_orchestrator as go
+    from squad_local_refactored.src.core.state import state as global_state
+    
+    monkeypatch.setattr(go.SysTools, "WORKSPACE", str(tmp_path))
+    import json
+    benign_cmd = json.dumps([{"tool": "execute_cmd", "parameters": {"cmd": "echo hello"}}])
+    monkeypatch.setattr(go.AIProvider, "generate", lambda self, **kw: benign_cmd)
+    # Limpiar estado
+    global_state.pipeline_status = "running"
+    
+    state_val = {
+        "prompt": "test", "model": "gemini", "target_model": "gemini",
+        "search_ctx": "", "plan": "", "stack": "FASTAPI_HTMX",
+        "created_files": [], "last_errors": ["some error"],
+        "destructive_calls": [], "retries": {"fix": 0}, "messages": []
+    }
+    go.node_fix(state_val)
+    assert global_state.pipeline_status != "waiting_hitl_approval"  # no pausó
+

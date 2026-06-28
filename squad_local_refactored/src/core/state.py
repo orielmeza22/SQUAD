@@ -12,7 +12,7 @@ class PipelineState:
     # Pipeline status
     logs: List[str] = field(default_factory=list)
     is_running: bool = False
-    pipeline_status: str = "idle"  # idle | running | waiting_spec_approval
+    pipeline_status: str = "idle"  # idle | running | waiting_spec_approval | waiting_hitl_approval
     pending_pipeline_data: Dict[str, Any] = field(default_factory=dict)
     
     # Diagnostics

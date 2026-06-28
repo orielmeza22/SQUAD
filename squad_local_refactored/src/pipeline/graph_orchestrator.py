@@ -38,19 +38,6 @@ class SquadGraphState(TypedDict):
     retries: Dict[str, int]       # {agent_name: retry_count}
     messages: List[str]           # log interno del grafo
 
-_saver_instance = None
-
-def _get_saver():
-    global _saver_instance
-    if _saver_instance is not None:
-        return _saver_instance
-    
-    db_name = getattr(settings, "graph_checkpoint_db", "squad_checkpoints.sqlite")
-    os.makedirs(SysTools.WORKSPACE, exist_ok=True)
-    db_path = os.path.abspath(os.path.join(SysTools.WORKSPACE, db_name))
-    
-    _saver_instance = SqliteSaver.from_conn_string(db_path)
-    return _saver_instance
 
 def _get_preflight() -> Dict[str, bool]:
     """Detect which host tools are available on PATH."""
@@ -273,6 +260,16 @@ def node_review(state_val: SquadGraphState) -> dict:
         "messages": state_val["messages"] + [f"Review verdict: {verdict}"]
     }
 
+def _is_destructive_action(cmd: str) -> bool:
+    """Detecta si un comando requiere HITL antes de ejecutarse."""
+    from ..tools.security import SecurityScanner
+    findings = SecurityScanner.scan_command(cmd) if hasattr(SecurityScanner, "scan_command") else []
+    if not findings:
+        for pattern, _ in SecurityScanner.DANGEROUS_SHELL_PATTERNS:
+            if re.search(pattern, cmd):
+                return True
+    return len(findings) > 0
+
 def node_fix(state_val: SquadGraphState) -> dict:
     state.set_node_status("fix", "executing")
     retries = state_val["retries"].copy()
@@ -286,8 +283,29 @@ def node_fix(state_val: SquadGraphState) -> dict:
         from ..agents.prompts import fix_prompt
         fix_p = fix_prompt(last_errors[-1])
         fix_out = AIProvider().generate(model=target_model, prompt=fix_p)
+        
+        # HITL: verificar acciones destructivas antes de ejecutar
         from ..tools.action_executor import ActionExecutor
-        ActionExecutor().execute_all(fix_out)
+        executor = ActionExecutor()
+        calls = executor.parse(fix_out)
+        destructive = []
+        for call in calls:
+            if call.tool == "execute_cmd":
+                cmd = call.parameters.get("cmd", "")
+                if _is_destructive_action(cmd):
+                    destructive.append(cmd)
+        
+        if destructive:
+            state.log(f"⏸️ [HITL] Acción destructiva detectada: {destructive}. Pausando grafo...")
+            state.pending_writes["hitl_pending_cmd"] = "\n".join(destructive)
+            state.pipeline_status = "waiting_hitl_approval"
+            state.set_node_status("fix", "paused_hitl")
+            return {
+                "retries": retries,
+                "messages": state_val["messages"] + [f"HITL paused for: {destructive}"]
+            }
+            
+        executor.execute_all(fix_out)
         state.log("🧹 Linter Autónomo resolvió los bugs del Review.")
 
     state.set_node_status("fix", "done")
@@ -381,13 +399,7 @@ def route_after_qa(state_val: SquadGraphState) -> str:
             return "fix_qa"
     return "devops"
 
-# GRAPH COMPILING
 
-def _build_graph():
-    workflow = StateGraph(SquadGraphState)
-    workflow.add_node("architect", node_architect)
-    workflow.add_node("dba", node_dba)
-# GRAPH COMPILING & RUNNING VIA SAVER CONTEXT
 
 def _run_with_saver(fn):
     if not LANGGRAPH_AVAILABLE:
@@ -413,14 +425,14 @@ def _run_with_saver(fn):
         workflow.add_edge("frontend", "backend")      # Frontend → Backend
         workflow.add_edge("backend", "review")        # Backend → Review
         workflow.add_conditional_edges("review", route_after_review, {
-            "fix_backend": "fix",
+            "fix_backend": "backend",
             "qa": "qa"
         })
-        workflow.add_edge("fix", "backend")           # fix → Backend (EL BUCLE)
         workflow.add_conditional_edges("qa", route_after_qa, {
             "fix_qa": "fix",
             "devops": END
         })
+        workflow.add_edge("fix", "qa")
         
         app = workflow.compile(checkpointer=saver, interrupt_after=["architect"])
         return fn(app)
@@ -497,6 +509,13 @@ def resume_graph_pipeline(run_id: str) -> bool:
     if not LANGGRAPH_AVAILABLE:
         return False
     
+    # VERIFICACIÓN TEMPRANA: ¿existe el archivo de checkpoint?
+    db_name = getattr(settings, "graph_checkpoint_db", "squad_checkpoints.sqlite")
+    db_path = os.path.abspath(os.path.join(SysTools.WORKSPACE, db_name))
+    if not os.path.exists(db_path):
+        state.log(f"❌ No existe checkpoint DB en {db_path}")
+        return False
+    
     state.pipeline_status = "running"
     state.is_running = True
     state.graph_run_id = run_id
@@ -508,9 +527,7 @@ def resume_graph_pipeline(run_id: str) -> bool:
         try:
             state_info = app.get_state(config)
             if not state_info or not state_info.values:
-                state.log(f"❌ Checkpoint no encontrado para run_id: {run_id}")
-                state.pipeline_status = "idle"
-                state.is_running = False
+                state.log(f"❌ Checkpoint vacío o no encontrado para run_id: {run_id}")
                 return False
                 
             app.invoke(None, config)
@@ -519,7 +536,6 @@ def resume_graph_pipeline(run_id: str) -> bool:
             if state_info.next:
                 state.pipeline_status = "waiting_spec_approval"
                 state.is_running = False
-                state.log("⏸️ Pipeline en pausa de nuevo.")
             else:
                 state.pipeline_status = "idle"
                 state.is_running = False

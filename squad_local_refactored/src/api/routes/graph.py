@@ -1,5 +1,5 @@
 """Graph telemetry and status routes."""
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from ...core.state import state
 from ...core.config import settings
 
@@ -44,3 +44,15 @@ def get_graph_status():
         "last_error": state.graph_last_error,
         "is_paused_hitl": is_paused_hitl
     }
+
+
+@router.post("/api/graph/hitl/approve")
+def approve_hitl(background_tasks: BackgroundTasks):
+    """Resume the graph after Human-in-the-Loop approval of destructive action."""
+    from ...pipeline.graph_orchestrator import resume_graph_pipeline, is_graph_mode_available
+    if not is_graph_mode_available() or not state.graph_run_id:
+        raise HTTPException(status_code=400, detail="No hay ejecución de grafo activa.")
+    state.launcher_logs.append("✅ [HITL] Acción aprobada por usuario. Reanudando...")
+    background_tasks.add_task(resume_graph_pipeline, state.graph_run_id)
+    return {"success": True, "message": "Grafo reanudado tras HITL."}
+
