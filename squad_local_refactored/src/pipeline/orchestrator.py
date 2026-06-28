@@ -53,6 +53,15 @@ def run_agent_pipeline(prompt: str, model: str) -> None:
 
     Parks the pipeline in ``waiting_spec_approval`` pending user review.
     """
+    from ..core.config import settings
+    if getattr(settings, "orchestrator_mode", "legacy") == "graph":
+        from .graph_orchestrator import run_graph_pipeline, is_graph_mode_available
+        if is_graph_mode_available():
+            run_graph_pipeline(prompt, model)
+            return
+        else:
+            state.log("⚠️ orchestrator_mode='graph' pero langgraph no está instalado. Usando pipeline legacy.")
+
     state.is_running = True
     state.pipeline_status = "running"
     state.logs = []

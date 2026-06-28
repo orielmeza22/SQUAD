@@ -59,6 +59,15 @@ class PipelineState:
     # Chat history
     chat_history: List[Dict[str, str]] = field(default_factory=list)
     
+    # LangGraph state
+    graph_run_id: Optional[str] = None        # ID del run actual para reanudar
+    graph_node_status: Dict[str, str] = field(default_factory=dict)  # {agent_name: "thinking"|"executing"|"error"|"done"|"paused_hitl"}
+    graph_last_error: Optional[str] = None    # último error reportado por QA/reviewer
+
+    def set_node_status(self, node: str, status: str) -> None:
+        self.graph_node_status[node] = status
+        self.log(f"[{node}] → {status}")
+    
     def log(self, message: str) -> None:
         """Add a message to the logs and print it."""
         try:

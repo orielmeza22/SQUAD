@@ -52,5 +52,27 @@ Reescribe y actualiza la especificación técnica aplicando el feedback del usua
 @router.post("/api/spec/approve")
 def api_spec_approve(background_tasks: BackgroundTasks):
     """Approve the SPEC.md and run Phase 2 (code building) in background."""
+    from ...core.config import settings
+    if getattr(settings, "orchestrator_mode", "legacy") == "graph":
+        from ...pipeline.graph_orchestrator import resume_after_spec_approval, is_graph_mode_available
+        if is_graph_mode_available() and state.graph_run_id:
+            background_tasks.add_task(resume_after_spec_approval, state.graph_run_id)
+            return {"success": True, "message": "Fase 2 del enjambre (Grafo) iniciada en segundo plano."}
+    
     background_tasks.add_task(run_agent_pipeline_phase_2)
     return {"success": True, "message": "Fase 2 del enjambre iniciada en segundo plano."}
+
+
+@router.post("/api/agent/spec/approve")
+def api_agent_spec_approve(background_tasks: BackgroundTasks):
+    """LangGraph SPEC approval endpoint."""
+    from ...core.config import settings
+    from ...pipeline.graph_orchestrator import resume_after_spec_approval, is_graph_mode_available
+    if not is_graph_mode_available():
+        raise HTTPException(status_code=400, detail="LangGraph no está disponible.")
+    if not state.graph_run_id:
+        raise HTTPException(status_code=400, detail="No hay ninguna ejecución activa del grafo.")
+    
+    background_tasks.add_task(resume_after_spec_approval, state.graph_run_id)
+    return {"success": True, "message": "Grafo reanudado tras aprobación de especificación."}
+
