@@ -18,6 +18,14 @@ def api_run_agent(background_tasks: BackgroundTasks, data: dict = Body(default={
     """Run the multi-agent pipeline Phase 1 (SPEC design) in background."""
     model = data.get('model', 'gemini-2.5-flash')
     goal = data.get('goal', '')
+    
+    from ...core.config import settings
+    if getattr(settings, "orchestrator_mode", "legacy") == "graph":
+        from ...pipeline.graph_orchestrator import run_graph_pipeline, is_graph_mode_available
+        if is_graph_mode_available():
+            background_tasks.add_task(run_graph_pipeline, goal, model)
+            return "OK"
+            
     background_tasks.add_task(run_agent_pipeline, goal, model)
     return "OK"
 

@@ -808,6 +808,36 @@ class SysTools:
         Returns:
             Dict mapping filename to file content.
         """
+        import json
+        try:
+            # Try to strip markdown fences if present
+            clean_text = text.strip()
+            if clean_text.startswith("```"):
+                import re
+                blocks = re.findall(r'```(?:json)?\s*(.*?)\s*```', clean_text, re.DOTALL)
+                if blocks:
+                    clean_text = blocks[0].strip()
+            
+            data = json.loads(clean_text)
+            items = []
+            if isinstance(data, list):
+                items = data
+            elif isinstance(data, dict):
+                items = [data]
+            
+            json_files = {}
+            for item in items:
+                if isinstance(item, dict) and item.get("tool") == "write_file":
+                    params = item.get("parameters", {})
+                    path = params.get("path")
+                    content = params.get("content")
+                    if path and content is not None:
+                        json_files[os.path.basename(path)] = content
+            if json_files:
+                return json_files
+        except Exception:
+            pass
+
         lines = text.split("\n")
         current_file = None
         current_content = []
