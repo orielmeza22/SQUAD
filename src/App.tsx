@@ -164,6 +164,24 @@ function MainLayout() {
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false);
   const [currentWorkspace, setCurrentWorkspace] = useState('sanatorio-mx');
+  const [elapsedTime, setElapsedTime] = useState(154);
+
+  useEffect(() => {
+    let interval: any;
+    if (isPipelineRunning) {
+      setElapsedTime(0);
+      interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPipelineRunning]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   // States for Tiers 1-4 UI features
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
@@ -687,7 +705,7 @@ function MainLayout() {
           <div className="flex items-center gap-2 px-3 py-1.5 badge-primary rounded-lg">
             <div className={`w-1.5 h-1.5 rounded-full ${isPipelineRunning ? 'bg-qwen-400 pulse-dot' : 'bg-gray-500'}`}></div>
             <span className="font-semibold text-xs">{isPipelineRunning ? 'RUNNING' : 'IDLE'}</span>
-            <span className="text-qwen-300/70 font-mono text-[10px]">02:34</span>
+            <span className="text-qwen-300/70 font-mono text-[10px]">{formatTime(elapsedTime)}</span>
           </div>
 
           {/* Action buttons */}
@@ -769,7 +787,7 @@ function MainLayout() {
             </div>
             <div>
               <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Elapsed</div>
-              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">02:34</div>
+              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">{formatTime(elapsedTime)}</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
