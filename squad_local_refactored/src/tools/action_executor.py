@@ -145,9 +145,13 @@ class ActionExecutor:
             
             try:
                 SysTools.write(path, content)
+                full_path = os.path.join(SysTools.WORKSPACE, path)
+                if not os.path.exists(full_path):
+                    return ToolResult(tool=tool, success=False, message=f"FileSystemError: El archivo '{path}' no pudo ser escrito físicamente en disco.")
                 return ToolResult(tool=tool, success=True, message=f"Archivo '{path}' creado/sobrescrito con éxito.")
             except Exception as e:
                 return ToolResult(tool=tool, success=False, message=str(e))
+
 
         elif tool == "apply_patch":
             search = params.get("search", "")
@@ -176,9 +180,13 @@ class ActionExecutor:
                 # Format to SEARCH/REPLACE format expected by apply_patch helper
                 patch_str = f"<<<<<<< SEARCH\n{search}\n=======\n{replace}\n>>>>>>> END"
                 SysTools.apply_patch(path, patch_str)
+                full_path = os.path.join(SysTools.WORKSPACE, path)
+                if not os.path.exists(full_path):
+                    return ToolResult(tool=tool, success=False, message=f"FileSystemError: El archivo '{path}' no existe tras aplicar el parche.")
                 return ToolResult(tool=tool, success=True, message=f"Parche aplicado con éxito sobre '{path}'.")
             except Exception as e:
                 return ToolResult(tool=tool, success=False, message=str(e))
+
 
         elif tool == "delete_file":
             try:

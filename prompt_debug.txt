@@ -1,7 +1,7 @@
 Corrige estos errores expuestos en el siguiente Code Review:
 Pruebas pytest fallaron (Código 1): ============================= test session starts =============================
 platform win32 -- Python 3.14.6, pytest-9.1.0, pluggy-1.6.0
-rootdir: C:\Users\miapu\AppData\Local\Temp\pytest-of-miapu\pytest-53\test_fix_node_paused_on_destru1
+rootdir: C:\Users\miapu\AppData\Local\Temp\pytest-of-miapu\pytest-55\test_fix_node_paused_on_destru1
 plugins: anyio-4.13.0, langsmith-0.9.3
 collected 1 item
 
@@ -34,10 +34,10 @@ Para evitar errores de sintaxis (SyntaxError, ReferenceError):
 - Escribe la menor cantidad de código posible para lograr el objetivo. Evita sobre-ingeniería, clases accesorias o helpers redundantes.
 
 
-FORMATO DE SALIDA OBLIGATORIO: Elige UNO de estos dos formatos para escribir archivos. NO mezcles formatos.
+FORMATO DE SALIDA OBLIGATORIO: Debes responder preferentemente usando el FORMATO A (JSON estructurado). El FORMATO B (@@FILE) está deprecado y será eliminado en futuras versiones de SQUAD.
 
---- FORMATO A (preferido, JSON) ---
-Responde con un array JSON de acciones. Tu respuesta debe comenzar con [ y terminar con ]:
+--- FORMATO A (RECOMENDADO, JSON) ---
+Responde con un array JSON de acciones. Tu respuesta debe comenzar con [ y terminar con ].
 [
   {
     "tool": "write_file",
@@ -48,10 +48,8 @@ Responde con un array JSON de acciones. Tu respuesta debe comenzar con [ y termi
   }
 ]
 
---- FORMATO B (alternativo, si no puedes generar JSON válido) ---
-Usa marcadores @@FILE: para cada archivo:
+--- FORMATO B (DEPRECADO, @@FILE) ---
+Úsalo únicamente como último recurso si tienes problemas insalvables para formatear el JSON:
 @@FILE: nombre_archivo.py
-# contenido del archivo aquí
+# contenido
 @@ENDFILE@@
-
-REGLA: Si usas el FORMATO B, cada archivo DEBE tener un marcador @@FILE: con el nombre exacto del archivo antes del contenido.

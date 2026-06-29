@@ -30,10 +30,10 @@ Para evitar errores de sintaxis (SyntaxError, ReferenceError):
 
 JSON_TOOL_CALLING_INSTRUCTION = """
 
-FORMATO DE SALIDA OBLIGATORIO: Elige UNO de estos dos formatos para escribir archivos. NO mezcles formatos.
+FORMATO DE SALIDA OBLIGATORIO: Debes responder preferentemente usando el FORMATO A (JSON estructurado). El FORMATO B (@@FILE) está deprecado y será eliminado en futuras versiones de SQUAD.
 
---- FORMATO A (preferido, JSON) ---
-Responde con un array JSON de acciones. Tu respuesta debe comenzar con [ y terminar con ]:
+--- FORMATO A (RECOMENDADO, JSON) ---
+Responde con un array JSON de acciones. Tu respuesta debe comenzar con [ y terminar con ].
 [
   {
     "tool": "write_file",
@@ -44,14 +44,13 @@ Responde con un array JSON de acciones. Tu respuesta debe comenzar con [ y termi
   }
 ]
 
---- FORMATO B (alternativo, si no puedes generar JSON válido) ---
-Usa marcadores @@FILE: para cada archivo:
+--- FORMATO B (DEPRECADO, @@FILE) ---
+Úsalo únicamente como último recurso si tienes problemas insalvables para formatear el JSON:
 @@FILE: nombre_archivo.py
-# contenido del archivo aquí
+# contenido
 @@ENDFILE@@
-
-REGLA: Si usas el FORMATO B, cada archivo DEBE tener un marcador @@FILE: con el nombre exacto del archivo antes del contenido.
 """
+
 
 
 def architect_prompt(prompt: str, search_ctx: str, preflight: dict, existing_context: str = "") -> str:
