@@ -923,11 +923,11 @@ class SysTools:
                 # 2. Local import validation check (SQUAD 2.0 Shift-Left Imports)
                 import ast
                 import sys
-                
-                std_libs = set(sys.builtin_module_names)
+                std_libs = getattr(sys, "stdlib_module_names", set(sys.builtin_module_names))
                 common_libs = {"fastapi", "uvicorn", "jinja2", "streamlit", "sqlite3", "pydantic", "sqlalchemy", "requests", "bs4", "pandas", "numpy"}
                 
                 tree = ast.parse(c, filename=name)
+
                 for node in ast.walk(tree):
                     imported_module = None
                     if isinstance(node, ast.Import):

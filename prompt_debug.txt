@@ -1,7 +1,7 @@
 Corrige estos errores expuestos en el siguiente Code Review:
 Pruebas pytest fallaron (Código 1): ============================= test session starts =============================
 platform win32 -- Python 3.14.6, pytest-9.1.0, pluggy-1.6.0
-rootdir: C:\Users\miapu\AppData\Local\Temp\pytest-of-miapu\pytest-56\test_fix_node_paused_on_destru1
+rootdir: C:\Users\miapu\AppData\Local\Temp\pytest-of-miapu\pytest-57\test_fix_node_paused_on_destru1
 plugins: anyio-4.13.0, langsmith-0.9.3
 collected 1 item
 
@@ -17,7 +17,7 @@ E       assert False
 test_fail_test.py:2: AssertionError
 =========================== short test summary info ===========================
 FAILED test_fail_test.py::test_always_fails - assert False
-============================== 1 failed in 0.10s ==============================
+============================== 1 failed in 0.08s ==============================
  
 
 ⚠️ IMPORTANTE: REGLA DE SEGURIDAD DE SINTAXIS E INTEGRIDAD ⚠️
