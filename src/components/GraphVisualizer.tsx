@@ -115,21 +115,6 @@ export default function GraphVisualizer() {
     ];
   }, []);
 
-  const hasActivity = Object.keys(nodeStatus).length > 0;
-
-  if (!hasActivity) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-600">
-        <div className="text-center space-y-2">
-          <div className="text-[24px]">🕸️</div>
-          <p className="text-[10px] font-mono">
-            Grafo inactivo. Inicia un pipeline para visualizar el enjambre.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full w-full bg-[#0A0A0C]">
       <ReactFlow
