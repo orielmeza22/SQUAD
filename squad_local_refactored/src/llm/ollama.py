@@ -34,7 +34,7 @@ class OllamaProvider(LLMProvider):
             return False
     
     def list_models(self) -> List[str]:
-        """Get list of available models from Ollama.
+        """Get list of available models from Ollama (excluding vision/vl models).
         
         Returns:
             List of model names.
@@ -42,9 +42,14 @@ class OllamaProvider(LLMProvider):
         try:
             with urllib.request.urlopen(f"{self.host}/api/tags", timeout=3) as req:
                 data = json.loads(req.read().decode('utf-8'))
-                return [model['name'] for model in data.get('models', [])]
+                raw_list = [model['name'] for model in data.get('models', [])]
+                filtered = [m for m in raw_list if "vl" not in m.lower()]
+                coder_models = [m for m in filtered if "coder" in m.lower()]
+                other_models = [m for m in filtered if "coder" not in m.lower()]
+                return coder_models + other_models
         except Exception:
             return []
+
     
     def generate(
         self,

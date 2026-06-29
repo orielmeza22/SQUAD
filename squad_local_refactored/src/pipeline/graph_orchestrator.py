@@ -457,9 +457,17 @@ def node_qa(state_val: SquadGraphState) -> dict:
         test_files = [f for f in os.listdir(SysTools.WORKSPACE) if f.startswith("test_") and f.endswith(".py")]
         if test_files:
             test_ran = True
-            rc, stdout, stderr = SysTools.run_command(["python", "-m", "pytest"] + test_files)
+            state.log("📦 [QA]: Configurando entorno de ejecución de pruebas (venv)...")
+            python_exe, pip_exe = SysTools.setup_venv()
+            
+            # Ensure dependencies are installed in the venv before running tests
+            state.log("📦 [QA]: Instalando dependencias de testing (pytest, pytest-asyncio, httpx)...")
+            SysTools.run_command([pip_exe, "install", "fastapi", "uvicorn", "jinja2", "pytest", "pytest-asyncio", "httpx"])
+            
+            rc, stdout, stderr = SysTools.run_command([python_exe, "-m", "pytest"] + test_files)
             if rc != 0:
                 last_errors.append(f"Pruebas pytest fallaron (Código {rc}): {stdout} {stderr}")
+
 
     if test_ran:
         if last_errors:
