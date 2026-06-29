@@ -1,183 +1,309 @@
+STACK: FASTAPI_HTMX
+
 ### Especificación de Software (SPEC)
 
-**STACK:** FASTAPI_HTMX
+#### 1. Introducción:
+Este documento define el diseño, arquitectura y especificaciones técnicas para un sistema de gestión completo para un sanatorio utilizando el stack FASTAPI_HTMX.
 
----
+#### 2. Objetivo del Proyecto:
+El objetivo es desarrollar una aplicación web completa que permita gestionar los aspectos administrativos y operativos de un sanatorio, incluyendo la gestión de pacientes, personal médico, recursos médicos, y otros datos relevantes.
 
-#### **1. Descripción General**
+#### 3. Arquitectura del Sistema:
 
-El sistema web de gestión de turnos es una aplicación diseñada para gestionar eficientemente los horarios y asignaciones de personal en un entorno empresarial a escala pequeña. Utilizando el stack tecnológico **FASTAPI_HTMX**, la aplicación se basará en Python, FastAPI para el backend, HTMX para la interactividad del frontend, y SQLite como base de datos.
+##### Backend:
+- **Lenguaje**: Python
+- **Framework**: FastAPI
+- **Interacción Cliente-Servidor**: HTMX (HyperText Markup Language eXtended)
+- **Base de Datos**: SQLite
 
----
+##### Frontend:
+- **HTML/CSS**: Servido por FastAPI
+- **JavaScript**: No se requiere, ya que todo el frontend está servido por FastAPI.
 
-#### **2. Base de Datos**
+#### 4. Estructura del Proyecto:
 
-**Archivo:** squad_checkpoints.sqlite
+1. **Archivos y carpetas**:
+   - `main_output.py`: Punto de entrada para el backend.
+   - `static/`: Carpeta para archivos estáticos (CSS, JS).
+   - `templates/`: Carpeta para plantillas HTML.
 
-La base de datos SQLite `squad_checkpoints.sqlite` contendrá las siguientes tablas:
+2. **Estructura del Backend**:
+   ```plaintext
+   .
+   ├── main_output.py
+   ├── static/
+   │   └── styles.css
+   │   └── scripts.js
+   ├── templates/
+   │   └── index.html
+   ```
 
-1. **Usuarios**
-   - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
-   - `nombre`: TEXT NOT NULL
-   - `email`: TEXT UNIQUE NOT NULL
-   - `rol`: TEXT NOT NULL (e.g., 'admin', 'empleado')
+#### 5. Estructura de las Tablas en SQLite:
 
-2. **Turnos**
-   - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
-   - `fecha`: DATE NOT NULL
-   - `hora_inicio`: TIME NOT NULL
-   - `hora_fin`: TIME NOT NULL
-   - `usuario_id`: INTEGER, FOREIGN KEY (usuario_id) REFERENCES Usuarios(id)
+1. **Tabla `pacientes`**:
+    - `id`: Integer, Primary Key, Autoincremental.
+    - `nombre`: Text.
+    - `apellido`: Text.
+    - `fecha_nacimiento`: Date.
+    - `diagnostico`: Text.
 
-3. **Asignaciones**
-   - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
-   - `turno_id`: INTEGER, FOREIGN KEY (turno_id) REFERENCES Turnos(id)
-   - `empleado_id`: INTEGER, FOREIGN KEY (empleado_id) REFERENCES Usuarios(id)
+2. **Tabla `personal_medico`**:
+    - `id`: Integer, Primary Key, Autoincremental.
+    - `nombre`: Text.
+    - `cargo`: Text.
+    - `especialidad`: Text.
 
----
+3. **Tabla `recursos_medicos`**:
+    - `id`: Integer, Primary Key, Autoincremental.
+    - `tipo`: Text.
+    - `estado`: Text.
+    - `ubicacion`: Text.
 
-#### **3. Estructura del Proyecto**
+4. **Tabla `historias_clinicas`**:
+    - `id`: Integer, Primary Key, Autoincremental.
+    - `paciente_id`: Integer, Foreign Key to pacientes.id.
+    - `fecha_visita`: Date.
+    - `diagnostico`: Text.
+    - `tratamiento`: Text.
 
-**Backend:**
-- **main_output.py**: Contendrá toda la lógica de FastAPI, incluyendo modelos, rutas y la configuración de SQLite.
+#### 6. Endpoints y Rutas:
 
-**Frontend:**
-- **templates/**: Carpeta que contendrá los archivos HTML servidos por FastAPI.
-  - `index.html`: Página principal con el formulario para gestionar turnos.
-  - `turnos.html`: Lista de turnos y asignaciones.
-  - `asignacion.html`: Formulario para crear o editar asignaciones.
+1. **Endpoint para Listar Pacientes**:
+   ```plaintext
+   GET /pacientes
+   ```
+   **Inputs/Outputs:**
+   - **Inputs**: None
+   - **Outputs**: Lista de pacientes en formato JSON, ejemplo:
+     ```json
+     [
+         {"id": 1, "nombre": "Juan", "apellido": "Perez", "fecha_nacimiento": "2000-01-01", "diagnostico": "Covid"},
+         ...
+     ]
+     ```
 
----
+2. **Endpoint para Crear Paciente**:
+   ```plaintext
+   POST /pacientes
+   ```
+   **Inputs/Outputs:**
+   - **Inputs**: JSON con los datos del paciente, ejemplo:
+     ```json
+     {
+         "nombre": "Juan",
+         "apellido": "Perez",
+         "fecha_nacimiento": "2000-01-01",
+         "diagnostico": "Covid"
+     }
+     ```
+   - **Outputs**: Código de estado HTTP 201 y el ID del paciente creado.
 
-#### **4. Endpoints**
+3. **Endpoint para Listar Personal Médico**:
+   ```plaintext
+   GET /personal_medico
+   ```
+   **Inputs/Outputs:**
+   - **Inputs**: None
+   - **Outputs**: Lista de personal médico en formato JSON, ejemplo:
+     ```json
+     [
+         {"id": 1, "nombre": "Juan", "cargo": "Doctor", "especialidad": "Cardiología"},
+         ...
+     ]
+     ```
 
-**1. Usuarios**
-- **GET /usuarios**: Retorna una lista de todos los usuarios.
-- **POST /usuarios**: Crea un nuevo usuario.
-  - **Inputs:**
-    - `nombre` (string)
-    - `email` (string)
-    - `rol` (string)
-  - **Outputs:**
-    - JSON con el ID del usuario creado.
+4. **Endpoint para Crear Personal Médico**:
+   ```plaintext
+   POST /personal_medico
+   ```
+   **Inputs/Outputs:**
+   - **Inputs**: JSON con los datos del personal médico, ejemplo:
+     ```json
+     {
+         "nombre": "Juan",
+         "cargo": "Doctor",
+         "especialidad": "Cardiología"
+     }
+     ```
+   - **Outputs**: Código de estado HTTP 201 y el ID del personal médico creado.
 
-**2. Turnos**
-- **GET /turnos**: Retorna una lista de todos los turnos.
-- **POST /turnos**: Crea un nuevo turno.
-  - **Inputs:**
-    - `fecha` (date)
-    - `hora_inicio` (time)
-    - `hora_fin` (time)
-    - `usuario_id` (integer)
-  - **Outputs:**
-    - JSON con el ID del turno creado.
+5. **Endpoint para Listar Recursos Médicos**:
+   ```plaintext
+   GET /recursos_medicos
+   ```
+   **Inputs/Outputs:**
+   - **Inputs**: None
+   - **Outputs**: Lista de recursos médicos en formato JSON, ejemplo:
+     ```json
+     [
+         {"id": 1, "tipo": "Máquina", "estado": "Activo", "ubicacion": "Salón A"},
+         ...
+     ]
+     ```
 
-**3. Asignaciones**
-- **GET /asignaciones**: Retorna una lista de todas las asignaciones.
-- **POST /asignaciones**: Crea una nueva asignación.
-  - **Inputs:**
-    - `turno_id` (integer)
-    - `empleado_id` (integer)
-  - **Outputs:**
-    - JSON con el ID de la asignación creada.
+6. **Endpoint para Crear Recursos Médicos**:
+   ```plaintext
+   POST /recursos_medicos
+   ```
+   **Inputs/Outputs:**
+   - **Inputs**: JSON con los datos del recurso médico, ejemplo:
+     ```json
+     {
+         "tipo": "Máquina",
+         "estado": "Activo",
+         "ubicacion": "Salón A"
+     }
+     ```
+   - **Outputs**: Código de estado HTTP 201 y el ID del recurso médico creado.
 
----
+7. **Endpoint para Listar Historias Clínicas**:
+   ```plaintext
+   GET /historias_clinicas
+   ```
+   **Inputs/Outputs:**
+   - **Inputs**: None
+   - **Outputs**: Lista de historias clínicas en formato JSON, ejemplo:
+     ```json
+     [
+         {"id": 1, "paciente_id": 1, "fecha_visita": "2023-04-05", "diagnostico": "Covid", "tratamiento": "Hospitalización"},
+         ...
+     ]
+     ```
 
-#### **5. Interactividad Frontend**
+8. **Endpoint para Crear Historia Clínica**:
+   ```plaintext
+   POST /historias_clinicas
+   ```
+   **Inputs/Outputs:**
+   - **Inputs**: JSON con los datos de la historia clínica, ejemplo:
+     ```json
+     {
+         "paciente_id": 1,
+         "fecha_visita": "2023-04-05",
+         "diagnostico": "Covid",
+         "tratamiento": "Hospitalización"
+     }
+     ```
+   - **Outputs**: Código de estado HTTP 201 y el ID de la historia clínica creada.
 
-**1. Index.html**
-- Formulario para crear un nuevo usuario.
-- Botón que envía una solicitud POST a `/usuarios`.
+#### 7. Documentación del Backend:
 
-**2. Turnos.html**
-- Tabla que muestra todos los turnos y permite agregar nuevas asignaciones.
-- Botón que envía una solicitud POST a `/turnos` para crear un turno.
-
-**3. Asignacion.html**
-- Formulario para crear o editar asignaciones.
-- Botones que envían solicitudes POST a `/asignaciones` para crear o actualizar asignaciones.
-
----
-
-#### **6. Configuración de FastAPI**
-
-**main_output.py**
 ```python
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 import sqlite3
 
 app = FastAPI()
 
-# Conexión a la base de datos SQLite
-def get_db_connection():
-    conn = sqlite3.connect('squad_checkpoints.sqlite')
-    conn.row_factory = sqlite3.Row
-    return conn
+# Conectar a SQLite
+conn = sqlite3.connect('squad_checkpoints.sqlite')
+cursor = conn.cursor()
 
-# Modelos Pydantic
-class Usuario(BaseModel):
+class Paciente(BaseModel):
     nombre: str
-    email: str
-    rol: str
+    apellido: str
+    fecha_nacimiento: str
+    diagnostico: str
 
-class Turno(BaseModel):
-    fecha: str
-    hora_inicio: str
-    hora_fin: str
-    usuario_id: int
+@app.get("/pacientes", response_model=list[Paciente])
+def listar_pacientes():
+    cursor.execute("SELECT * FROM pacientes")
+    rows = cursor.fetchall()
+    return [Paciente(**row) for row in rows]
 
-class Asignacion(BaseModel):
-    turno_id: int
-    empleado_id: int
+class PersonalMedico(BaseModel):
+    nombre: str
+    cargo: str
+    especialidad: str
 
-# Rutas FastAPI
-@app.get("/")
-async def read_root():
-    return {"message": "Bienvenido a la gestión de turnos"}
-
-@app.post("/usuarios/")
-async def create_usuario(usuario: Usuario):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO Usuarios (nombre, email, rol) VALUES (?, ?, ?)", 
-                   (usuario.nombre, usuario.email, usuario.rol))
+@app.post("/personal_medico", response_model=PersonalMedico)
+def crear_personal_medico(personal_medico: PersonalMedico):
+    cursor.execute("INSERT INTO personal_medico (nombre, cargo, especialidad) VALUES (?, ?, ?)", 
+                   (personal_medico.nombre, personal_medico.cargo, personal_medico.especialidad))
     conn.commit()
-    conn.close()
-    return {"id": cursor.lastrowid}
+    return personal_medico
 
-@app.get("/usuarios/")
-async def read_usuarios():
-    conn = get_db_connection()
-    usuarios = conn.execute("SELECT * FROM Usuarios").fetchall()
-    conn.close()
-    return usuarios
+class RecursoMedico(BaseModel):
+    tipo: str
+    estado: str
+    ubicacion: str
 
-# ... (agregar rutas para turnos y asignaciones de manera similar)
+@app.get("/recursos_medicos", response_model=list[RecursoMedico])
+def listar_recursos_medicos():
+    cursor.execute("SELECT * FROM recursos_medicos")
+    rows = cursor.fetchall()
+    return [RecursoMedico(**row) for row in rows]
+
+@app.post("/recursos_medicos", response_model=RecursoMedico)
+def crear_recurso_medico(recurso_medico: RecursoMedico):
+    cursor.execute("INSERT INTO recursos_medicos (tipo, estado, ubicacion) VALUES (?, ?, ?)", 
+                   (recurso_medico.tipo, recurso_medico.estado, recurso_medico.ubicacion))
+    conn.commit()
+    return recurso_medico
+
+class HistoriaClinica(BaseModel):
+    paciente_id: int
+    fecha_visita: str
+    diagnostico: str
+    tratamiento: str
+
+@app.get("/historias_clinicas", response_model=list[HistoriaClinica])
+def listar_historias_clinicas():
+    cursor.execute("SELECT * FROM historias_clinicas")
+    rows = cursor.fetchall()
+    return [HistoriaClinica(**row) for row in rows]
+
+@app.post("/historias_clinicas", response_model=HistoriaClinica)
+def crear_historia_clinica(historia_clinica: HistoriaClinica):
+    cursor.execute("INSERT INTO historias_clinicas (paciente_id, fecha_visita, diagnostico, tratamiento) VALUES (?, ?, ?, ?)", 
+                   (historia_clinica.paciente_id, historia_clinica.fecha_visita, historia_clinica.diagnostico, historia_clinica.tratamiento))
+    conn.commit()
+    return historia_clinica
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main_output:app", host="0.0.0.0", port=8000)
 ```
 
----
+#### 8. Documentación del Frontend:
 
-#### **7. Ejecución del Proyecto**
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sanatorio</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Gestión de Sanatorio</h1>
+    <div id="app"></div>
 
-1. **Backend:**
-   - Asegúrate de tener Python instalado.
-   - Instala FastAPI y Uvicorn:
-     ```bash
-     pip install fastapi uvicorn
-     ```
-   - Ejecuta el servidor:
-     ```bash
-     python main_output.py
-     ```
+    <!-- JavaScript para HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.5.0"></script>
+    <script src="/static/scripts.js"></script>
+</body>
+</html>
+```
 
-2. **Frontend:**
-   - Los archivos HTML se servirán directamente desde la carpeta `templates/` de FastAPI.
+#### 9. Documentación de la Interfaz del Usuario (UI):
 
----
+- **Página Inicial**: Listado general de pacientes, personal médico y recursos médicos.
+- **Página de Detalle Paciente**: Formulario para editar o eliminar un paciente.
+- **Página de Crear Paciente**: Formulario para crear un nuevo paciente.
+- **Página de Detalle Personal Médico**: Formulario para editar o eliminar un personal médico.
+- **Página de Crear Personal Médico**: Formulario para crear un nuevo personal médico.
+- **Página de Detalle Recurso Médico**: Formulario para editar o eliminar un recurso médico.
+- **Página de Crear Recurso Médico**: Formulario para crear un nuevo recurso médico.
+- **Página de Detalle Historia Clínica**: Formulario para editar o eliminar una historia clínica.
+- **Página de Crear Historia Clínica**: Formulario para crear una nueva historia clínica.
 
-Este plan técnico detallado proporciona una estructura clara y separada para el backend y frontend, asegurando que la aplicación cumpla con las reglas establecidas y maximice su fiabilidad.
+#### 10. Documentación de Pruebas:
+
+- **Pruebas unitarias**:
+  - `test_pacientes.py`
+  - `test_personal_medico.py`
+  - `test_recursos_medicos.py`
+  - `test_historias_clinicas.py`
+
+Este documento proporciona una estructura clara y detallada para el desarrollo del sistema de gestión completo para un sanatorio utilizando el stack FASTAPI_HTMX.
