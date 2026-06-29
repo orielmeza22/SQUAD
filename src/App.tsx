@@ -5,7 +5,8 @@ import {
   Play, Square, Save, Folder, FolderOpen, File, FileCode, Settings, Search, 
   Trash2, Download, RefreshCw, Send, Terminal, Cpu, Layers, GitBranch, 
   Activity, ChevronRight, ChevronDown, Database, Sparkles, Clock, Coins, 
-  Lock, ShieldAlert, CheckCircle, ExternalLink, Moon, Eye, EyeOff, Github
+  Lock, ShieldAlert, CheckCircle, ExternalLink, Moon, Eye, EyeOff, Github,
+  Brain, BookOpen
 } from 'lucide-react';
 
 // Import subcomponents
@@ -154,9 +155,9 @@ function MainLayout() {
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [activeRightTab, setActiveRightTab] = useState<'prompt' | 'chat' | 'settings' | 'ux'>('prompt');
-  const [showBottomPanel, setShowBottomPanel] = useState(false);
-  const [bottomPanelHeight, setBottomPanelHeight] = useState(260);
-  const [activeBottomTab, setActiveBottomTab] = useState<'console' | 'database' | 'infra' | 'deploy' | 'graph'>('console');
+  const [showBottomPanel, setShowBottomPanel] = useState(true);
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(380);
+  const [activeBottomTab, setActiveBottomTab] = useState<any>('graph');
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
 
   // States for Tiers 1-4 UI features
@@ -451,76 +452,171 @@ function MainLayout() {
       <main className="flex-1 flex min-h-0 overflow-hidden">
         
         {/* Left Navigation Sidebar Menu */}
-        <nav className={`w-16 border-r ${tc.border} bg-black/20 flex flex-col items-center py-4 space-y-6 shrink-0`}>
-          <button 
-            onClick={() => {
-              setActiveSidebarTab('build');
-              setActiveRightTab('prompt');
-              setActiveBottomTab('console');
-              setShowRightPanel(true);
-              setShowBottomPanel(true);
-            }}
-            className={`p-2.5 rounded-lg transition-all cursor-pointer ${activeRightTab === 'prompt' && showRightPanel ? 'text-amber-500 bg-amber-500/10' : 'text-gray-500 hover:text-white'}`}
-            title="Prompt & Constructor"
-          >
-            <Sparkles size={18} />
-          </button>
-          <button 
-            onClick={() => {
-              setActiveSidebarTab('chat');
-              setActiveRightTab('chat');
-              setShowRightPanel(true);
-            }}
-            className={`p-2.5 rounded-lg transition-all cursor-pointer ${activeRightTab === 'chat' && showRightPanel ? 'text-amber-500 bg-amber-500/10' : 'text-gray-500 hover:text-white'}`}
-            title="Chat de Agentes"
-          >
-            <Send size={18} />
-          </button>
-          <button 
-            onClick={() => {
-              setActiveSidebarTab('infra');
-              setActiveBottomTab('database');
-              setShowBottomPanel(true);
-            }}
-            className={`p-2.5 rounded-lg transition-all cursor-pointer ${activeBottomTab === 'database' && showBottomPanel ? 'text-amber-500 bg-amber-500/10' : 'text-gray-500 hover:text-white'}`}
-            title="Base de Datos SQLite"
-          >
-            <Database size={18} />
-          </button>
-          <button 
-            onClick={() => {
-              setActiveSidebarTab('infra');
-              setActiveBottomTab('infra');
-              setShowBottomPanel(true);
-            }}
-            className={`p-2.5 rounded-lg transition-all cursor-pointer ${activeBottomTab === 'infra' && showBottomPanel ? 'text-amber-500 bg-amber-500/10' : 'text-gray-500 hover:text-white'}`}
-            title="Variables & Docker"
-          >
-            <Layers size={18} />
-          </button>
-          <button 
-            onClick={() => {
-              setActiveSidebarTab('llm');
-              setActiveRightTab('settings');
-              setShowRightPanel(true);
-            }}
-            className={`p-2.5 rounded-lg transition-all cursor-pointer ${activeRightTab === 'settings' && showRightPanel ? 'text-amber-500 bg-amber-500/10' : 'text-gray-500 hover:text-white'}`}
-            title="Parámetros de IA"
-          >
-            <Cpu size={18} />
-          </button>
-          <button 
-            onClick={() => {
-              setActiveSidebarTab('deploy');
-              setActiveBottomTab('deploy');
-              setShowBottomPanel(true);
-            }}
-            className={`p-2.5 rounded-lg transition-all cursor-pointer ${activeBottomTab === 'deploy' && showBottomPanel ? 'text-amber-500 bg-amber-500/10' : 'text-gray-500 hover:text-white'}`}
-            title="Despliegue Cloud / Timeline"
-          >
-            <GitBranch size={18} />
-          </button>
+        {/* Left Navigation Sidebar Menu */}
+        <nav className={`w-56 border-r ${tc.border} bg-[#0A0A0C]/90 flex flex-col justify-between py-6 px-4 shrink-0 z-10 backdrop-blur-xl select-none font-sans`}>
+          <div className="space-y-6">
+            {/* Top Logo */}
+            <div className="flex items-center space-x-2 px-2 pb-2 border-b border-white/5">
+              <div className="w-5 h-5 bg-indigo-600 rounded flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-indigo-600/30">
+                S
+              </div>
+              <div>
+                <span className="text-[11px] font-bold text-white tracking-wider block">SQUAD</span>
+                <span className="text-[8px] text-gray-500 font-mono">v0.7.0 • beta</span>
+              </div>
+            </div>
+
+            {/* Workspace Select */}
+            <div className="bg-[#141419]/60 border border-white/5 rounded-lg p-2 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all">
+              <div>
+                <span className="text-[10px] font-bold text-gray-200 block">sanatorio-mx</span>
+                <span className="text-[8.5px] text-gray-500 font-mono">run_34929f • live</span>
+              </div>
+              <ChevronDown size={12} className="text-gray-500" />
+            </div>
+
+            {/* Orchestration Section */}
+            <div className="space-y-1">
+              <span className="text-[8.5px] font-mono text-gray-600 tracking-wider block uppercase px-2 mb-1.5 font-bold">Orchestration</span>
+              <button 
+                onClick={() => {
+                  setActiveBottomTab('graph');
+                  setShowBottomPanel(true);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                  activeBottomTab === 'graph' && showBottomPanel 
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
+                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <GitBranch size={12} />
+                <span>Pipeline Graph</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setShowLeftPanel(true);
+                }}
+                className="w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5"
+              >
+                <FileCode size={12} />
+                <span>Code Editor</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setActiveBottomTab('console');
+                  setShowBottomPanel(true);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                  activeBottomTab === 'console' && showBottomPanel 
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
+                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Terminal size={12} />
+                <span>Terminal</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setActiveBottomTab('repl');
+                  setShowBottomPanel(true);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                  activeBottomTab === 'repl' && showBottomPanel 
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
+                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Layers size={12} />
+                <span>Test Suite</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setActiveBottomTab('infra');
+                  setShowBottomPanel(true);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                  activeBottomTab === 'infra' && showBottomPanel 
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
+                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Activity size={12} />
+                <span>Observability</span>
+              </button>
+            </div>
+
+            {/* Intelligence Section */}
+            <div className="space-y-1">
+              <span className="text-[8.5px] font-mono text-gray-600 tracking-wider block uppercase px-2 mb-1.5 font-bold">Intelligence</span>
+              <button 
+                onClick={() => {
+                  setActiveBottomTab('skills');
+                  setShowBottomPanel(true);
+                }}
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                  activeBottomTab === 'skills' && showBottomPanel 
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
+                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5">
+                  <BookOpen size={12} />
+                  <span>Skills Library</span>
+                </div>
+                <span className="bg-indigo-500/20 text-indigo-300 text-[8px] font-bold px-1.5 rounded-full">47</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setActiveBottomTab('memory');
+                  setShowBottomPanel(true);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                  activeBottomTab === 'memory' && showBottomPanel 
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
+                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Brain size={12} />
+                <span>Memory Store</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setActiveBottomTab('scrubber');
+                  setShowBottomPanel(true);
+                }}
+                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                  activeBottomTab === 'scrubber' && showBottomPanel 
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
+                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Clock size={12} />
+                <span>Run History</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom Settings and User */}
+          <div className="space-y-4">
+            <button 
+              onClick={() => setShowSettingsModal(true)}
+              className="w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all border border-transparent"
+            >
+              <Settings size={12} />
+              <span>Settings</span>
+            </button>
+            <div className="flex items-center space-x-2.5 px-2 pt-2 border-t border-white/5">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-[10px] font-bold text-white">
+                OM
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-bold text-gray-200 block truncate">Oriel Meza</span>
+                <span className="text-[8px] text-gray-500 block truncate">pro plan</span>
+              </div>
+            </div>
+          </div>
         </nav>
+
 
         {/* Left Workspace Panel: File Explorer + Shadow Git History */}
         {showLeftPanel && (
