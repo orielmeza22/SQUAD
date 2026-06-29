@@ -1,4 +1,4 @@
-# SQUAD: Orquestador de Enjambres Multi-Agente para Desarrollo Autónomo de Software (V6)
+# SQUAD: Orquestador de Enjambres Multi-Agente para Desarrollo Autónomo de Software (v0.7.0-beta)
 
 SQUAD es una plataforma de **Ingeniería de Software Autónoma** que permite generar, depurar, compilar y desplegar aplicaciones web funcionales completas (Full-Stack) a partir de una descripción en lenguaje natural. Funciona de manera 100% local (utilizando Ollama para privacidad total) o mediante APIs en la nube (como Google AI Studio).
 
