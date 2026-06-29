@@ -767,6 +767,17 @@ function MainLayout() {
                 <Sparkles size={10} />
                 Optimize
               </button>
+              {currentFiles.some((f: any) => f.name === 'SPEC.md') && (
+                <button 
+                  onClick={approveSpec}
+                  disabled={isPipelineRunning}
+                  className="bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-500/30 text-indigo-300 hover:text-white px-2.5 py-1 rounded text-[10px] font-semibold flex items-center gap-1 disabled:opacity-50 cursor-pointer transition"
+                  title="Reanudar el enjambre de agentes desde el paso/nodo actual"
+                >
+                  <RefreshCw size={10} className="mr-0.5" />
+                  Reanudar Enjambre
+                </button>
+              )}
               <button 
                 onClick={startBuildPipeline}
                 disabled={isPipelineRunning}
@@ -1647,6 +1658,16 @@ function MainLayout() {
                             <Sparkles size={10} />
                             Optimizar
                           </button>
+                          {currentFiles.some((f: any) => f.name === 'SPEC.md') && (
+                            <button
+                              onClick={approveSpec}
+                              disabled={isPipelineRunning}
+                              className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-500/30 text-indigo-300 hover:text-white font-semibold py-2 rounded-lg text-[10px] uppercase transition cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                              <RefreshCw size={10} />
+                              Reanudar
+                            </button>
+                          )}
                           <button
                             onClick={startBuildPipeline}
                             disabled={isPipelineRunning || !promptInput.trim()}

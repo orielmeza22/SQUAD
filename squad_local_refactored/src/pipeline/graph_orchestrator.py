@@ -613,6 +613,9 @@ def run_graph_pipeline(prompt: str, model: str) -> str:
             state.log(f"❌ ERROR CRÍTICO DEL ENJAMBRE (GRAFO): {str(e)}")
             state.is_running = False
             state.pipeline_status = "idle"
+            for n, stat in list(state.graph_node_status.items()):
+                if stat in ["executing", "thinking"]:
+                    state.set_node_status(n, "error")
             raise
 
     _run_with_saver(_execute)
@@ -663,6 +666,9 @@ def resume_graph_pipeline(run_id: str) -> bool:
             state.log(f"❌ ERROR CRÍTICO AL REANUDAR EL ENJAMBRE: {str(e)}")
             state.is_running = False
             state.pipeline_status = "idle"
+            for n, stat in list(state.graph_node_status.items()):
+                if stat in ["executing", "thinking"]:
+                    state.set_node_status(n, "error")
             return False
 
     return _run_with_saver(_resume)
