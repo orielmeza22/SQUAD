@@ -13,6 +13,10 @@ class Checkpoint(BaseModel):
 @app.post("/checkpoints/")
 async def create_checkpoint(checkpoint: Checkpoint):
     conn = sqlite3.connect("squad_checkpoints.sqlite")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     cursor = conn.cursor()
     
     try:
@@ -33,6 +37,10 @@ async def create_checkpoint(checkpoint: Checkpoint):
 @app.get("/checkpoints/{id}")
 async def get_checkpoint(id: int):
     conn = sqlite3.connect("squad_checkpoints.sqlite")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     cursor = conn.cursor()
     
     try:
@@ -56,6 +64,10 @@ async def get_checkpoint(id: int):
 @app.put("/checkpoints/{id}")
 async def update_checkpoint(id: int, checkpoint: Checkpoint):
     conn = sqlite3.connect("squad_checkpoints.sqlite")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     cursor = conn.cursor()
     
     try:
@@ -80,6 +92,10 @@ async def update_checkpoint(id: int, checkpoint: Checkpoint):
 @app.delete("/checkpoints/{id}")
 async def delete_checkpoint(id: int):
     conn = sqlite3.connect("squad_checkpoints.sqlite")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     cursor = conn.cursor()
     
     try:
@@ -103,6 +119,10 @@ async def delete_checkpoint(id: int):
 @app.get("/checkpoints/")
 async def list_checkpoints():
     conn = sqlite3.connect("squad_checkpoints.sqlite")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     cursor = conn.cursor()
     
     try:
