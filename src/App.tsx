@@ -163,6 +163,7 @@ function MainLayout() {
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false);
+  const [currentWorkspace, setCurrentWorkspace] = useState('sanatorio-mx');
 
   // States for Tiers 1-4 UI features
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
@@ -397,16 +398,13 @@ function MainLayout() {
             </div>
 
             {/* Workspace Select */}
-            <div 
-              className="relative"
-              onMouseLeave={() => setIsWorkspaceDropdownOpen(false)}
-            >
+            <div className="relative">
               <div 
                 onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
                 className="bg-[#141419]/60 border border-white/5 rounded-lg p-2 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
               >
                 <div>
-                  <span className="text-[10px] font-bold text-gray-200 block">sanatorio-mx</span>
+                  <span className="text-[10px] font-bold text-gray-200 block">{currentWorkspace}</span>
                   <span className="text-[8.5px] text-gray-500 font-mono">run_34929f • live</span>
                 </div>
                 <ChevronDown size={12} className="text-gray-500" />
@@ -416,30 +414,33 @@ function MainLayout() {
                 <div className="absolute left-0 mt-1 w-full bg-[#13131A] border border-qwen-border rounded-lg shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <button 
                     onClick={() => {
-                      showToast("Cambiado al workspace: sanatorio-mx");
+                      setCurrentWorkspace('sanatorio-mx');
+                      showToast("Cambiado al workspace: sanatorio-mx", 'success');
                       setIsWorkspaceDropdownOpen(false);
                     }}
-                    className="w-full text-left px-3 py-1.5 text-[10px] font-mono text-indigo-400 bg-indigo-500/5 font-bold border-b border-white/5"
+                    className={`w-full text-left px-3 py-1.5 text-[10px] font-mono border-b border-white/5 cursor-pointer ${currentWorkspace === 'sanatorio-mx' ? 'text-indigo-400 bg-indigo-500/5 font-bold' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
                   >
-                    sanatorio-mx (active)
+                    sanatorio-mx {currentWorkspace === 'sanatorio-mx' ? '(active)' : ''}
                   </button>
                   <button 
                     onClick={() => {
-                      showToast("Cambiado al workspace: clinica-la-luz");
+                      setCurrentWorkspace('clinica-la-luz');
+                      showToast("Cambiado al workspace: clinica-la-luz", 'success');
                       setIsWorkspaceDropdownOpen(false);
                     }}
-                    className="w-full text-left px-3 py-1.5 text-[10px] font-mono text-gray-300 hover:bg-white/5 hover:text-white"
+                    className={`w-full text-left px-3 py-1.5 text-[10px] font-mono border-b border-white/5 cursor-pointer ${currentWorkspace === 'clinica-la-luz' ? 'text-indigo-400 bg-indigo-500/5 font-bold' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
                   >
-                    clinica-la-luz
+                    clinica-la-luz {currentWorkspace === 'clinica-la-luz' ? '(active)' : ''}
                   </button>
                   <button 
                     onClick={() => {
-                      showToast("Cambiado al workspace: ecommerce-shop");
+                      setCurrentWorkspace('ecommerce-shop');
+                      showToast("Cambiado al workspace: ecommerce-shop", 'success');
                       setIsWorkspaceDropdownOpen(false);
                     }}
-                    className="w-full text-left px-3 py-1.5 text-[10px] font-mono text-gray-300 hover:bg-white/5 hover:text-white"
+                    className={`w-full text-left px-3 py-1.5 text-[10px] font-mono cursor-pointer ${currentWorkspace === 'ecommerce-shop' ? 'text-indigo-400 bg-indigo-500/5 font-bold' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
                   >
-                    ecommerce-shop
+                    ecommerce-shop {currentWorkspace === 'ecommerce-shop' ? '(active)' : ''}
                   </button>
                 </div>
               )}
@@ -588,7 +589,6 @@ function MainLayout() {
             </button>
             <div 
               onClick={() => setIsProfilePopoverOpen(!isProfilePopoverOpen)}
-              onMouseLeave={() => setIsProfilePopoverOpen(false)}
               className="flex items-center space-x-2.5 px-2 pt-2 border-t border-white/5 cursor-pointer hover:bg-white/5 rounded-lg py-1 transition-all relative"
             >
               <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-[10px] font-bold text-white">
@@ -635,11 +635,11 @@ function MainLayout() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" className="text-qwen-600"><path d="M9 18l6-6-6-6"/></svg>
             <span 
               onClick={() => {
-                showToast("Workspace: sanatorio-mx • 1 active run");
+                showToast(`Workspace: ${currentWorkspace} • 1 active run`);
               }}
               className="text-qwen-400 hover:text-qwen-300 cursor-pointer"
             >
-              sanatorio-mx
+              {currentWorkspace}
             </span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" className="text-qwen-600"><path d="M9 18l6-6-6-6"/></svg>
             <span className="text-white font-semibold flex items-center gap-1.5">
