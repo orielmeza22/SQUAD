@@ -370,86 +370,12 @@ function MainLayout() {
   };
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden font-mono ${tc.bg} ${tc.text} select-none`}>
+    <div className="flex h-screen relative overflow-hidden qwen-bg font-sans text-gray-200 select-none">
       
-      {/* 1. Header Banner */}
-      <header className={`h-14 border-b ${tc.border} ${tc.card} flex items-center justify-between px-6 shrink-0 z-10`}>
-        <div className="flex items-center space-x-4">
-          <div className={`w-3 h-3 rounded ${tc.accentBg} ${tc.accentGlow} animate-pulse`}></div>
-          <span className={`font-bold ${tc.accentText} uppercase tracking-widest text-[11px]`}>
-            SQUAD_BUILDER // CORE V6 ASYNC FASTAPI
-          </span>
-          {isPipelineRunning && (
-            <span className="bg-amber-500/20 text-amber-400 px-3 py-1 rounded text-[10px] border border-amber-500/50 font-bold animate-pulse">
-              ⚙️ OPERANDO ENJAMBRE
-            </span>
-          )}
-        </div>
-        
-        <div className="flex space-x-4 text-[9px] text-white/50 uppercase tracking-wider items-center">
-          <div className="flex items-center space-x-2 bg-black/20 px-2.5 py-1.5 rounded border border-white/5">
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
-            <span>Ollama: <b className="text-emerald-400">Online</b></span>
-          </div>
-          <div className="flex items-center space-x-2 bg-black/20 px-2.5 py-1.5 rounded border border-white/5">
-            <GitBranch size={10} className="text-blue-400" />
-            <span>Shadow Git: <b className="text-blue-400">Activo</b></span>
-          </div>
-          
-          <div className="flex items-center space-x-1 border-l border-white/10 pl-3">
-            <button 
-              onClick={() => setShowLeftPanel(!showLeftPanel)}
-              className={`p-1.5 rounded cursor-pointer flex items-center space-x-1 ${showLeftPanel ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-500 hover:text-white'}`}
-              title="Alternar Explorador de Archivos (Explorador/Git)"
-            >
-              <Folder size={10} />
-              <span className="text-[8px] font-bold">Explorador</span>
-            </button>
-            <button 
-              onClick={() => setShowBottomPanel(!showBottomPanel)}
-              className={`p-1.5 rounded cursor-pointer flex items-center space-x-1 ${showBottomPanel ? 'bg-amber-500/20 text-amber-400' : 'text-gray-500 hover:text-white'}`}
-              title="Alternar Panel Inferior (Consola/Base de Datos)"
-            >
-              <Terminal size={10} />
-              <span className="text-[8px] font-bold">Consola</span>
-            </button>
-            <button 
-              onClick={() => setShowRightPanel(!showRightPanel)}
-              className={`p-1.5 rounded cursor-pointer flex items-center space-x-1 ${showRightPanel ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-500 hover:text-white'}`}
-              title="Alternar Panel Derecho (Copilot/IA)"
-            >
-              <Sparkles size={10} />
-              <span className="text-[8px] font-bold">Copilot</span>
-            </button>
+      {/* Decorative radial orbs */}
+      <div className="orb-1" style={{ top: '-100px', right: '-100px' }}></div>
+      <div className="orb-2" style={{ bottom: '10%', left: '40%' }}></div>
 
-            <button 
-              onClick={() => setTheme('dark')} 
-              className={`p-1.5 rounded cursor-pointer ${theme === 'dark' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
-              title="Tema Oscuro"
-            >
-              <Moon size={12} />
-            </button>
-            <button 
-              onClick={() => setTheme('cyberpunk')} 
-              className={`p-1.5 rounded font-bold text-[8px] cursor-pointer ${theme === 'cyberpunk' ? 'bg-pink-500/20 text-pink-400' : 'text-gray-500 hover:text-white'}`}
-              title="Tema Cyberpunk"
-            >
-              CYBER
-            </button>
-            <button 
-              onClick={() => setTheme('glass')} 
-              className={`p-1.5 rounded font-bold text-[8px] cursor-pointer ${theme === 'glass' ? 'bg-sky-500/20 text-sky-400' : 'text-gray-500 hover:text-white'}`}
-              title="Tema Glass"
-            >
-              GLASS
-            </button>
-
-          </div>
-        </div>
-      </header>
-
-      {/* 2. Main Area */}
-      <main className="flex-1 flex min-h-0 overflow-hidden">
         
         {/* Left Navigation Sidebar Menu */}
         {/* Left Navigation Sidebar Menu */}
@@ -618,7 +544,184 @@ function MainLayout() {
         </nav>
 
 
-        {/* Left Workspace Panel: File Explorer + Shadow Git History */}
+      {/* Right Main Container */}
+      <main className="flex-1 flex flex-col overflow-hidden relative z-10">
+        
+        {/* Top Header Bar */}
+        <header className="h-14 border-b border-qwen-border flex items-center px-6 gap-4 glass-light relative z-10">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-1.5 text-xs">
+            <span className="text-qwen-400 hover:text-qwen-300 cursor-pointer">Workspaces</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" className="text-qwen-600"><path d="M9 18l6-6-6-6"/></svg>
+            <span className="text-qwen-400 hover:text-qwen-300 cursor-pointer">sanatorio-mx</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" className="text-qwen-600"><path d="M9 18l6-6-6-6"/></svg>
+            <span className="text-white font-semibold flex items-center gap-1.5">
+              Pipeline #34929f
+              <span className="badge-primary text-[9px] px-1.5 py-0.5 rounded-full font-mono">live</span>
+            </span>
+          </nav>
+
+          <div className="flex-1"></div>
+
+          {/* Model Dropdown */}
+          <div className="relative group">
+            <button className="flex items-center gap-2 px-3 py-1.5 glass rounded-lg text-xs font-medium hover:border-qwen-500/40 transition">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyber-cyan pulse-dot-cyan"></div>
+              <span className="text-white">{selectedModel}</span>
+              <span className="text-qwen-500">·</span>
+              <span className="text-qwen-400 font-mono text-[10px]">local</span>
+              <ChevronDown size={12} className="text-qwen-400" />
+            </button>
+            <div className="absolute right-0 mt-1 hidden group-hover:block bg-[#13131A] border border-qwen-border rounded-lg shadow-xl py-1 z-50 min-w-[160px]">
+              {models.map(m => (
+                <button
+                  key={m}
+                  onClick={() => setSelectedModel(m)}
+                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-white/5 ${selectedModel === m ? 'text-indigo-400 font-bold' : 'text-gray-300'}`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status Badge */}
+          <div className="flex items-center gap-2 px-3 py-1.5 badge-primary rounded-lg">
+            <div className={`w-1.5 h-1.5 rounded-full ${isPipelineRunning ? 'bg-qwen-400 pulse-dot' : 'bg-gray-500'}`}></div>
+            <span className="font-semibold text-xs">{isPipelineRunning ? 'RUNNING' : 'IDLE'}</span>
+            <span className="text-qwen-300/70 font-mono text-[10px]">02:34</span>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1">
+            <button className="w-8 h-8 rounded-lg hover:bg-qwen-500/10 flex items-center justify-center text-qwen-400 hover:text-qwen-300 transition" title="Pausar Enjambre">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </button>
+            <button 
+              onClick={() => {
+                if (confirm("¿Cancelar pipeline actual?")) clearWorkspaceAction();
+              }}
+              className="w-8 h-8 rounded-lg hover:bg-rose-500/10 flex items-center justify-center text-qwen-400 hover:text-rose-400 transition" 
+              title="Detener Pipeline"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+            </button>
+            <div className="w-px h-5 bg-qwen-border mx-1"></div>
+            <button 
+              onClick={() => setShowLeftPanel(prev => !prev)}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${showLeftPanel ? 'bg-indigo-500/10 text-indigo-400' : 'text-gray-400 hover:text-white'}`} 
+              title="Explorador de Archivos"
+            >
+              <Folder size={14} />
+            </button>
+          </div>
+        </header>
+
+        {/* Prompt Hero */}
+        <div className="px-6 py-4 border-b border-qwen-border glass-light relative z-10">
+          <div className="flex items-start gap-4">
+            <div className="w-11 h-11 rounded-xl gradient-aurora flex items-center justify-center shadow-qwen-glow flex-shrink-0">
+              <Sparkles size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="text-[10px] uppercase tracking-wider text-qwen-400 font-semibold mb-1">Current Prompt</div>
+              <textarea
+                value={promptInput}
+                onChange={(e) => setPromptInput(e.target.value)}
+                className="w-full bg-transparent text-sm text-white font-medium leading-relaxed outline-none border-b border-transparent focus:border-indigo-500/30 resize-none h-12"
+              />
+              <div className="mt-2 flex items-center gap-4 text-[11px]">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-qwen-500 font-mono">stack</span>
+                  <span className="badge-primary text-[10px] px-2 py-0.5 rounded-full font-mono">fastapi</span>
+                  <span className="badge-primary text-[10px] px-2 py-0.5 rounded-full font-mono">htmx</span>
+                  <span className="badge-primary text-[10px] px-2 py-0.5 rounded-full font-mono">sqlite</span>
+                </span>
+                <span className="text-qwen-500">·</span>
+                <span className="text-qwen-400"><span className="text-white font-mono">{currentFiles.length}</span> files</span>
+              </div>
+            </div>
+            <div className="flex space-x-2 shrink-0">
+              <button 
+                onClick={optimizePrompt}
+                className="btn-ghost px-4 py-2 rounded-lg text-xs font-semibold text-gray-300 flex items-center gap-1.5"
+              >
+                <Sparkles size={12} />
+                Optimize
+              </button>
+              <button 
+                onClick={startBuildPipeline}
+                disabled={isPipelineRunning}
+                className="btn-primary px-4 py-2 rounded-lg text-xs font-semibold text-white flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <Play size={12} fill="white" className="mr-1.5" />
+                Ejecutar Enjambre
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Row */}
+        <div className="px-6 py-3 border-b border-qwen-border glass-light grid grid-cols-6 gap-3 relative z-10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-qwen-500/10 border border-qwen-500/20 flex items-center justify-center">
+              <Clock size={14} className="text-qwen-400" />
+            </div>
+            <div>
+              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Elapsed</div>
+              <div className="text-xs font-bold text-white font-mono leading-tight">02:34</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-cyber-cyan/10 border border-cyber-cyan/20 flex items-center justify-center">
+              <CheckCircle size={14} className="text-cyber-cyan" />
+            </div>
+            <div>
+              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Nodes Done</div>
+              <div className="text-xs font-bold text-white font-mono leading-tight">5 <span className="text-qwen-500 font-normal">/ 8</span></div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-cyber-pink/10 border border-cyber-pink/20 flex items-center justify-center">
+              <Layers size={14} className="text-cyber-pink" />
+            </div>
+            <div>
+              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Active Agents</div>
+              <div className="text-xs font-bold text-white font-mono leading-tight">2</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-cyber-lime/10 border border-cyber-lime/20 flex items-center justify-center">
+              <Coins size={14} className="text-cyber-lime" />
+            </div>
+            <div>
+              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Tokens</div>
+              <div className="text-xs font-bold text-white font-mono leading-tight">{(tokenIn + tokenOut) ? `${((tokenIn + tokenOut) / 1000).toFixed(1)}k` : '0'}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-cyber-orange/10 border border-cyber-orange/20 flex items-center justify-center">
+              <Terminal size={14} className="text-cyber-orange" />
+            </div>
+            <div>
+              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">REPL Sessions</div>
+              <div className="text-xs font-bold text-white font-mono leading-tight">3 active</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <ShieldAlert size={14} className="text-rose-400" />
+            </div>
+            <div>
+              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Issues</div>
+              <div className="text-xs font-bold text-white font-mono leading-tight">{pendingWrites.length} <span className="text-qwen-500 font-normal">HITL</span></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Core Workspace Splits */}
+        <div className="flex-1 flex min-h-0 overflow-hidden relative">
+
         {showLeftPanel && (
           <>
             <section 
@@ -1888,7 +1991,7 @@ function MainLayout() {
           </section>
         )}
 
-      </main>
+      </div>
 
       {/* 🛡️ Critical File Interceptor Approval Modal */}
       {pendingWrites && pendingWrites.length > 0 && (
@@ -2235,8 +2338,11 @@ function MainLayout() {
           </div>
         </div>
       )}
+      </main>
 
       {/* Tiers Overlay components */}
+
+
       <AgentInspector 
         isOpen={isInspectorOpen} 
         onClose={() => setIsInspectorOpen(false)} 
