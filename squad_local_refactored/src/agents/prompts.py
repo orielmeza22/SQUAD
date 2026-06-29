@@ -30,9 +30,10 @@ Para evitar errores de sintaxis (SyntaxError, ReferenceError):
 
 JSON_TOOL_CALLING_INSTRUCTION = """
 
-FORMATO DE SALIDA OBLIGATORIO: Responde ÚNICAMENTE con un array JSON de llamadas a herramientas usando exactamente este schema. NO uses marcadores @@FILE: ni bloques de código sueltos. Tu respuesta debe ser un JSON válido que comience con [ y termine con ].
+FORMATO DE SALIDA OBLIGATORIO: Elige UNO de estos dos formatos para escribir archivos. NO mezcles formatos.
 
-Ejemplo de formato:
+--- FORMATO A (preferido, JSON) ---
+Responde con un array JSON de acciones. Tu respuesta debe comenzar con [ y terminar con ]:
 [
   {
     "tool": "write_file",
@@ -43,17 +44,13 @@ Ejemplo de formato:
   }
 ]
 
-Si necesitas modificar partes de un archivo, puedes usar 'apply_patch':
-[
-  {
-    "tool": "apply_patch",
-    "parameters": {
-      "path": "app.py",
-      "search": "print('Hola')",
-      "replace": "print('Hola Mundo')"
-    }
-  }
-]
+--- FORMATO B (alternativo, si no puedes generar JSON válido) ---
+Usa marcadores @@FILE: para cada archivo:
+@@FILE: nombre_archivo.py
+# contenido del archivo aquí
+@@ENDFILE@@
+
+REGLA: Si usas el FORMATO B, cada archivo DEBE tener un marcador @@FILE: con el nombre exacto del archivo antes del contenido.
 """
 
 

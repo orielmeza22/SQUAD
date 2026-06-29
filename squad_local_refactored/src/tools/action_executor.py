@@ -39,12 +39,18 @@ class ActionExecutor:
             except Exception:
                 pass
 
-        # 3. Fallback compatibility: if no JSON, delegate to SysTools.extract_and_write_multifile
-        # Check if any legacy markers exist to trigger fallback
+        # 3. Fallback: legacy @@FILE: markers
         if any(tag in llm_output for tag in ("@@FILE:", "@@PATCH:", "@@DELETE:")):
             state.launcher_logs.append("⚠️ [DEPRECACIÓN] Salida en formato legacy detectada. Migrando a JSON schemas.")
             files = SysTools._legacy_extract_and_write_multifile(llm_output)
             return [ToolCall(tool="legacy_fallback", parameters={"files": files})]
+
+        # 4. Fallback: markdown code blocks with filename hints
+        #    Supports: ```python\n# filename.py, ```html\n<!-- index.html -->, or ```lang:filename
+        markdown_calls = self._parse_markdown_blocks(llm_output)
+        if markdown_calls:
+            state.launcher_logs.append("⚠️ [COMPATIBILIDAD] Salida en formato markdown detectada. El modelo no sigue JSON tool calling.")
+            return markdown_calls
 
         return []
 
@@ -57,6 +63,51 @@ class ActionExecutor:
         elif isinstance(data, dict):
             if "tool" in data and "parameters" in data:
                 calls.append(ToolCall(tool=data["tool"], parameters=data["parameters"]))
+        return calls
+
+    def _parse_markdown_blocks(self, llm_output: str) -> List[ToolCall]:
+        """Extract write_file calls from markdown code blocks with filename hints.
+        
+        Supports these patterns (common in local models):
+        - ```python\n# filename.py
+        - ```html\n<!-- filename.html -->
+        - ```css\n/* filename.css */
+        - ```lang:filename.ext
+        - # filename.ext\n```lang
+        """
+        calls = []
+        # Pattern: ```lang:filename or ```lang filename
+        named_block = re.findall(
+            r'```(?:[a-zA-Z]*[:\s]+)?([\w./\-]+\.(?:py|html|css|js|ts|json|yaml|yml|md|sql|sh|txt))\n([\s\S]*?)```',
+            llm_output
+        )
+        for filename, content in named_block:
+            calls.append(ToolCall(tool="write_file", parameters={"path": filename.strip(), "content": content}))
+
+        if calls:
+            return calls
+
+        # Pattern: comment with filename on first line of code block
+        comment_block = re.finditer(
+            r'```[a-zA-Z]*\n'
+            r'(?:'
+            r'#\s*([\w./\-]+\.(?:py|sql|sh|txt|md))|'
+            r'<!--\s*([\w./\-]+\.(?:html|htm|xml))\s*-->|'
+            r'/\*\s*([\w./\-]+\.(?:css|js|ts))\s*\*/|'
+            r'//\s*([\w./\-]+\.(?:js|ts|json))'
+            r')\n'
+            r'([\s\S]*?)```',
+            llm_output
+        )
+        for m in comment_block:
+            filename = next(g for g in m.groups()[:-1] if g)
+            content_with_comment = m.group(0)
+            # Strip the ```lang line and the comment line, keep the rest
+            lines = content_with_comment.split('\n')
+            # lines[0] = ```lang, lines[1] = comment, lines[2:-1] = content, lines[-1] = ```
+            content = '\n'.join(lines[2:-1])
+            calls.append(ToolCall(tool="write_file", parameters={"path": filename.strip(), "content": content}))
+
         return calls
 
     def execute(self, call: ToolCall) -> ToolResult:
