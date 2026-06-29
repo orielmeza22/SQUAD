@@ -1,0 +1,10 @@
+{
+  "name": "squad-workspace-project",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "*"
+  }
+}
