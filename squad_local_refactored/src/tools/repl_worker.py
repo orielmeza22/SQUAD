@@ -2,12 +2,12 @@ import sys
 import json
 import io
 import contextlib
-import code
+import traceback
 
 
 def main():
-    # Stateful interactive console
-    console = code.InteractiveConsole()
+    # Persistent execution context dictionary
+    context_dict = {}
 
     while True:
         try:
@@ -22,18 +22,22 @@ def main():
             stdout_buf = io.StringIO()
             stderr_buf = io.StringIO()
 
+            success = True
             with contextlib.redirect_stdout(stdout_buf), contextlib.redirect_stderr(stderr_buf):
-                # runsource compiles and runs multi-line code blocks statefully
-                more = console.runsource(code_str)
+                try:
+                    exec(code_str, context_dict, context_dict)
+                except Exception:
+                    success = False
+                    traceback.print_exc()
 
             stdout_val = stdout_buf.getvalue()
             stderr_val = stderr_buf.getvalue()
 
             response = {
-                "success": not more,
+                "success": success,
                 "output": stdout_val,
                 "error": stderr_val,
-                "more": more
+                "more": False
             }
             sys.stdout.write(json.dumps(response) + "\n")
             sys.stdout.flush()

@@ -58,9 +58,11 @@ class PythonREPLSession(BaseREPLSession):
             try:
                 line = self.process.stdout.readline()
                 if not line:
+                    self.stdout_queue.put(None)  # Sentinel for EOF / worker death
                     break
                 self.stdout_queue.put(line)
             except Exception:
+                self.stdout_queue.put(None)
                 break
 
     def run_code(self, code_str: str) -> dict:
@@ -85,6 +87,14 @@ class PythonREPLSession(BaseREPLSession):
         try:
             # 5-second execution timeout
             line = self.stdout_queue.get(timeout=5.0)
+            if line is None:
+                self._start_worker()
+                return {
+                    "success": False,
+                    "output": "",
+                    "error": "El worker del REPL terminó abruptamente durante la ejecución del código."
+                }
+                
             result = json.loads(line)
 
             # Truncate large output buffers (max 10KB)

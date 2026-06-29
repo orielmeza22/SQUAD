@@ -49,9 +49,11 @@ class NodeREPLSession(BaseREPLSession):
             try:
                 line = self.process.stdout.readline()
                 if not line:
+                    self.stdout_queue.put(None)
                     break
                 self.stdout_queue.put(line)
             except Exception:
+                self.stdout_queue.put(None)
                 break
 
     def run_code(self, code_str: str) -> dict:
@@ -79,6 +81,14 @@ class NodeREPLSession(BaseREPLSession):
 
         try:
             line = self.stdout_queue.get(timeout=5.0)
+            if line is None:
+                self._start_worker()
+                return {
+                    "success": False,
+                    "output": "",
+                    "error": "El worker de Node REPL terminó abruptamente durante la ejecución del código."
+                }
+                
             result = json.loads(line)
 
             if len(result.get("output", "")) > 10000:
