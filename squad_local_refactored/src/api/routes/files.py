@@ -77,10 +77,22 @@ def api_clear_workspace():
                 if item == ".git":
                     continue
                 path = os.path.join(SysTools.WORKSPACE, item)
+                import stat
+                def _on_rmtree_error(func, path, exc_info):
+                    try:
+                        os.chmod(path, stat.S_IWRITE)
+                        func(path)
+                    except Exception:
+                        pass
+
                 try:
                     if os.path.isdir(path):
-                        shutil.rmtree(path, ignore_errors=True)
+                        shutil.rmtree(path, onerror=_on_rmtree_error)
                     else:
+                        try:
+                            os.chmod(path, stat.S_IWRITE)
+                        except Exception:
+                            pass
                         os.remove(path)
                 except Exception as ex:
                     print(f"Error removing {path}: {ex}")

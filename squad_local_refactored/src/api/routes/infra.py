@@ -275,13 +275,42 @@ def api_get_postgres_data(table: str = Query(...)):
 def api_destroy():
     """Wipe all files from SysTools.WORKSPACE."""
     try:
+        from ...tools.sys_tools import SysTools
+        import stat
+
+        # 1. Kill active process in state if any
+        if state.active_process and state.active_process.poll() is None:
+            try:
+                SysTools.kill_process_tree(state.active_process.pid)
+            except Exception:
+                pass
+            state.active_process = None
+
+        # 2. Cleanup workspace residual processes
+        SysTools.cleanup_workspace_processes()
+
+        # 3. Clean files with read-only error handler
+        def _on_rmtree_error(func, path, exc_info):
+            try:
+                os.chmod(path, stat.S_IWRITE)
+                func(path)
+            except Exception:
+                pass
+
         if os.path.exists(SysTools.WORKSPACE):
             for item in os.listdir(SysTools.WORKSPACE):
                 path = os.path.join(SysTools.WORKSPACE, item)
-                if os.path.isdir(path):
-                    shutil.rmtree(path, ignore_errors=True)
-                else:
-                    os.remove(path)
+                try:
+                    if os.path.isdir(path):
+                        shutil.rmtree(path, onerror=_on_rmtree_error)
+                    else:
+                        try:
+                            os.chmod(path, stat.S_IWRITE)
+                        except Exception:
+                            pass
+                        os.remove(path)
+                except Exception as ex:
+                    print(f"Error removing {path} during destroy: {ex}")
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

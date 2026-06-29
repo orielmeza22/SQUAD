@@ -120,14 +120,37 @@ class SysTools:
                 pname = proc.name().lower()
                 if not any(x in pname for x in ["python", "node", "npm", "pip", "cmd", "powershell", "bash"]):
                     continue
+                
+                kill_needed = False
                 try:
                     cwd = os.path.abspath(proc.cwd())
                     if cwd.startswith(ws_abs):
-                        print(f"🧹 [SISTEMA] Matando proceso residual en workspace: PID {proc.pid} ({proc.name()})")
-                        proc.kill()
-                        continue
+                        kill_needed = True
                 except Exception:
                     pass
+                
+                if not kill_needed:
+                    try:
+                        exe = os.path.abspath(proc.exe())
+                        if exe.startswith(ws_abs):
+                            kill_needed = True
+                    except Exception:
+                        pass
+                
+                if not kill_needed:
+                    try:
+                        cmdline = proc.cmdline()
+                        if any(ws_abs in part or SysTools.WORKSPACE in part for part in cmdline):
+                            kill_needed = True
+                    except Exception:
+                        pass
+                
+                if kill_needed:
+                    print(f"🧹 [SISTEMA] Matando proceso residual en workspace: PID {proc.pid} ({proc.name()})")
+                    try:
+                        proc.kill()
+                    except Exception:
+                        pass
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
 
