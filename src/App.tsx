@@ -577,14 +577,14 @@ function MainLayout() {
 
           {/* Model Dropdown */}
           <div className="relative group">
-            <button className="flex items-center gap-2 px-3 py-1.5 glass rounded-lg text-xs font-medium hover:border-qwen-500/40 transition">
-              <div className="w-1.5 h-1.5 rounded-full bg-cyber-cyan pulse-dot-cyan"></div>
-              <span className="text-white">{selectedModel}</span>
-              <span className="text-qwen-500">·</span>
-              <span className="text-qwen-400 font-mono text-[10px]">local</span>
-              <ChevronDown size={12} className="text-qwen-400" />
+            <button className="flex items-center gap-2 px-3 py-1.5 glass rounded-lg text-xs font-medium hover:border-qwen-500/40 transition max-w-[240px]">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyber-cyan pulse-dot-cyan flex-shrink-0"></div>
+              <span className="text-white truncate block flex-1" title={selectedModel}>{selectedModel}</span>
+              <span className="text-qwen-500 flex-shrink-0">·</span>
+              <span className="text-qwen-400 font-mono text-[10px] flex-shrink-0">local</span>
+              <ChevronDown size={12} className="text-qwen-400 flex-shrink-0" />
             </button>
-            <div className="absolute right-0 mt-1 hidden group-hover:block bg-[#13131A] border border-qwen-border rounded-lg shadow-xl py-1 z-50 min-w-[160px]">
+            <div className="absolute right-0 mt-1 hidden group-hover:block bg-[#13131A] border border-qwen-border rounded-lg shadow-xl py-1 z-50 min-w-[200px] max-h-60 overflow-y-auto scrollbar">
               {models.map(m => (
                 <button
                   key={m}
@@ -1009,11 +1009,11 @@ function MainLayout() {
                   <div className="space-y-4 max-w-4xl">
                     {/* Visual .env Editor */}
                     <div className="bg-black/30 border border-white/5 rounded-lg p-3.5 space-y-2 shadow-lg">
-                      <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block flex justify-between items-center border-b border-white/5 pb-2">
+                      <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block flex justify-between items-center border-b border-white/5 pb-2">
                         <span>Editor de Variables (.env)</span>
                         <button 
                           onClick={() => setEnvEditMode(envEditMode === 'visual' ? 'raw' : 'visual')} 
-                          className="text-amber-400 hover:text-amber-300 text-[8px] font-bold font-mono"
+                          className="text-indigo-400 hover:text-indigo-300 text-[8px] font-bold font-mono"
                         >
                           MODO: {envEditMode.toUpperCase()}
                         </button>
@@ -1025,11 +1025,11 @@ function MainLayout() {
                             value={envContent} 
                             onChange={(e) => setEnvContent(e.target.value)}
                             rows={4}
-                            className="w-full bg-[#0A0A0C] border border-white/10 rounded p-1.5 text-white font-mono text-[9px] outline-none focus:border-amber-500/50 resize-none"
+                            className="w-full bg-[#0A0A0C] border border-white/10 rounded p-1.5 text-white font-mono text-[9px] outline-none focus:border-indigo-500/50 resize-none"
                           />
                           <button 
                             onClick={saveEnvContent}
-                            className="w-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] uppercase font-bold py-1.5 rounded transition-all cursor-pointer"
+                            className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[9px] uppercase font-bold py-1.5 rounded transition-all cursor-pointer"
                           >
                             Guardar .env raw
                           </button>
@@ -1056,7 +1056,7 @@ function MainLayout() {
                                       list[idx].val = e.target.value;
                                       updateEnvFromList(list);
                                     }}
-                                    className="flex-1 bg-[#0A0A0C] border border-white/10 rounded p-1 text-[9px] text-white font-mono outline-none focus:border-amber-500/50"
+                                    className="flex-1 bg-[#0A0A0C] border border-white/10 rounded p-1 text-[9px] text-white font-mono outline-none focus:border-indigo-500/50"
                                   />
                                   <button 
                                     onClick={() => {
@@ -1078,13 +1078,13 @@ function MainLayout() {
                               type="text" 
                               placeholder="NUEVA_CLAVE" 
                               id="new-env-key"
-                              className="w-1/2 bg-[#0A0A0C] border border-white/10 rounded p-1 text-[9px] text-white font-mono outline-none focus:border-amber-500/50"
+                              className="w-1/2 bg-[#0A0A0C] border border-white/10 rounded p-1 text-[9px] text-white font-mono outline-none focus:border-indigo-500/50"
                             />
                             <input 
                               type="text" 
                               placeholder="valor" 
                               id="new-env-value"
-                              className="flex-1 bg-[#0A0A0C] border border-white/10 rounded p-1 text-[9px] text-white font-mono outline-none focus:border-amber-500/50"
+                              className="flex-1 bg-[#0A0A0C] border border-white/10 rounded p-1 text-[9px] text-white font-mono outline-none focus:border-indigo-500/50"
                             />
                             <button 
                               onClick={() => {
@@ -1097,7 +1097,7 @@ function MainLayout() {
                                   valInput.value = '';
                                 }
                               }}
-                              className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-[9px] uppercase px-2.5 rounded transition-all cursor-pointer"
+                              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[9px] uppercase px-2.5 rounded transition-all cursor-pointer"
                             >
                               +
                             </button>
@@ -1105,7 +1105,7 @@ function MainLayout() {
 
                           <button 
                             onClick={saveEnvContent}
-                            className="w-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] uppercase font-bold py-1 rounded transition-all cursor-pointer"
+                            className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[9px] uppercase font-bold py-1 rounded transition-all cursor-pointer"
                           >
                             Guardar Cambios .env
                           </button>
@@ -1544,7 +1544,7 @@ function MainLayout() {
                           key={i} 
                           className={`rounded-lg p-3 text-[10px] leading-relaxed font-sans select-text border ${
                             m.role === 'user' 
-                              ? 'bg-amber-500/10 border-amber-500/20 text-amber-100 ml-6' 
+                              ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-100 ml-6' 
                               : m.role === 'system'
                                 ? 'bg-white/3 border-white/5 text-gray-500 italic text-[9px]'
                                 : 'bg-black/30 border-white/5 text-gray-200 mr-6'
@@ -1560,7 +1560,7 @@ function MainLayout() {
                         <div className="bg-white/5 border border-white/5 rounded-lg p-3 text-[10px] text-gray-400 italic mr-6 animate-pulse font-sans">
                           <div>El enjambre está analizando y respondiendo...</div>
                           {pipelineLogs.length > 0 && (
-                            <div className="text-[9px] text-amber-400 font-mono border-t border-white/5 pt-1.5 mt-1.5 break-all not-italic">
+                            <div className="text-[9px] text-indigo-400 font-mono border-t border-white/5 pt-1.5 mt-1.5 break-all not-italic">
                               {pipelineLogs[pipelineLogs.length - 1]}
                             </div>
                           )}
@@ -1577,7 +1577,7 @@ function MainLayout() {
                       <select 
                         value={selectedModel}
                         onChange={(e) => setSelectedModel(e.target.value)}
-                        className="bg-black border border-white/10 rounded text-[9px] text-emerald-400 font-mono px-2 py-0.5 outline-none max-w-[170px] truncate"
+                        className="bg-[#13131A] border border-qwen-border rounded text-[9px] text-cyber-cyan font-mono px-2 py-0.5 outline-none max-w-[170px] truncate"
                       >
                         {models.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
@@ -1588,7 +1588,7 @@ function MainLayout() {
                       <select 
                         value={chatTarget}
                         onChange={(e) => setChatTarget(e.target.value as any)}
-                        className="bg-black border border-white/10 rounded text-[9px] text-amber-400 font-mono px-2 py-0.5 outline-none"
+                        className="bg-[#13131A] border border-qwen-border rounded text-[9px] text-indigo-400 font-mono px-2 py-0.5 outline-none"
                       >
                         <option value="general">Enjambre General</option>
                         <option value="architect">Arquitecto (Planificador)</option>
@@ -1605,18 +1605,19 @@ function MainLayout() {
                         onChange={(e) => setChatMessage(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !isChatThinking) sendChatMessage(); }}
                         placeholder={chatTarget === 'debate' ? "Escribe la tesis a debatir..." : "Pregunta sobre el código, arquitectura..."}
-                        className="flex-1 bg-black border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-amber-500/50 font-sans"
+                        className="flex-1 bg-black border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-indigo-500/50 font-sans"
                       />
                       <button 
                         onClick={sendChatMessage}
                         disabled={isChatThinking || !chatMessage.trim()}
-                        className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-bold text-[10px] uppercase px-3.5 rounded-lg transition-colors cursor-pointer"
+                        className="btn-primary disabled:opacity-50 text-white font-semibold text-[10px] uppercase px-3.5 rounded-lg transition-all cursor-pointer shadow-none"
                       >
                         Enviar
                       </button>
                     </div>
                   </div>
                 </div>
+
               )}
 
               {/* Tab: Settings */}
