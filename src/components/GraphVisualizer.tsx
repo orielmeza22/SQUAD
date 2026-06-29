@@ -137,7 +137,7 @@ export default function GraphVisualizer({ onNodeClick }: { onNodeClick?: (node: 
         />
         <MiniMap
           nodeColor={(n) => {
-            const status = (n.data as AgentNodeData | undefined)?.status || 'idle';
+            const status = (n.data as any)?.status || 'idle';
             const colors: Record<string, string> = {
               idle: '#374151',
               thinking: '#f59e0b',
