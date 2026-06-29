@@ -64,6 +64,7 @@ def run_agent_pipeline(prompt: str, model: str) -> None:
 
     state.is_running = True
     state.pipeline_status = "running"
+    state.set_node_status("architect", "executing")
     state.logs = []
     SysTools.setup()
 
@@ -121,6 +122,7 @@ def run_agent_pipeline(prompt: str, model: str) -> None:
         SysTools.write("build_manifest.json", json.dumps(manifest_data, indent=2), force=True)
 
         state.log("✅ Especificación del Proyecto generada (SPEC.md).")
+        state.set_node_status("architect", "done")
 
         # Save pipeline parameters to resume Phase 2
         state.pending_pipeline_data = {
@@ -207,6 +209,8 @@ def run_agent_pipeline_phase_2() -> None:
         style_mem_s = style_memory_str(style_mem)
 
         state.log("⚡ [SQUAD] Lanzando Agente DBA y Agente UI Frontend en paralelo...")
+        state.set_node_status("dba", "executing")
+        state.set_node_status("frontend", "executing")
 
         db_output = [None]
         ui_output = [None]
@@ -237,8 +241,10 @@ def run_agent_pipeline_phase_2() -> None:
         # DBA Write
         if db_output[0] and not db_output[0].startswith("Error DBA"):
             SysTools.extract_and_write_multifile(db_output[0])
+            state.set_node_status("dba", "done")
             state.log("✅ Modelos de DB y Seguridad previstos (Paralelo).")
         else:
+            state.set_node_status("dba", "failed")
             state.log(f"⚠️ DBA Agent falló o dio error: {db_output[0]}")
 
         # Validate UI output from thread in memory (Shift-Left, SQUAD 2.0)
@@ -263,6 +269,7 @@ def run_agent_pipeline_phase_2() -> None:
                     SysTools.write(filepath, content)
                 created_ui = list(extracted.keys())
                 ui_success = True
+                state.set_node_status("frontend", "done")
                 state.log("✅ Sistema de Diseño Frontend/UI creado (Paralelo).")
             else:
                 ui_retries = 1
@@ -292,10 +299,12 @@ def run_agent_pipeline_phase_2() -> None:
                     SysTools.write(filepath, content)
                 created_ui = list(extracted.keys())
                 ui_success = True
+                state.set_node_status("frontend", "done")
                 state.log("✅ Sistema de Diseño Frontend/UI creado (Fase Secuencial).")
             else:
                 ui_retries += 1
                 if ui_retries >= 3:
+                    state.set_node_status("frontend", "failed")
                     state.log(f"❌ [SHIFT-LEFT] UI Agent falló la validación de sintaxis 2 veces: {', '.join(err_details)}. Abortando y guardando respuesta para depuración.")
                     for filepath, content in extracted.items():
                         SysTools.write(filepath, content)
@@ -307,6 +316,7 @@ def run_agent_pipeline_phase_2() -> None:
         existing_context = _existing_context(prompt)
 
         # Backend Agent execution with Shift-Left memory loop (SQUAD 2.0)
+        state.set_node_status("backend", "executing")
         state.log(f"💻 [AGENTE BACKEND DEV] ({target_model}): Escribiendo Lógica de Negocio y APIs...")
         created_back: list = []
         back_success = False
@@ -334,10 +344,12 @@ def run_agent_pipeline_phase_2() -> None:
                     SysTools.write(filepath, content)
                 created_back = list(extracted.keys())
                 back_success = True
+                state.set_node_status("backend", "done")
                 state.log("✅ Lógica de Negocio Backend creada con éxito.")
             else:
                 back_retries += 1
                 if back_retries >= 3:
+                    state.set_node_status("backend", "failed")
                     state.log(f"❌ [SHIFT-LEFT] Backend Agent falló la validación de sintaxis 2 veces: {', '.join(err_details)}. Abortando y guardando respuesta para depuración.")
                     for filepath, content in extracted.items():
                         SysTools.write(filepath, content)
@@ -348,20 +360,26 @@ def run_agent_pipeline_phase_2() -> None:
         created_files = list(set(created_ui + created_back))
         state.log(f"✅ Se crearon/modificaron {len(created_files)} archivos en total...")
 
+        state.set_node_status("review", "executing")
         state.log(f"🤖 [AGENTE CODE REVIEWER] ({target_model}): Analizando calidad de código generado...")
         review_p = code_review_prompt(plan, created_files)
         code_review = AIProvider().generate(model=target_model, prompt=review_p)
 
         if "SÍ_CRITICO" in code_review.upper():
+            state.set_node_status("review", "failed")
+            state.set_node_status("fix", "executing")
             state.log("⚠️ El Code Reviewer detectó fallos. Inyectando AGENTE LINTER AUTÓNOMO...")
             fix_p = fix_prompt(code_review)
             fix_out = AIProvider().generate(model=target_model, prompt=fix_p)
             SysTools.extract_and_write_multifile(fix_out)
+            state.set_node_status("fix", "done")
             state.log("🧹 Linter Autónomo resolvió los bugs del Review.")
         else:
+            state.set_node_status("review", "done")
             state.log("✅ Code Review superado con excelencia (Clean Code).")
 
         # Multi-language linter validation
+        state.set_node_status("qa", "executing")
         state.log("🧹 [SYNTAX CHECK]: Verificando sintaxis de archivos creados...")
         syntax_errors: list = []
         for cf in created_files:
@@ -393,6 +411,7 @@ def run_agent_pipeline_phase_2() -> None:
         qa_p = qa_devops_prompt()
         test_out = AIProvider().generate(model=target_model, prompt=qa_p)
         SysTools.extract_and_write_multifile(test_out)
+        state.set_node_status("qa", "done")
         state.log("✅ Suite QA y pipelines de DevOps finalizados.")
 
         state.log("⏱️ [SHADOW GIT]: Documentando snapshot del Workspace...")
