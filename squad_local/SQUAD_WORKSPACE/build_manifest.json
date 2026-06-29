@@ -1,10 +1,10 @@
 {
-  "stack": "NODE_EJS",
+  "stack": "FASTAPI_HTMX",
   "files": [
-    "server.js",
-    "views/index.ejs",
-    "public/styles.css",
-    "public/app.js",
-    "package.json"
+    "main_output.py",
+    "app.py",
+    "styles.css",
+    "index.html",
+    "requirements.txt"
   ]
 }
