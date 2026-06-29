@@ -1,156 +1,104 @@
-STACK: FASTAPI_HTMX
+STACK: NODE_EJS
 
-# Especificación de Software (SPEC)
+### Especificación de Software (SPEC)
 
-## Resumen del Proyecto
-El objetivo principal es crear un sistema de API utilizando el stack FASTAPI_HTMX, que incluye Python, FastAPI y HTMX para interactividad vía hx-get/hx-post. El sistema se basará en SQLite como base de datos.
+#### 1. Introducción:
+Este documento define el diseño y arquitectura para una aplicación web simple que cumple con la petición del usuario, utilizando el stack tecnológico `NODE_EJS`. La aplicación consistirá en un servidor Express con una única ruta GET `/hello` que devolverá el mensaje JSON: `{ 'message': 'Hola Mundo' }`.
 
-## Arquitectura del Sistema
+#### 2. Estructura de carpetas:
+- **/public**: Contiene archivos estáticos como HTML, CSS y JavaScript del cliente.
+- **/server.js**: Contiene la lógica del servidor Express.
 
-### Backend
-- **Punto de Entrada**: main_output.py
-  - Usar `uvicorn` para ejecutar el servidor.
-  
-### Frontend
-- **HTML/CSS/JS**: Servido por FastAPI, no se generará código frontend independiente.
+#### 3. Archivos necesarios:
 
-## Estructura del Proyecto
+1. **server.js**
+   - Este archivo contendrá toda la lógica del servidor Express.
+   
+2. **public/index.html**
+   - Este archivo HTML servirá como punto de entrada para el cliente y mostrará un mensaje simple.
 
-### Backend (main_output.py)
-```plaintext
-├── main_output.py
-└── db.sqlite3  # Base de datos SQLite
+3. **public/style.css**
+   - Este archivo CSS proporcionará estilos básicos al HTML.
+
+4. **public/script.js**
+   - Este archivo JavaScript puede ser utilizado para agregar funcionalidades adicionales, aunque no es necesario en este caso.
+
+#### 4. Estructura de la base de datos:
+- No se utilizará una base de datos SQLite ya que el usuario solo requiere una ruta GET simple y no hay necesidad de almacenamiento persistente.
+
+#### 5. Endpoints y Rutas:
+
+| Endpoint | Método HTTP | Descripción |
+|----------|-------------|--------------|
+| /hello   | GET         | Devuelve un mensaje JSON: `{ 'message': 'Hola Mundo' }` |
+
+#### 6. Implementación del servidor Express (server.js):
+
+```javascript
+// server.js
+
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/hello', (req, res) => {
+    const message = { 'message': 'Hola Mundo' };
+    res.json(message);
+});
+
+app.listen(PORT, () => {
+    console.log(`Servidor escuchando en el puerto ${PORT}`);
+});
 ```
 
-### Frontend (Servido por FastAPI)
-- No hay archivos frontend específicos, todo el frontend será generado dinámicamente por FastAPI.
+#### 7. Implementación del frontend (public/index.html):
 
-## Estructura del Backend
+```html
+<!-- public/index.html -->
 
-### Endpoints y Rutas
-1. **Ruta para Crear un Nuevo Registro**
-   - Método: POST
-   - URL: `/api/crear`
-   - Input: JSON con los datos necesarios.
-   - Output: JSON con el ID del nuevo registro o un mensaje de error.
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Hola Mundo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>¡Hola Mundo!</h1>
+    
+    <script src="script.js"></script>
+</body>
+</html>
+```
 
-2. **Ruta para Obtener Todos los Registros**
-   - Método: GET
-   - URL: `/api/listar`
-   - Input: Ninguno.
-   - Output: JSON con una lista de todos los registros.
+#### 8. Implementación del frontend (public/style.css):
 
-3. **Ruta para Obtener Un Registro por ID**
-   - Método: GET
-   - URL: `/api/obtener/<id>`
-   - Input: ID del registro.
-   - Output: JSON con el registro correspondiente o un mensaje de error si no existe.
+```css
+/* public/style.css */
 
-4. **Ruta para Actualizar un Registro**
-   - Método: PUT
-   - URL: `/api/actualizar/<id>`
-   - Input: JSON con los datos actualizados y el ID del registro.
-   - Output: JSON con un mensaje de éxito o un mensaje de error.
-
-5. **Ruta para Eliminar Un Registro**
-   - Método: DELETE
-   - URL: `/api/eliminar/<id>`
-   - Input: ID del registro.
-   - Output: JSON con un mensaje de éxito o un mensaje de error si no existe el registro.
-
-## Estructura de la Base de Datos (SQLite)
-
-### Tablas
-
-1. **Tabla `registros`**
-   ```plaintext
-   CREATE TABLE registros (
-       id INTEGER PRIMARY KEY AUTOINCREMENT,
-       nombre TEXT NOT NULL,
-       edad INTEGER NOT NULL,
-       email TEXT UNIQUE NOT NULL
-   );
-   ```
-
-## Documentación y Descripción de Endpoints
-
-### Ruta para Crear un Nuevo Registro
-```plaintext
-POST /api/crear
-Input: {
-    "nombre": "Juan",
-    "edad": 30,
-    "email": "juan@example.com"
+body {
+    font-family: Arial, sans-serif;
 }
-Output: {
-    "id": 1, 
-    "mensaje": "Registro creado con éxito."
-} o {
-    "error": "Error al crear el registro."
+
+h1 {
+    color: blue;
 }
 ```
 
-### Ruta para Obtener Todos los Registros
-```plaintext
-GET /api/listar
-Input: Ninguno.
-Output: [
-    {"id": 1, "nombre": "Juan", "edad": 30, "email": "juan@example.com"},
-    {"id": 2, "nombre": "María", "edad": 25, "email": "maria@example.com"}
-]
+#### 9. Implementación del frontend (public/script.js) (opcional):
+
+```javascript
+// public/script.js
+
+console.log('Este archivo JavaScript es opcional y no se utiliza en este caso.');
 ```
 
-### Ruta para Obtener Un Registro por ID
-```plaintext
-GET /api/obtener/<id>
-Input: ID del registro.
-Output: {
-    "id": 1,
-    "nombre": "Juan",
-    "edad": 30,
-    "email": "juan@example.com"
-} o {
-    "error": "No se encontró el registro con ese ID."
-}
-```
+### Resumen:
+- **Stack**: `NODE_EJS`
+- **Estructura de carpetas**:
+  - /public: HTML, CSS y JS del cliente.
+  - /server.js: Lógica del servidor Express.
+- **Endpoints**:
+  - GET `/hello`: Devuelve `{ 'message': 'Hola Mundo' }`.
 
-### Ruta para Actualizar un Registro
-```plaintext
-PUT /api/actualizar/<id>
-Input: {
-    "nombre": "Juan",
-    "edad": 31,
-    "email": "juan@example.com"
-} y el ID del registro.
-Output: {
-    "mensaje": "Registro actualizado con éxito."
-} o {
-    "error": "Error al actualizar el registro."
-}
-```
-
-### Ruta para Eliminar Un Registro
-```plaintext
-DELETE /api/eliminar/<id>
-Input: ID del registro.
-Output: {
-    "mensaje": "Registro eliminado con éxito."
-} o {
-    "error": "No se encontró el registro con ese ID."
-}
-```
-
-## Documentación de HTMX
-
-### Interactividad vía hx-get/hx-post
-- **hx-get**: Usar para obtener datos.
-- **hx-post**: Usar para enviar datos y actualizar la página.
-
-Ejemplo:
-```plaintext
-hx-get="/api/listar" 
-hx-target="#lista-registros"
-hx-swap="innerHTML"
-```
-
-Este documento proporciona una estructura clara y detallada de cómo se implementará el sistema de API utilizando el stack FASTAPI_HTMX. El backend estará completamente autocontenido en `main_output.py`, y todo el frontend será generado dinámicamente por FastAPI, siguiendo las reglas establecidas para evitar bugs y mantener la arquitectura limpia y eficiente.
+Este diseño cumple con las restricciones del sistema anfitrión y el stack tecnológico seleccionado, proporcionando una solución simple y eficiente para la petición del usuario.
