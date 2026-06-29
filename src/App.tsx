@@ -161,6 +161,8 @@ function MainLayout() {
   const [centralView, setCentralView] = useState<'editor' | 'graph'>('graph');
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
+  const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false);
 
   // States for Tiers 1-4 UI features
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
@@ -395,12 +397,52 @@ function MainLayout() {
             </div>
 
             {/* Workspace Select */}
-            <div className="bg-[#141419]/60 border border-white/5 rounded-lg p-2 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all">
-              <div>
-                <span className="text-[10px] font-bold text-gray-200 block">sanatorio-mx</span>
-                <span className="text-[8.5px] text-gray-500 font-mono">run_34929f • live</span>
+            <div 
+              className="relative"
+              onMouseLeave={() => setIsWorkspaceDropdownOpen(false)}
+            >
+              <div 
+                onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
+                className="bg-[#141419]/60 border border-white/5 rounded-lg p-2 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
+              >
+                <div>
+                  <span className="text-[10px] font-bold text-gray-200 block">sanatorio-mx</span>
+                  <span className="text-[8.5px] text-gray-500 font-mono">run_34929f • live</span>
+                </div>
+                <ChevronDown size={12} className="text-gray-500" />
               </div>
-              <ChevronDown size={12} className="text-gray-500" />
+              
+              {isWorkspaceDropdownOpen && (
+                <div className="absolute left-0 mt-1 w-full bg-[#13131A] border border-qwen-border rounded-lg shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <button 
+                    onClick={() => {
+                      showToast("Cambiado al workspace: sanatorio-mx");
+                      setIsWorkspaceDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-[10px] font-mono text-indigo-400 bg-indigo-500/5 font-bold border-b border-white/5"
+                  >
+                    sanatorio-mx (active)
+                  </button>
+                  <button 
+                    onClick={() => {
+                      showToast("Cambiado al workspace: clinica-la-luz");
+                      setIsWorkspaceDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-[10px] font-mono text-gray-300 hover:bg-white/5 hover:text-white"
+                  >
+                    clinica-la-luz
+                  </button>
+                  <button 
+                    onClick={() => {
+                      showToast("Cambiado al workspace: ecommerce-shop");
+                      setIsWorkspaceDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-[10px] font-mono text-gray-300 hover:bg-white/5 hover:text-white"
+                  >
+                    ecommerce-shop
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Orchestration Section */}
@@ -536,7 +578,7 @@ function MainLayout() {
           </div>
 
           {/* Bottom Settings and User */}
-          <div className="space-y-4">
+          <div className="space-y-4 font-sans relative">
             <button 
               onClick={() => setShowSettingsModal(true)}
               className="w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all border border-transparent"
@@ -544,7 +586,11 @@ function MainLayout() {
               <Settings size={12} />
               <span>Settings</span>
             </button>
-            <div className="flex items-center space-x-2.5 px-2 pt-2 border-t border-white/5">
+            <div 
+              onClick={() => setIsProfilePopoverOpen(!isProfilePopoverOpen)}
+              onMouseLeave={() => setIsProfilePopoverOpen(false)}
+              className="flex items-center space-x-2.5 px-2 pt-2 border-t border-white/5 cursor-pointer hover:bg-white/5 rounded-lg py-1 transition-all relative"
+            >
               <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-[10px] font-bold text-white">
                 OM
               </div>
@@ -552,6 +598,22 @@ function MainLayout() {
                 <span className="text-[10px] font-bold text-gray-200 block truncate">Oriel Meza</span>
                 <span className="text-[8px] text-gray-500 block truncate">pro plan</span>
               </div>
+              
+              {isProfilePopoverOpen && (
+                <div className="absolute bottom-10 left-0 w-48 bg-[#13131A] border border-qwen-border rounded-lg shadow-2xl p-3 space-y-2 z-50 text-[10px] font-sans animate-in fade-in slide-in-from-bottom-1 duration-150">
+                  <div className="font-bold text-white">Oriel Meza</div>
+                  <div className="text-gray-400">Plan: Pro Swarm Plan</div>
+                  <div className="text-qwen-400 font-mono text-[9px]">API tokens: 145.2k</div>
+                  <div className="border-t border-white/5 pt-1.5 mt-1.5">
+                    <button 
+                      onClick={() => showToast("Cerrando sesión...")}
+                      className="w-full text-left text-rose-400 hover:text-rose-300 font-medium cursor-pointer"
+                    >
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </nav>
@@ -564,9 +626,21 @@ function MainLayout() {
         <header className="h-11 border-b border-qwen-border flex items-center px-6 gap-4 glass-light relative z-30 select-none">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-xs">
-            <span className="text-qwen-400 hover:text-qwen-300 cursor-pointer">Workspaces</span>
+            <span 
+              onClick={() => setIsWorkspaceDropdownOpen(true)}
+              className="text-qwen-400 hover:text-qwen-300 cursor-pointer"
+            >
+              Workspaces
+            </span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" className="text-qwen-600"><path d="M9 18l6-6-6-6"/></svg>
-            <span className="text-qwen-400 hover:text-qwen-300 cursor-pointer">sanatorio-mx</span>
+            <span 
+              onClick={() => {
+                showToast("Workspace: sanatorio-mx • 1 active run");
+              }}
+              className="text-qwen-400 hover:text-qwen-300 cursor-pointer"
+            >
+              sanatorio-mx
+            </span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" className="text-qwen-600"><path d="M9 18l6-6-6-6"/></svg>
             <span className="text-white font-semibold flex items-center gap-1.5">
               Pipeline #34929f
@@ -2435,6 +2509,58 @@ function MainLayout() {
                 className="bg-rose-500 hover:bg-rose-400 text-white px-3.5 py-1.5 rounded transition-all cursor-pointer"
               >
                 Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ⚙️ SQUAD Swarm Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0A0A0F] border border-white/10 rounded-lg max-w-sm w-full shadow-2xl p-4 space-y-4 font-sans">
+            <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest font-mono border-b border-white/5 pb-2">
+              ⚙️ SQUAD Swarm Settings
+            </div>
+            <div className="space-y-3 text-[10px]">
+              <div>
+                <label className="text-[8px] text-gray-500 uppercase block mb-1">Swarm Concurrency limit</label>
+                <select className="w-full bg-[#13131A] border border-white/10 rounded p-1.5 text-white font-mono">
+                  <option>5 Concurrent Swarm Nodes (Default)</option>
+                  <option>10 Concurrent Swarm Nodes (Performance)</option>
+                  <option>20 Concurrent Swarm Nodes (Turbo)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[8px] text-gray-500 uppercase block mb-1">Auto-linter validation</label>
+                <select className="w-full bg-[#13131A] border border-white/10 rounded p-1.5 text-white font-mono">
+                  <option>Enabled (Verify with ast/ruff/eslint)</option>
+                  <option>Disabled (Dry-run only)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[8px] text-gray-500 uppercase block mb-1">General swarms telemetry</label>
+                <div className="flex items-center space-x-2 py-1 cursor-pointer">
+                  <input type="checkbox" defaultChecked className="accent-indigo-500 h-3.5 w-3.5" />
+                  <span className="text-gray-300">Send anonymized metrics to server</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex space-x-2 justify-end text-[9px] uppercase font-bold font-mono">
+              <button 
+                onClick={() => setShowSettingsModal(false)}
+                className="bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 rounded transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  showToast("Configuración general guardada con éxito.");
+                  setShowSettingsModal(false);
+                }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded transition-all cursor-pointer"
+              >
+                Aceptar
               </button>
             </div>
           </div>
