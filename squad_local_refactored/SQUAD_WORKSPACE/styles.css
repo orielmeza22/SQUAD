@@ -1,0 +1,7 @@
+/* Estilos personalizados */
+body {
+    font-family: 'Inter', sans-serif;
+}
+input, select, button {
+    outline: none;
+}
