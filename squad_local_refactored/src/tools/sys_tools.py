@@ -642,34 +642,8 @@ class SysTools:
         while clean_name.startswith("..") or clean_name.startswith("/") or clean_name.startswith("\\"):
             clean_name = clean_name.replace("../", "").replace("..\\", "").replace("..", "").lstrip("\\/")
 
-        # Manifest block validation (SQUAD 2.0)
-        manifest_path = os.path.join(SysTools.WORKSPACE, "build_manifest.json")
-        if os.path.exists(manifest_path) and clean_name not in ["build_manifest.json", "SPEC.md", "ARCHITECTURE.md", "VISUAL_REPORT.md", "SECURITY_REPORT.md"]:
-            try:
-                import json
-                with open(manifest_path, "r", encoding="utf-8") as f_manifest:
-                    manifest_data = json.load(f_manifest)
-                allowed_files = manifest_data.get("files", [])
-                norm_clean = clean_name.replace('\\', '/')
-                norm_allowed = [f.replace('\\', '/') for f in allowed_files]
-                
-                is_allowed = (
-                    norm_clean in norm_allowed or 
-                    any(norm_clean.startswith(f + "/") for f in norm_allowed) or
-                    norm_clean.startswith(".github/") or
-                    norm_clean.startswith("tests/") or
-                    norm_clean.endswith("_test.py") or
-                    norm_clean.endswith(".test.js") or
-                    norm_clean == "schema.sql"
-                )
-                
-                if not is_allowed:
-                    state.launcher_logs.append(
-                        f"🚫 [SISTEMA] Escritura BLOQUEADA para '{clean_name}' (No listado en build_manifest.json)."
-                    )
-                    return os.path.abspath(os.path.join(SysTools.WORKSPACE, clean_name))
-            except Exception as e:
-                print(f"Error validating manifest: {e}")
+
+
 
         # Shift-Left Syntax validation
         is_valid, err_msg = SysTools.check_syntax(clean_name, c)
@@ -920,46 +894,8 @@ class SysTools:
                 # 1. Compile check
                 compile(c, name, 'exec')
                 
-                # 2. Local import validation check (SQUAD 2.0 Shift-Left Imports)
-                import ast
-                import sys
-                std_libs = getattr(sys, "stdlib_module_names", set(sys.builtin_module_names))
-                common_libs = {"fastapi", "uvicorn", "jinja2", "streamlit", "sqlite3", "pydantic", "sqlalchemy", "requests", "bs4", "pandas", "numpy"}
-                
-                tree = ast.parse(c, filename=name)
 
-                for node in ast.walk(tree):
-                    imported_module = None
-                    if isinstance(node, ast.Import):
-                        for alias in node.names:
-                            imported_module = alias.name
-                    elif isinstance(node, ast.ImportFrom):
-                        imported_module = node.module
-                    
-                    if imported_module:
-                        base_module = imported_module.split('.')[0]
-                        if base_module not in std_libs and base_module not in common_libs:
-                            local_py_file = base_module + ".py"
-                            local_dir = base_module
-                            
-                            path_py = os.path.join(SysTools.WORKSPACE, local_py_file)
-                            path_dir = os.path.join(SysTools.WORKSPACE, local_dir)
-                            if not os.path.exists(path_py) and not os.path.exists(path_dir):
-                                allowed = False
-                                manifest_path = os.path.join(SysTools.WORKSPACE, "build_manifest.json")
-                                if os.path.exists(manifest_path):
-                                    try:
-                                        import json
-                                        with open(manifest_path, "r", encoding="utf-8") as f_manifest:
-                                            m_data = json.load(f_manifest)
-                                        allowed_files = m_data.get("files", [])
-                                        if any(base_module in f for f in allowed_files):
-                                            allowed = True
-                                    except Exception:
-                                        pass
-                                
-                                if not allowed:
-                                    return False, f"ImportError: El archivo intenta importar el módulo local '{imported_module}' que no existe en el workspace ni está permitido en build_manifest.json. Todo el código debe ser autocontenido en {name}."
+
                 
                 # 3. Security Scan (SQUAD 2.0 Supply Chain & AST Scanning)
                 from .security import SecurityScanner
