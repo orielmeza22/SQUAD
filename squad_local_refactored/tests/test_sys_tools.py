@@ -37,3 +37,23 @@ def test_write_and_read():
 def test_cleanup_workspace_processes():
     # Verify cleanup runs without crashing
     SysTools.cleanup_workspace_processes()
+
+
+def test_extract_multifile_in_memory_json():
+    json_output = """
+    ```json
+    [
+      {
+        "tool": "write_file",
+        "parameters": {
+          "path": "app.py",
+          "content": "print('hello')"
+        }
+      }
+    ]
+    ```
+    """
+    files = SysTools.extract_multifile_in_memory(json_output)
+    assert "app.py" in files
+    assert files["app.py"] == "print('hello')"
+
