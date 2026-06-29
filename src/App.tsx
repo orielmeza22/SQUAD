@@ -164,7 +164,7 @@ function MainLayout() {
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false);
   const [currentWorkspace, setCurrentWorkspace] = useState('sanatorio-mx');
-  const [elapsedTime, setElapsedTime] = useState(154);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
     let interval: any;
