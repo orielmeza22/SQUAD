@@ -838,34 +838,9 @@ class SysTools:
         except Exception:
             pass
 
-        lines = text.split("\n")
-        current_file = None
-        current_content = []
         files = {}
-
-        for line in lines:
-            if line.startswith("@@FILE:"):
-                if current_file:
-                    files[current_file] = "\n".join(current_content).strip("`\n ")
-                current_file = line.replace("@@FILE:", "").strip()
-                current_content = []
-                continue
-            elif line.startswith("@@PATCH:") or line.startswith("@@DELETE:") or line.startswith("@@ENDFILE") or line.startswith("@@ENDPATCH"):
-                if current_file:
-                    files[current_file] = "\n".join(current_content).strip("`\n ")
-                    current_file = None
-                continue
-
-            if current_file is not None:
-                if line.strip().startswith("```") and len(line.strip()) <= 15:
-                    continue
-                current_content.append(line)
-
-        if current_file:
-            files[current_file] = "\n".join(current_content).strip("`\n ")
-
-        # Fallback: Parse standard Markdown code blocks if no @@FILE: tags were found (SQUAD 2.0 Robustness)
         if not files:
+
             import re
             # Find all markdown code blocks: ```[lang]\n[content]\n```
             blocks = re.findall(r'```(\w*)\n(.*?)\n```', text, re.DOTALL)
@@ -917,164 +892,16 @@ class SysTools:
         successful_files = []
         for call, res in zip(calls, results):
             if res.success:
-                if call.tool == "legacy_fallback":
-                    try:
-                        files = call.parameters.get("files", [])
-                        successful_files.extend(files)
-                    except Exception:
-                        pass
-                else:
-                    path = call.parameters.get("path")
-                    if path:
-                        successful_files.append(path)
+                path = call.parameters.get("path")
+                if path:
+                    successful_files.append(path)
         return list(set(successful_files))
 
 
 
-    @staticmethod
-    def _legacy_extract_and_write_multifile(text: str) -> List[str]:
-        """Parse and execute ``@@FILE:``/``@@PATCH:``/``@@DELETE:`` operations from LLM output.
 
-        Returns:
-            List of created/modified file names.
-        """
-        lines = text.split("\n")
-        current_file = None
-        current_content = []
-        files = []
-        current_patch_file = None
-        current_patch_content = []
 
-        for line in lines:
-            if line.startswith("@@PATCH:"):
-                if current_file:
-                    SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
-                    current_file = None
-                if current_patch_file:
-                    SysTools.apply_patch(current_patch_file, "\n".join(current_patch_content))
-                    current_patch_file = None
-                current_patch_file = line.replace("@@PATCH:", "").strip()
-                current_patch_content = []
-                files.append(current_patch_file)
-                continue
-            elif line.startswith("@@FILE:"):
-                if current_file:
-                    SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
-                if current_patch_file:
-                    SysTools.apply_patch(current_patch_file, "\n".join(current_patch_content))
-                    current_patch_file = None
-                current_file = line.replace("@@FILE:", "").strip()
-                current_content = []
-                files.append(current_file)
-                continue
-            elif line.startswith("@@DELETE:"):
-                if current_file:
-                    SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
-                    current_file = None
-                if current_patch_file:
-                    SysTools.apply_patch(current_patch_file, "\n".join(current_patch_content))
-                    current_patch_file = None
-                del_file = line.replace("@@DELETE:", "").strip()
-                del_path = os.path.abspath(os.path.join(SysTools.WORKSPACE, del_file.lstrip("\\/")))
-                if del_path.startswith(os.path.abspath(SysTools.WORKSPACE)) and os.path.exists(del_path):
-                    try:
-                        os.remove(del_path)
-                    except Exception:
-                        pass
-                continue
 
-            has_endfile = "@@ENDFILE" in line
-            has_endpatch = "@@ENDPATCH" in line
-
-            if has_endfile or has_endpatch:
-                tag = "@@ENDFILE" if has_endfile else "@@ENDPATCH"
-                parts = line.split(tag, 1)
-                before_tag = parts[0]
-                before_tag = before_tag.replace(">>>>>>> END", "").rstrip()
-
-                if current_file is not None:
-                    if before_tag.strip():
-                        if not (before_tag.strip().startswith("```") and len(before_tag.strip()) <= 15):
-                            current_content.append(before_tag)
-                    SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
-                    current_file = None
-                elif current_patch_file is not None:
-                    if before_tag.strip():
-                        current_patch_content.append(before_tag)
-                    SysTools.apply_patch(current_patch_file, "\n".join(current_patch_content))
-                    current_patch_file = None
-                continue
-
-            if current_file is not None:
-                if line.strip().startswith("```") and len(line.strip()) <= 15:
-                    continue
-                current_content.append(line)
-            elif current_patch_file is not None:
-                current_patch_content.append(line)
-
-        if current_file:
-            SysTools.write(current_file, "\n".join(current_content).strip("`\n "))
-        if current_patch_file:
-            SysTools.apply_patch(current_patch_file, "\n".join(current_patch_content))
-
-        if not files:
-            # Fallback: parse fenced code blocks when no @@FILE markers present (SQUAD 2.0 Stack-Aware Fallback)
-            import json
-            current_stack = "FASTAPI_HTMX"
-            manifest_path = os.path.join(SysTools.WORKSPACE, "build_manifest.json")
-            if os.path.exists(manifest_path):
-                try:
-                    with open(manifest_path, "r", encoding="utf-8") as f_manifest:
-                        manifest_data = json.load(f_manifest)
-                    current_stack = manifest_data.get("stack", "FASTAPI_HTMX")
-                except Exception:
-                    pass
-
-            blocks = re.findall(r'```([a-zA-Z0-9_-]*)\s*(.*?)(?:```|$)', text, re.DOTALL)
-            if not blocks:
-                return []
-
-            for lang_tag, code in blocks:
-                lang_tag = lang_tag.lower()
-                code_clean = code.strip("`\n ")
-                fname = None
-
-                # Check if the code block starts with a comment specifying the filename
-                first_lines = [line.strip() for line in code_clean.splitlines()[:2]]
-                for line in first_lines:
-                    m = re.search(r'(?:#|//|/\*|<!--)\s*@FILE:?\s*([a-zA-Z0-9_\-\./]+)', line, re.IGNORECASE)
-                    if m:
-                        fname = m.group(1).strip()
-                        break
-
-                if not fname:
-                    if current_stack == "FASTAPI_HTMX":
-                        if lang_tag in ["py", "python", "py3"]:
-                            fname = "main_output.py"
-                        elif lang_tag in ["html", "xml"] or "<html" in code_clean.lower() or "<div" in code_clean.lower():
-                            fname = "index.html"
-                        elif lang_tag in ["css"] or "body {" in code_clean or "margin:" in code_clean:
-                            fname = "styles.css"
-                        elif lang_tag in ["sql"] or "CREATE TABLE" in code_clean:
-                            fname = "schema.sql"
-                    elif current_stack == "NODE_EJS":
-                        if lang_tag in ["js", "javascript"]:
-                            is_server = "express" in code_clean or "require(" in code_clean or "listen(" in code_clean
-                            fname = "server.js" if is_server else "public/app.js"
-                        elif lang_tag in ["html", "ejs"] or "<html" in code_clean.lower() or "<div" in code_clean.lower():
-                            fname = "views/index.ejs"
-                        elif lang_tag in ["css"] or "body {" in code_clean or "margin:" in code_clean:
-                            fname = "public/styles.css"
-                        elif lang_tag in ["sql"] or "CREATE TABLE" in code_clean:
-                            fname = "schema.sql"
-                    elif current_stack == "PYTHON_STREAMLIT":
-                        if lang_tag in ["py", "python"]:
-                            fname = "app.py"
-
-                if fname:
-                    SysTools.write(fname, code_clean)
-                    files.append(fname)
-        return files
 
     @staticmethod
     def extract_code(text: str) -> str:

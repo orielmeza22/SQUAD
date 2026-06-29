@@ -64,16 +64,26 @@ index.html actual:
 styles.css actual:
 {styles_css}
 
-Genera los archivos mejorados utilizando el formato exacto:
-@@FILE: index.html
-<código index.html mejorado>
-@@ENDFILE@@
+FORMATO DE SALIDA OBLIGATORIO (JSON):
+[
+  {{
+    "tool": "write_file",
+    "parameters": {{
+      "path": "index.html",
+      "content": "<código index.html mejorado>"
+    }}
+  }},
+  {{
+    "tool": "write_file",
+    "parameters": {{
+      "path": "styles.css",
+      "content": "<código styles.css mejorado>"
+    }}
+  }}
+]
 
-@@FILE: styles.css
-<código styles.css mejorado>
-@@ENDFILE@@
+No expliques nada. Solo genera el JSON."""
 
-No expliques nada. Solo genera los archivos."""
         ux_fixes = AIProvider().generate(model=model, prompt=ux_fix_prompt)
         SysTools.extract_and_write_multifile(ux_fixes)
         state.launcher_logs.append("🎨 [AGENTE AUDITOR UX]: Mejoras estéticas de UI/UX aplicadas exitosamente.")

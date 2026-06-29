@@ -512,7 +512,7 @@ def run_dba_provision(model: str):
                 rel = os.path.relpath(p, SysTools.WORKSPACE).replace('\\', '/')
                 content = SysTools.read(rel)
                 if content:
-                    files_context.append(f"@@FILE: {rel}\n{content}\n@@ENDFILE@@")
+                    files_context.append(f"Archivo: {rel}\n```\n{content}\n```")
 
     files_context_str = "\n\n".join(files_context)
 
@@ -521,12 +521,20 @@ Analiza la estructura de los archivos actuales:
 {files_context_str}
 
 Genera únicamente un script SQL válido con la creación de tablas (CREATE TABLE) y opcionalmente algunos datos semilla (INSERT INTO).
-Usa el formato exacto:
-@@FILE: schema.sql
-<código SQL>
-@@ENDFILE@@
 
-No expliques nada. Solo genera el archivo schema.sql."""
+FORMATO DE SALIDA OBLIGATORIO (JSON):
+[
+  {{
+    "tool": "write_file",
+    "parameters": {{
+      "path": "schema.sql",
+      "content": "-- código SQL aquí"
+    }}
+  }}
+]
+
+No expliques nada. Solo genera el JSON."""
+
 
     state.launcher_logs.append("🧠 [AGENTE DBA]: Invocando IA para diseñar el esquema relacional SQLite...")
     try:

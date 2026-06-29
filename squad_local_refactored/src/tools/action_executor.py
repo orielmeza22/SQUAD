@@ -39,13 +39,7 @@ class ActionExecutor:
             except Exception:
                 pass
 
-        # 3. Fallback: legacy @@FILE: markers
-        if any(tag in llm_output for tag in ("@@FILE:", "@@PATCH:", "@@DELETE:")):
-            state.launcher_logs.append("⚠️ [DEPRECACIÓN] Salida en formato legacy detectada. Migrando a JSON schemas.")
-            files = SysTools._legacy_extract_and_write_multifile(llm_output)
-            return [ToolCall(tool="legacy_fallback", parameters={"files": files})]
-
-        # 4. Fallback: markdown code blocks with filename hints
+        # 3. Fallback: markdown code blocks with filename hints
         #    Supports: ```python\n# filename.py, ```html\n<!-- index.html -->, or ```lang:filename
         markdown_calls = self._parse_markdown_blocks(llm_output)
         if markdown_calls:
@@ -53,6 +47,7 @@ class ActionExecutor:
             return markdown_calls
 
         return []
+
 
     def _parse_json_data(self, data: Any) -> List[ToolCall]:
         calls = []
@@ -113,11 +108,8 @@ class ActionExecutor:
     def execute(self, call: ToolCall) -> ToolResult:
         tool = call.tool
         params = call.parameters
-        
-        if tool == "legacy_fallback":
-            return ToolResult(tool=tool, success=True, message=f"Archivos procesados vía fallback legacy: {params.get('files')}")
-
         path = params.get("path")
+
         if path:
             clean_path = path.lstrip("\\/")
             # Prevent workspace escape

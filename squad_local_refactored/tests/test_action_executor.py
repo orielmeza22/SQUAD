@@ -65,26 +65,26 @@ def test_action_executor_path_traversal(tmp_path):
     finally:
         SysTools.WORKSPACE = original_workspace
 
-def test_action_executor_legacy_fallback(tmp_path):
+def test_action_executor_markdown_fallback(tmp_path):
     original_workspace = SysTools.WORKSPACE
     SysTools.WORKSPACE = str(tmp_path)
     
     try:
         executor = ActionExecutor()
-        # Legacy @@FILE syntax
-        llm_output = "@@FILE:app_legacy.py\nprint('Legacy content')\n@@ENDFILE@@"
+        # Markdown fallback syntax
+        llm_output = "```python\n# app_legacy.py\nprint('Legacy content')\n```"
         
         results = executor.execute_all(llm_output)
         assert len(results) == 1
         assert results[0].success is True
-        assert "legacy_fallback" in results[0].tool
+        assert "write_file" in results[0].tool
         
         target = tmp_path / "app_legacy.py"
         assert target.exists()
-        # Cleaned by legacy extractor
         assert "print('Legacy content')" in target.read_text(encoding="utf-8")
     finally:
         SysTools.WORKSPACE = original_workspace
+
 
 def test_action_executor_malformed_json():
     executor = ActionExecutor()

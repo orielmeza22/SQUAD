@@ -54,11 +54,11 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
             for f in files:
                 rel = os.path.relpath(os.path.join(root, f), SysTools.WORKSPACE).replace('\\', '/')
                 content = SysTools.broken_memory_files.get(rel) or SysTools.read(rel)
-                files_context.append(f"@@FILE: {rel}\n{content}\n@@ENDFILE@@")
+                files_context.append(f"Archivo: {rel}\n```\n{content}\n```")
 
     for rel, content in SysTools.broken_memory_files.items():
-        if not any(f.startswith(f"@@FILE: {rel}\n") for f in files_context):
-            files_context.append(f"@@FILE: {rel}\n{content}\n@@ENDFILE@@")
+        if not any(f.startswith(f"Archivo: {rel}\n") for f in files_context):
+            files_context.append(f"Archivo: {rel}\n```\n{content}\n```")
 
     files_context_str = "\n\n".join(files_context)
 
@@ -88,10 +88,16 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
         "Si hay un error de importación local (como ModuleNotFoundError: No module named 'backend' o 'backend.crud'), NO intentes crear una carpeta o archivos nuevos. En su lugar, copia el código de ese módulo y combínalo DIRECTAMENTE dentro del archivo permitido (como main_output.py) para que sea autocontenido.{retry_warning}\n"
         "REGLA DE PUERTO: El servidor siempre debe escuchar en el puerto definido por la variable de entorno PORT (process.env.PORT o os.environ.get('PORT')).\n"
         f"{OptTools.CODE_GUIDELINES}\n\n"
-        "REGLA DE FORMATO OBLIGATORIA (REGENERACIÓN COMPLETA): Debes responder ÚNICAMENTE utilizando el siguiente "
-        "formato para cada archivo que modifiques o crees. No utilices parches parciales, escribe siempre el archivo completo:\n\n"
-        "@@FILE: nombre_del_archivo\ncódigo completo aquí\n@@ENDFILE@@\n\n"
-        "No agregues ninguna explicación ni texto introductorio ni conclusiones. Solo genera las correcciones de archivos con el formato indicado."
+        "FORMATO DE SALIDA OBLIGATORIO: Responde ÚNICAMENTE con un array JSON de llamadas a herramientas usando exactamente este schema. No utilices explicaciones ni texto introductorio.\n"
+        "[\n"
+        "  {\n"
+        "    \"tool\": \"write_file\",\n"
+        "    \"parameters\": {\n"
+        "      \"path\": \"nombre_del_archivo\",\n"
+        "      \"content\": \"código completo aquí\"\n"
+        "    }\n"
+        "  }\n"
+        "]"
     )
 
     try:
@@ -99,6 +105,7 @@ def run_autonomous_linter(error_logs_list: List[str], model: str):
         state.interception_enabled = False
         fixed_output = AIProvider().generate(model=model, prompt=prompt, no_cache=True)
         corrected_files = SysTools.extract_and_write_multifile(fixed_output)
+
         state.launcher_logs.append(
             f"🧹 [LINTER AUTÓNOMO]: Reparación aplicada sobre archivos: {str(corrected_files)}"
         )
