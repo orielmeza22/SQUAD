@@ -5,6 +5,10 @@ app = FastAPI()
 
 # Conexión a SQLite
 cursor = sqlite3.connect('db.sqlite3').cursor()
+try:
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=5000")
+except Exception: pass
 
 @app.post("/api/crear")
 def crear_registro(nombre: str, edad: int, email: str):
