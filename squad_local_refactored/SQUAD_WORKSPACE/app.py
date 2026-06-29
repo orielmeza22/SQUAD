@@ -5,6 +5,10 @@ app = FastAPI()
 
 def init_db():
     conn = sqlite3.connect("local_project.db")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS items (
@@ -25,6 +29,10 @@ def read_root():
 @app.get("/items")
 def get_items():
     conn = sqlite3.connect("local_project.db")
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+    except Exception: pass
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM items")
     rows = cursor.fetchall()
