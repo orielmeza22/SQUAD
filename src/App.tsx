@@ -155,9 +155,10 @@ function MainLayout() {
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [activeRightTab, setActiveRightTab] = useState<'prompt' | 'chat' | 'settings' | 'ux'>('prompt');
-  const [showBottomPanel, setShowBottomPanel] = useState(true);
-  const [bottomPanelHeight, setBottomPanelHeight] = useState(380);
-  const [activeBottomTab, setActiveBottomTab] = useState<any>('graph');
+  const [showBottomPanel, setShowBottomPanel] = useState(false);
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(320);
+  const [activeBottomTab, setActiveBottomTab] = useState<any>('console');
+  const [centralView, setCentralView] = useState<'editor' | 'graph'>('graph');
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
 
   // States for Tiers 1-4 UI features
@@ -406,11 +407,10 @@ function MainLayout() {
               <span className="text-[8.5px] font-mono text-gray-600 tracking-wider block uppercase px-2 mb-1.5 font-bold">Orchestration</span>
               <button 
                 onClick={() => {
-                  setActiveBottomTab('graph');
-                  setShowBottomPanel(true);
+                  setCentralView('graph');
                 }}
                 className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'graph' && showBottomPanel 
+                  centralView === 'graph'
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
                     : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -420,20 +420,26 @@ function MainLayout() {
               </button>
               <button 
                 onClick={() => {
+                  setCentralView('editor');
                   setShowLeftPanel(true);
                 }}
-                className="w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                  centralView === 'editor' && showLeftPanel
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
+                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
               >
                 <FileCode size={12} />
                 <span>Code Editor</span>
               </button>
               <button 
                 onClick={() => {
+                  setCentralView('editor');
                   setActiveBottomTab('console');
                   setShowBottomPanel(true);
                 }}
                 className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'console' && showBottomPanel 
+                  activeBottomTab === 'console' && showBottomPanel && centralView === 'editor'
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
                     : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -443,11 +449,12 @@ function MainLayout() {
               </button>
               <button 
                 onClick={() => {
+                  setCentralView('editor');
                   setActiveBottomTab('repl');
                   setShowBottomPanel(true);
                 }}
                 className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'repl' && showBottomPanel 
+                  activeBottomTab === 'repl' && showBottomPanel && centralView === 'editor'
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
                     : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -457,11 +464,12 @@ function MainLayout() {
               </button>
               <button 
                 onClick={() => {
+                  setCentralView('editor');
                   setActiveBottomTab('infra');
                   setShowBottomPanel(true);
                 }}
                 className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'infra' && showBottomPanel 
+                  activeBottomTab === 'infra' && showBottomPanel && centralView === 'editor'
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
                     : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -476,11 +484,12 @@ function MainLayout() {
               <span className="text-[8.5px] font-mono text-gray-600 tracking-wider block uppercase px-2 mb-1.5 font-bold">Intelligence</span>
               <button 
                 onClick={() => {
+                  setCentralView('editor');
                   setActiveBottomTab('skills');
                   setShowBottomPanel(true);
                 }}
                 className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'skills' && showBottomPanel 
+                  activeBottomTab === 'skills' && showBottomPanel && centralView === 'editor'
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
                     : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -493,11 +502,12 @@ function MainLayout() {
               </button>
               <button 
                 onClick={() => {
+                  setCentralView('editor');
                   setActiveBottomTab('memory');
                   setShowBottomPanel(true);
                 }}
                 className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'memory' && showBottomPanel 
+                  activeBottomTab === 'memory' && showBottomPanel && centralView === 'editor'
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
                     : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -507,11 +517,12 @@ function MainLayout() {
               </button>
               <button 
                 onClick={() => {
+                  setCentralView('editor');
                   setActiveBottomTab('scrubber');
                   setShowBottomPanel(true);
                 }}
                 className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'scrubber' && showBottomPanel 
+                  activeBottomTab === 'scrubber' && showBottomPanel && centralView === 'editor'
                     ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
                     : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
@@ -519,6 +530,7 @@ function MainLayout() {
                 <Clock size={12} />
                 <span>Run History</span>
               </button>
+
             </div>
           </div>
 
@@ -828,9 +840,18 @@ function MainLayout() {
         {/* Editor & Console Central Column */}
         <section className="flex-1 flex flex-col min-h-0 overflow-hidden">
           
-          {/* Top Panel: Monaco Editor */}
+          {/* Top Panel: Monaco Editor or Graph Visualizer depending on centralView */}
           <div className="flex-1 min-h-0 flex flex-col relative">
-            <MonacoEditorPanel />
+            {centralView === 'editor' ? (
+              <MonacoEditorPanel />
+            ) : (
+              <div className="w-full h-full relative">
+                <GraphVisualizer onNodeClick={(node) => {
+                  setInspectorNode(node);
+                  setIsInspectorOpen(true);
+                }} />
+              </div>
+            )}
           </div>
 
           {/* Drag handle for Bottom Panel */}
@@ -1312,25 +1333,28 @@ function MainLayout() {
                   onClick={() => setActiveRightTab('prompt')}
                   className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeRightTab === 'prompt' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                 >
-                  ✨ Prompt
+                  Console
+                </button>
+                <button 
+                  onClick={() => setActiveRightTab('hitl')}
+                  className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 flex items-center ${activeRightTab === 'hitl' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                >
+                  <span>HITL</span>
+                  {pendingWrites.length > 0 && (
+                    <span className="ml-1 bg-amber-500 text-black text-[8px] font-extrabold px-1 rounded-full">{pendingWrites.length}</span>
+                  )}
                 </button>
                 <button 
                   onClick={() => setActiveRightTab('chat')}
                   className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeRightTab === 'chat' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                 >
-                  💬 Chat
+                  Chat
                 </button>
                 <button 
                   onClick={() => setActiveRightTab('settings')}
                   className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeRightTab === 'settings' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                 >
-                  ⚙️ Ajustes IA
-                </button>
-                <button 
-                  onClick={() => setActiveRightTab('ux')}
-                  className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeRightTab === 'ux' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                >
-                  🎨 UI/UX
+                  Settings
                 </button>
               </div>
               <button 
@@ -1342,147 +1366,146 @@ function MainLayout() {
               </button>
             </div>
 
+
             {/* Right Tab Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
               
               {/* Tab: Prompt & swarm controllers */}
+              {/* Tab: Console Terminal REPL (mockup style) */}
               {activeRightTab === 'prompt' && (
-                <div className="space-y-4">
-                  <div className="bg-black/30 border border-white/5 rounded-lg p-3.5 space-y-2 shadow-lg shrink-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-[10px] font-bold ${tc.accentText} uppercase tracking-widest block`}>
-                        Requisitos del Prompt
-                      </span>
-                      <div className="flex space-x-1.5">
-                        <button
-                          onClick={clearWorkspaceAction}
-                          disabled={isPipelineRunning || isAppLaunching}
-                          className="text-[8px] bg-rose-500/20 hover:bg-rose-500/35 border border-rose-500/30 text-rose-300 px-2 py-0.5 rounded transition-all cursor-pointer font-bold flex items-center space-x-1"
-                          title="Limpiar Workspace y reiniciar proyecto"
-                        >
-                          <span>🧹 Limpiar</span>
-                        </button>
-                        <button
-                          onClick={() => optimizePrompt(promptInput)}
-                          disabled={isPipelineRunning || !promptInput.trim()}
-                          className="text-[8px] bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded transition-all cursor-pointer font-bold flex items-center space-x-1"
-                          title="Optimizar prompt con IA para hacerlo detallado"
-                        >
-                          <span>✨ Optimizar</span>
-                        </button>
-                      </div>
+                <div className="flex flex-col h-[calc(100vh-120px)] bg-[#0A0A0F]/80 rounded-xl border border-qwen-border overflow-hidden fade-in">
+                  <div className="text-qwen-500 p-3.5 border-b border-qwen-border flex items-center gap-2 text-[10px] uppercase tracking-wider bg-black/40">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 rounded-full bg-rose-400/80"></div>
+                      <div className="w-2 h-2 rounded-full bg-yellow-400/80"></div>
+                      <div className="w-2 h-2 rounded-full bg-emerald-400/80"></div>
                     </div>
-                    <textarea 
-                      value={promptInput}
-                      onChange={(e) => setPromptInput(e.target.value)}
-                      className="w-full h-36 bg-[#0A0A0C]/80 border border-white/10 rounded p-2.5 text-xs text-emerald-100 focus:outline-none focus:border-indigo-500 resize-none font-sans leading-relaxed" 
-                      placeholder="Ej: Crea una API en Express con una base de datos SQLite para llevar inventario, y un frontend animado..."
-                    />
-
-                    {/* SPEC approval banner (LangGraph HITL) */}
-                    {graphIsPausedSpec && (
-                      <div className="bg-indigo-500/10 border border-indigo-500/40 rounded-lg p-3.5 space-y-2.5 shadow-lg">
-                        <div className="flex items-center space-x-2">
-                          <span className="w-2 h-2 bg-indigo-400 rounded-full animate-ping"></span>
-                          <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
-                            ⏸️ SPEC GENERADA — PENDIENTE APROBACIÓN
-                          </span>
-                        </div>
-                        <p className="text-[9px] text-gray-300 leading-relaxed">
-                          El Arquitecto generó SPEC.md. Revísalo en el explorador de archivos y apruébalo para que el enjambre continúe (DBA + Frontend + Backend + QA).
-                        </p>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={graphApproveSpec}
-                            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[9px] uppercase tracking-widest py-2 rounded transition-all cursor-pointer"
-                          >
-                            ✅ Aprobar SPEC
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* HITL approval banner (destructive command) */}
-                    {graphIsPausedHitl && (
-                      <div className="bg-amber-500/10 border border-amber-500/40 rounded-lg p-3.5 space-y-2.5 shadow-lg">
-                        <div className="flex items-center space-x-2">
-                          <span className="w-2 h-2 bg-amber-400 rounded-full animate-ping"></span>
-                          <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                            ⚠️ ACCIÓN DESTRUCTIVA DETECTADA — REVISAR
-                          </span>
-                        </div>
-                        <p className="text-[9px] text-gray-300 leading-relaxed">
-                          El Linter quiere ejecutar un comando potencialmente destructivo. Apruébalo solo si lo reconoces.
-                        </p>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={graphApproveHitl}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[9px] uppercase py-2 rounded transition-all cursor-pointer"
-                          >
-                            ✅ Aprobar
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex space-x-2 pt-1">
-                      <button 
-                        onClick={() => {
-                          startBuildPipeline();
-                          setActiveBottomTab('console');
-                          setShowBottomPanel(true);
-                        }}
-                        disabled={isPipelineRunning || !promptInput.trim()}
-                        className={`flex-1 ${tc.accentBg} ${tc.accentHoverBg} text-black font-bold text-[10px] uppercase tracking-widest py-3 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed ${tc.accentGlow}`}
-                      >
-                        {isPipelineRunning ? 'Orquestando...' : 'Ejecutar Enjambre'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          launchAppSystem();
-                          setActiveBottomTab('console');
-                          setShowBottomPanel(true);
-                        }}
-                        disabled={isAppLaunching || isPipelineRunning}
-                        className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-black font-bold text-[10px] uppercase tracking-widest px-3 rounded transition-all cursor-pointer flex items-center justify-center space-x-1"
-                        title="Lanzar aplicación local (Ejecutar scripts de inicio / Ctrl+Enter)"
-                      >
-                        <Play size={10} className="fill-black mr-0.5" />
-                        <span>{isAppLaunching ? 'Lanzando' : 'Lanzar'}</span>
-                      </button>
-                      <button 
-                        onClick={saveToVault}
-                        className="bg-white/5 hover:bg-white/10 border border-white/15 px-3 rounded text-[10px] cursor-pointer"
-                        title="Guardar Prompt en Bóveda"
-                      >
-                        📥
-                      </button>
-                    </div>
+                    <span className="ml-2 font-mono">Backend Agent · REPL session</span>
                   </div>
-
-                  {/* Project Templates Gallery */}
-                  <div className="bg-black/30 border border-white/5 rounded-lg p-3.5 space-y-3 shadow-lg shrink-0">
-                    <span className={`text-[10px] font-bold ${tc.accentText} uppercase tracking-widest block`}>
-                      Plantillas Rápidas
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button 
-                        disabled={isApplyingTemplate || isPipelineRunning}
-                        onClick={() => applyProjectTemplate('fastapi')}
-                        className="bg-white/5 hover:bg-white/10 border border-white/10 text-[9px] py-2 rounded text-left px-2.5 transition-all text-emerald-400 font-mono disabled:opacity-50 cursor-pointer"
-                      >
-                        🐍 FastAPI + SQLite
-                      </button>
-                      <button 
-                        disabled={isApplyingTemplate || isPipelineRunning}
-                        onClick={() => applyProjectTemplate('express')}
-                        className="bg-white/5 hover:bg-white/10 border border-white/10 text-[9px] py-2 rounded text-left px-2.5 transition-all text-amber-400 font-mono disabled:opacity-50 cursor-pointer"
-                      >
-                        ⚡ Express.js Node
-                      </button>
-                    </div>
+                  <div className="flex-1 overflow-y-auto scrollbar p-4">
+                    <AgentConsole />
                   </div>
                 </div>
               )}
+
+              {/* Tab: HITL Decisions */}
+              {activeRightTab === 'hitl' && (
+                <div className="space-y-4 fade-in">
+                  {/* LangGraph Spec HITL */}
+                  {graphIsPausedSpec && (
+                    <div className="p-4 border border-indigo-500/30 bg-indigo-500/10 rounded-lg">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-9 h-9 rounded-lg gradient-aurora flex items-center justify-center flex-shrink-0 shadow-qwen">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-xs font-bold text-white">Especificación Generada</div>
+                            <span className="badge-primary text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold">HITL</span>
+                          </div>
+                          <p className="text-[11px] text-gray-300 leading-relaxed mb-3">
+                            El Arquitecto generó los planos del proyecto. ¿Deseas aprobarlos e iniciar la construcción?
+                          </p>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={graphApproveSpec}
+                              className="flex-1 btn-primary py-2 rounded-lg text-xs font-semibold text-white"
+                            >
+                              Aprobar SPEC
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LangGraph Command HITL */}
+                  {graphIsPausedHitl && (
+                    <div className="p-4 border border-amber-500/30 bg-amber-500/10 rounded-lg">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                          <ShieldAlert size={16} className="text-amber-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-xs font-bold text-white">Comando Detectado</div>
+                            <span className="badge-orange text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold">HITL</span>
+                          </div>
+                          <p className="text-[11px] text-gray-300 leading-relaxed mb-3">
+                            El enjambre solicita autorización para ejecutar un comando administrativo.
+                          </p>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={graphApproveHitl}
+                              className="flex-1 btn-primary py-2 rounded-lg text-xs font-semibold text-white"
+                            >
+                              Autorizar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Files interceptor HITL */}
+                  {pendingWrites.map((pw: any, idx: number) => (
+                    <div key={idx} className="p-4 border border-qwen-border bg-gradient-to-br from-qwen-500/10 via-cyber-pink/5 to-transparent rounded-lg">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-9 h-9 rounded-lg gradient-aurora flex items-center justify-center flex-shrink-0 shadow-qwen">
+                          <ShieldAlert size={16} className="text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-xs font-bold text-white">Decisión requerida</div>
+                            <span className="badge-primary text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold">conf 0.42</span>
+                          </div>
+                          <p className="text-[11px] text-gray-300 leading-relaxed mb-3">
+                            El SPEC.md no define el esquema de autenticación. ¿Qué enfoque prefieres?
+                            <pre className="text-[9px] bg-black/40 p-2 rounded mt-2.5 overflow-x-auto text-gray-400 max-h-24 font-mono">{pw.file}</pre>
+                          </p>
+                          <div className="space-y-1.5 mb-3">
+                            <label className="flex items-start gap-2 p-2.5 glass rounded-lg cursor-pointer hover:border-qwen-500/50 transition">
+                              <input type="radio" name="auth" defaultChecked className="mt-0.5 accent-qwen-500" />
+                              <div className="flex-1">
+                                <div className="text-xs font-semibold text-white">JWT + bcrypt</div>
+                                <div className="text-[10px] text-gray-400 mt-0.5">Recomendado · stateless · 15 líneas</div>
+                              </div>
+                            </label>
+                            <label className="flex items-start gap-2 p-2.5 glass rounded-lg cursor-pointer hover:border-qwen-500/50 transition">
+                              <input type="radio" name="auth" className="mt-0.5 accent-qwen-500" />
+                              <div className="flex-1">
+                                <div className="text-xs font-semibold text-white">Sessions + Argon2</div>
+                                <div className="text-[10px] text-gray-400 mt-0.5">Más seguro · requiere Redis</div>
+                              </div>
+                            </label>
+                          </div>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => resolvePendingWrites('confirm', [pw.file])}
+                              className="flex-1 btn-primary py-2 rounded-lg text-xs font-semibold text-white"
+                            >
+                              Confirmar
+                            </button>
+                            <button 
+                              onClick={() => resolvePendingWrites('reject', [pw.file])}
+                              className="btn-ghost px-3 py-2 rounded-lg text-xs font-medium text-gray-300"
+                            >
+                              Skip
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {pendingWrites.length === 0 && !graphIsPausedSpec && !graphIsPausedHitl && (
+                    <div className="text-center py-8 text-gray-500 text-xs font-sans">
+                      No hay peticiones HITL pendientes. El enjambre opera de forma autónoma.
+                    </div>
+                  )}
+                </div>
+              )}
+
 
               {/* Tab: Debates chatbot */}
               {activeRightTab === 'chat' && (
