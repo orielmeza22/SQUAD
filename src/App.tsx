@@ -757,7 +757,7 @@ function MainLayout() {
               <span className="badge-primary text-[8px] px-1.5 py-0.5 rounded font-mono">htmx</span>
               <span className="badge-primary text-[8px] px-1.5 py-0.5 rounded font-mono">sqlite</span>
               <span>·</span>
-              <span className="text-qwen-400 font-sans"><span className="text-white font-mono">{currentFiles.length}</span> files</span>
+              <span className="text-qwen-400 font-sans"><span className="text-white font-mono">{Object.keys(currentFiles).length}</span> files</span>
             </div>
             <div className="flex items-center gap-2">
               <button 
@@ -767,7 +767,7 @@ function MainLayout() {
                 <Sparkles size={10} />
                 Optimize
               </button>
-              {currentFiles.some((f: any) => f.name === 'SPEC.md') && (
+              {!!currentFiles['SPEC.md'] && (
                 <button 
                   onClick={approveSpec}
                   disabled={isPipelineRunning}
@@ -1658,7 +1658,7 @@ function MainLayout() {
                             <Sparkles size={10} />
                             Optimizar
                           </button>
-                          {currentFiles.some((f: any) => f.name === 'SPEC.md') && (
+                          {!!currentFiles['SPEC.md'] && (
                             <button
                               onClick={approveSpec}
                               disabled={isPipelineRunning}
