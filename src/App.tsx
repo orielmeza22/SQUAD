@@ -561,7 +561,7 @@ function MainLayout() {
       <main className="flex-1 flex flex-col overflow-hidden relative z-10">
         
         {/* Top Header Bar */}
-        <header className="h-14 border-b border-qwen-border flex items-center px-6 gap-4 glass-light relative z-10">
+        <header className="h-11 border-b border-qwen-border flex items-center px-6 gap-4 glass-light relative z-30 select-none">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-xs">
             <span className="text-qwen-400 hover:text-qwen-300 cursor-pointer">Workspaces</span>
@@ -641,104 +641,106 @@ function MainLayout() {
           </div>
         </header>
 
-        {/* Prompt Hero */}
-        <div className="px-6 py-4 border-b border-qwen-border glass-light relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-11 h-11 rounded-xl gradient-aurora flex items-center justify-center shadow-qwen-glow flex-shrink-0">
-              <Sparkles size={20} className="text-white" />
+        {/* Compact Prompt Hero */}
+        <div className="px-6 py-1.5 border-b border-qwen-border bg-[#0B0B10]/80 backdrop-blur-md relative z-10 flex items-center justify-between gap-4 shrink-0 select-none">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="w-7 h-7 rounded-lg gradient-aurora flex items-center justify-center shadow-qwen-glow flex-shrink-0">
+              <Sparkles size={12} className="text-white" />
             </div>
-            <div className="flex-1">
-              <div className="text-[10px] uppercase tracking-wider text-qwen-400 font-semibold mb-1">Current Prompt</div>
-              <textarea
+            <div className="flex-1 flex items-center gap-2 min-w-0">
+              <span className="text-[9px] uppercase tracking-wider text-qwen-500 font-bold font-mono flex-shrink-0">Prompt:</span>
+              <input
+                type="text"
                 value={promptInput}
                 onChange={(e) => setPromptInput(e.target.value)}
-                className="w-full bg-transparent text-sm text-white font-medium leading-relaxed outline-none border-b border-transparent focus:border-indigo-500/30 resize-none h-12"
+                className="flex-1 bg-transparent text-[11px] text-white font-medium outline-none border-b border-transparent focus:border-indigo-500/30 font-sans truncate py-0.5"
+                placeholder="Describe tu requerimiento..."
               />
-              <div className="mt-2 flex items-center gap-4 text-[11px]">
-                <span className="flex items-center gap-1.5">
-                  <span className="text-qwen-500 font-mono">stack</span>
-                  <span className="badge-primary text-[10px] px-2 py-0.5 rounded-full font-mono">fastapi</span>
-                  <span className="badge-primary text-[10px] px-2 py-0.5 rounded-full font-mono">htmx</span>
-                  <span className="badge-primary text-[10px] px-2 py-0.5 rounded-full font-mono">sqlite</span>
-                </span>
-                <span className="text-qwen-500">·</span>
-                <span className="text-qwen-400"><span className="text-white font-mono">{currentFiles.length}</span> files</span>
-              </div>
             </div>
-            <div className="flex space-x-2 shrink-0">
+          </div>
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-1.5 text-[9px] font-mono text-qwen-500">
+              <span>stack:</span>
+              <span className="badge-primary text-[8px] px-1.5 py-0.5 rounded font-mono">fastapi</span>
+              <span className="badge-primary text-[8px] px-1.5 py-0.5 rounded font-mono">htmx</span>
+              <span className="badge-primary text-[8px] px-1.5 py-0.5 rounded font-mono">sqlite</span>
+              <span>·</span>
+              <span className="text-qwen-400 font-sans"><span className="text-white font-mono">{currentFiles.length}</span> files</span>
+            </div>
+            <div className="flex items-center gap-2">
               <button 
                 onClick={optimizePrompt}
-                className="btn-ghost px-4 py-2 rounded-lg text-xs font-semibold text-gray-300 flex items-center gap-1.5"
+                className="btn-ghost px-2.5 py-1 rounded text-[10px] font-semibold text-gray-300 flex items-center gap-1 cursor-pointer"
               >
-                <Sparkles size={12} />
+                <Sparkles size={10} />
                 Optimize
               </button>
               <button 
                 onClick={startBuildPipeline}
                 disabled={isPipelineRunning}
-                className="btn-primary px-4 py-2 rounded-lg text-xs font-semibold text-white flex items-center gap-1.5 disabled:opacity-50"
+                className="btn-primary px-3 py-1 rounded text-[10px] font-semibold text-white flex items-center gap-1 disabled:opacity-50 cursor-pointer"
               >
-                <Play size={12} fill="white" className="mr-1.5" />
+                <Play size={10} fill="white" className="mr-0.5" />
                 Ejecutar Enjambre
               </button>
             </div>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="px-6 py-3 border-b border-qwen-border glass-light grid grid-cols-6 gap-3 relative z-10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-qwen-500/10 border border-qwen-500/20 flex items-center justify-center">
-              <Clock size={14} className="text-qwen-400" />
+        {/* Compact Stats Row */}
+        <div className="px-6 py-1.5 border-b border-qwen-border bg-[#09090D]/50 backdrop-blur-sm grid grid-cols-6 gap-3 relative z-10 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-qwen-500/10 border border-qwen-500/20 flex items-center justify-center">
+              <Clock size={11} className="text-qwen-400" />
             </div>
             <div>
-              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Elapsed</div>
-              <div className="text-xs font-bold text-white font-mono leading-tight">02:34</div>
+              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Elapsed</div>
+              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">02:34</div>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyber-cyan/10 border border-cyber-cyan/20 flex items-center justify-center">
-              <CheckCircle size={14} className="text-cyber-cyan" />
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-cyber-cyan/10 border border-cyber-cyan/20 flex items-center justify-center">
+              <CheckCircle size={11} className="text-cyber-cyan" />
             </div>
             <div>
-              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Nodes Done</div>
-              <div className="text-xs font-bold text-white font-mono leading-tight">5 <span className="text-qwen-500 font-normal">/ 8</span></div>
+              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Nodes Done</div>
+              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">5 <span className="text-qwen-600 font-normal">/ 8</span></div>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyber-pink/10 border border-cyber-pink/20 flex items-center justify-center">
-              <Layers size={14} className="text-cyber-pink" />
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-cyber-pink/10 border border-cyber-pink/20 flex items-center justify-center">
+              <Layers size={11} className="text-cyber-pink" />
             </div>
             <div>
-              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Active Agents</div>
-              <div className="text-xs font-bold text-white font-mono leading-tight">2</div>
+              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Active Agents</div>
+              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">2</div>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyber-lime/10 border border-cyber-lime/20 flex items-center justify-center">
-              <Coins size={14} className="text-cyber-lime" />
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-cyber-lime/10 border border-cyber-lime/20 flex items-center justify-center">
+              <Coins size={11} className="text-cyber-lime" />
             </div>
             <div>
-              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Tokens</div>
-              <div className="text-xs font-bold text-white font-mono leading-tight">{(tokenIn + tokenOut) ? `${((tokenIn + tokenOut) / 1000).toFixed(1)}k` : '0'}</div>
+              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Tokens</div>
+              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">{(tokenIn + tokenOut) ? `${((tokenIn + tokenOut) / 1000).toFixed(1)}k` : '0'}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyber-orange/10 border border-cyber-orange/20 flex items-center justify-center">
-              <Terminal size={14} className="text-cyber-orange" />
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-cyber-orange/10 border border-cyber-orange/20 flex items-center justify-center">
+              <Terminal size={11} className="text-cyber-orange" />
             </div>
             <div>
-              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">REPL Sessions</div>
-              <div className="text-xs font-bold text-white font-mono leading-tight">3 active</div>
+              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">REPL Sessions</div>
+              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">3 active</div>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              <ShieldAlert size={14} className="text-rose-400" />
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <ShieldAlert size={11} className="text-rose-400" />
             </div>
             <div>
-              <div className="text-[10px] text-qwen-400 uppercase tracking-wider font-semibold font-sans">Issues</div>
-              <div className="text-xs font-bold text-white font-mono leading-tight">{pendingWrites.length} <span className="text-qwen-500 font-normal">HITL</span></div>
+              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Issues</div>
+              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">{pendingWrites.length} <span className="text-qwen-600 font-normal font-sans">HITL</span></div>
             </div>
           </div>
         </div>
