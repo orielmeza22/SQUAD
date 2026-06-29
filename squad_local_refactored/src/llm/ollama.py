@@ -44,9 +44,11 @@ class OllamaProvider(LLMProvider):
                 data = json.loads(req.read().decode('utf-8'))
                 raw_list = [model['name'] for model in data.get('models', [])]
                 filtered = [m for m in raw_list if "vl" not in m.lower()]
-                coder_models = [m for m in filtered if "coder" in m.lower()]
+                coder_14b = [m for m in filtered if "14b" in m.lower() and "coder" in m.lower()]
+                other_coder = [m for m in filtered if "coder" in m.lower() and "14b" not in m.lower()]
                 other_models = [m for m in filtered if "coder" not in m.lower()]
-                return coder_models + other_models
+                return coder_14b + other_coder + other_models
+
         except Exception:
             return []
 

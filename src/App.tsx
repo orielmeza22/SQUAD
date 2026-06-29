@@ -16,6 +16,20 @@ import DatabaseVisualizer from './components/DatabaseVisualizer';
 import AgentConsole from './components/AgentConsole';
 import GraphVisualizer from './components/GraphVisualizer';
 
+// Tiers 1-4 Premium UI components
+import AgentInspector from './components/AgentInspector';
+import DiffViewer from './components/DiffViewer';
+import CommandPalette from './components/CommandPalette';
+import SkillLibrary from './components/SkillLibrary';
+import MemoryDashboard from './components/MemoryDashboard';
+import MultiSessionREPL from './components/MultiSessionREPL';
+import LiveAppPreview from './components/LiveAppPreview';
+import AgentConversation from './components/AgentConversation';
+import DependencyGraph from './components/DependencyGraph';
+import ConfidenceHeatmap from './components/ConfidenceHeatmap';
+import TimelineScrubber from './components/TimelineScrubber';
+
+
 const categories = {
   "Databases & Cache": [
     { name: "PostgreSQL + Vectorizer", desc: "Base de datos relacional con búsquedas vectoriales híbridas.", defaultChecked: true },
@@ -145,7 +159,36 @@ function MainLayout() {
   const [activeBottomTab, setActiveBottomTab] = useState<'console' | 'database' | 'infra' | 'deploy' | 'graph'>('console');
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
 
+  // States for Tiers 1-4 UI features
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
+  const [inspectorNode, setInspectorNode] = useState<any>(null);
+  const [isDiffOpen, setIsDiffOpen] = useState(false);
+  const [diffFileData, setDiffFileData] = useState({ fileName: 'main_output.py', original: '', modified: '' });
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setShowLeftPanel(prev => !prev);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        setShowBottomPanel(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const startResizingConfig = (mouseDownEvent: React.MouseEvent) => {
+
     mouseDownEvent.preventDefault();
     const startWidth = configPanelWidth;
     const startX = mouseDownEvent.clientX;
@@ -608,38 +651,75 @@ function MainLayout() {
             >
               {/* Bottom Tab Bar */}
               <div className="h-9 bg-black/40 border-b border-white/5 flex items-center justify-between px-4 shrink-0 select-none">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 overflow-x-auto max-w-[85%] scrollbar-none">
                   <button 
                     onClick={() => setActiveBottomTab('console')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeBottomTab === 'console' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'console' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     💻 Consola & Logs
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('database')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeBottomTab === 'database' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'database' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🗄️ Base de Datos
                   </button>
                   <button 
-                    onClick={() => setActiveBottomTab('infra')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeBottomTab === 'infra' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    🔌 Variables & Docker
-                  </button>
-                  <button
-                    onClick={() => setActiveBottomTab('deploy')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeBottomTab === 'deploy' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    🚀 Despliegue Cloud
-                  </button>
-                  <button
                     onClick={() => setActiveBottomTab('graph')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeBottomTab === 'graph' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'graph' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🕸️ Grafo
                   </button>
+                  <button 
+                    onClick={() => setActiveBottomTab('repl')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'repl' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    📟 Multi-Session REPL
+                  </button>
+                  <button 
+                    onClick={() => setActiveBottomTab('preview')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'preview' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    📺 Vista Previa
+                  </button>
+                  <button 
+                    onClick={() => setActiveBottomTab('skills')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'skills' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    🧪 Habilidades
+                  </button>
+                  <button 
+                    onClick={() => setActiveBottomTab('memory')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'memory' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    🧠 Memoria & Ledger
+                  </button>
+                  <button 
+                    onClick={() => setActiveBottomTab('conversation')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'conversation' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    💬 Diálogos
+                  </button>
+                  <button 
+                    onClick={() => setActiveBottomTab('dependency')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'dependency' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    🌿 Dependencias
+                  </button>
+                  <button 
+                    onClick={() => setActiveBottomTab('heatmap')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'heatmap' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    🔥 Confianza Código
+                  </button>
+                  <button 
+                    onClick={() => setActiveBottomTab('scrubber')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'scrubber' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    ⏱️ Scrubber
+                  </button>
                 </div>
+
                 <button 
                   onClick={() => setShowBottomPanel(false)}
                   className="text-gray-500 hover:text-rose-400 text-[10px] font-bold"
@@ -664,8 +744,45 @@ function MainLayout() {
                 )}
 
                 {activeBottomTab === 'graph' && (
-                  <GraphVisualizer />
+                  <GraphVisualizer onNodeClick={(node) => {
+                    setInspectorNode(node);
+                    setIsInspectorOpen(true);
+                  }} />
                 )}
+
+                {activeBottomTab === 'repl' && (
+                  <MultiSessionREPL />
+                )}
+
+                {activeBottomTab === 'preview' && (
+                  <LiveAppPreview />
+                )}
+
+                {activeBottomTab === 'skills' && (
+                  <SkillLibrary />
+                )}
+
+                {activeBottomTab === 'memory' && (
+                  <MemoryDashboard />
+                )}
+
+                {activeBottomTab === 'conversation' && (
+                  <AgentConversation />
+                )}
+
+                {activeBottomTab === 'dependency' && (
+                  <DependencyGraph />
+                )}
+
+                {activeBottomTab === 'heatmap' && (
+                  <ConfidenceHeatmap />
+                )}
+
+                {activeBottomTab === 'scrubber' && (
+                  <TimelineScrubber />
+                )}
+
+
 
                 {activeBottomTab === 'infra' && (
                   <div className="h-full overflow-y-auto p-4">
@@ -2022,7 +2139,40 @@ function MainLayout() {
           </div>
         </div>
       )}
+
+      {/* Tiers Overlay components */}
+      <AgentInspector 
+        isOpen={isInspectorOpen} 
+        onClose={() => setIsInspectorOpen(false)} 
+        nodeData={inspectorNode} 
+      />
+      <DiffViewer 
+        isOpen={isDiffOpen} 
+        onClose={() => setIsDiffOpen(false)} 
+        fileName={diffFileData.fileName} 
+        originalContent={diffFileData.original} 
+        modifiedContent={diffFileData.modified} 
+        onAccept={() => {
+          showToast("Cambios del linter autónomo aplicados correctamente.");
+        }} 
+        onReject={() => {
+          showToast("Cambios rechazados.");
+        }} 
+      />
+      <CommandPalette 
+        isOpen={isCommandPaletteOpen} 
+        onClose={() => setIsCommandPaletteOpen(false)} 
+        onExecuteCommand={(action) => {
+          if (action === 'run') startBuildPipeline();
+          else if (action === 'pause') showToast("Pipeline pausado.");
+          else if (action === 'resume') approveSpec();
+          else if (action === 'clear') clearWorkspaceAction();
+          else if (action === 'kill') showToast("Pipeline cancelado.");
+          else showToast(`Comando ejecutado: ${action}`);
+        }} 
+      />
     </div>
+
   );
 }
 

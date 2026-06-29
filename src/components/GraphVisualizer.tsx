@@ -80,10 +80,11 @@ function AgentNode({ data }: { data: AgentNodeData }) {
 
 const nodeTypes = { agentNode: AgentNode };
 
-export default function GraphVisualizer() {
+export default function GraphVisualizer({ onNodeClick }: { onNodeClick?: (node: any) => void }) {
   const nodeStatus = useGraphStore((s) => s.nodeStatus);
   const current_node = useGraphStore((s) => s.current_node);
   const retries = useGraphStore((s) => s.retries);
+
 
   const nodes: Node[] = useMemo(() => {
     return Object.entries(GRAPH_LAYOUT).map(([id, pos]) => ({
@@ -121,6 +122,9 @@ export default function GraphVisualizer() {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        onNodeClick={(event, node) => {
+          if (onNodeClick) onNodeClick(node);
+        }}
         fitView
         minZoom={0.4}
         maxZoom={1.5}
