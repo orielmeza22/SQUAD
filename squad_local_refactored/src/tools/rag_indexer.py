@@ -94,6 +94,23 @@ class RAGIndexer:
                         stats[rel] = len(self._chunk_content(content, rel))
                     except Exception:
                         pass
+
+        # Also index global/project skills if they exist
+        backend_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        skills_dir = os.path.join(backend_root, "skills")
+        if os.path.exists(skills_dir):
+            for root, dirs, files in os.walk(skills_dir):
+                for f in files:
+                    if f.endswith(('.py', '.js', '.ts')):
+                        filepath = os.path.join(root, f)
+                        rel_skill = "skills/" + os.path.relpath(filepath, skills_dir).replace('\\', '/')
+                        try:
+                            with open(filepath, 'r', encoding='utf-8') as fh:
+                                content = fh.read()
+                            self.index_file(rel_skill, content, f.split('.')[-1])
+                            stats[rel_skill] = len(self._chunk_content(content, rel_skill))
+                        except Exception:
+                            pass
         return stats
 
     def query(self, question: str, n_results: int = 5) -> List[Dict]:

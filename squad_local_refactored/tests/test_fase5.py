@@ -3,6 +3,7 @@ import shutil
 import pytest
 from squad_local_refactored.src.tools.user_profile import UserProfileManager
 from squad_local_refactored.src.tools.mock_maker import MockMaker, ContractValidator
+from squad_local_refactored.src.tools.rag_indexer import CHROMA_AVAILABLE
 
 
 @pytest.fixture
@@ -73,3 +74,17 @@ def test_contract_validator():
     success, msg = ContractValidator.validate_payload_against_schema(bad_payload2, schema)
     assert success is False
     assert "Tipo de dato incorrecto" in msg
+
+
+@pytest.mark.skipif(not CHROMA_AVAILABLE, reason="ChromaDB not installed")
+def test_skill_library_indexing(temp_workspace):
+    from squad_local_refactored.src.tools.rag_indexer import RAGIndexer
+    
+    # Verify that RAGIndexer correctly runs and indexes workspace including skills
+    indexer = RAGIndexer(temp_workspace, "test_skills_collection")
+    stats = indexer.index_workspace()
+    
+    # "skills/sqlite_connection_singleton.py" should be found in indexed statistics if the folder exists
+    skills_indexed = [k for k in stats.keys() if k.startswith("skills/")]
+    assert len(skills_indexed) > 0
+    assert "skills/sqlite_connection_singleton.py" in skills_indexed
