@@ -18,8 +18,7 @@ from squad_local_refactored.src.pipeline.graph_orchestrator import (
 from squad_local_refactored.src.api.server import create_app
 from squad_local_refactored.src.tools.sys_tools import SysTools
 
-def test_settings_default_orchestrator_mode():
-    assert settings.orchestrator_mode == "legacy"
+def test_settings_default_graph_config():
     assert settings.graph_max_retries == 3
     assert settings.graph_checkpoint_db == "squad_checkpoints.sqlite"
 

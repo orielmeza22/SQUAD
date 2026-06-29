@@ -31,7 +31,6 @@ class Settings(BaseSettings):
     docker_image_node: str = Field(default="node:20-slim", description="Docker image for Node sandbox")
     
     # LangGraph Orchestrator Settings
-    orchestrator_mode: str = Field(default="legacy", description="legacy | graph")
     graph_max_retries: int = Field(default=3, description="Máximo de reintentos por agente en el grafo")
     graph_checkpoint_db: str = Field(default="squad_checkpoints.sqlite", description="Ruta del DB SQLite para checkpoints")
     

@@ -1,14 +1,15 @@
-"""Agent orchestration endpoints.
-
-Migrated 1:1 from the legacy monolith.
-"""
+"""Agent orchestration endpoints."""
 
 from fastapi import APIRouter, Body, HTTPException, BackgroundTasks
 
 from ...core.state import state
 from ...tools.sys_tools import SysTools
 from ...llm.provider import AIProvider
-from ...pipeline.orchestrator import run_agent_pipeline, run_agent_pipeline_phase_2
+from ...pipeline.graph_orchestrator import (
+    run_graph_pipeline,
+    resume_after_spec_approval,
+    is_graph_mode_available,
+)
 
 router = APIRouter()
 
@@ -18,15 +19,11 @@ def api_run_agent(background_tasks: BackgroundTasks, data: dict = Body(default={
     """Run the multi-agent pipeline Phase 1 (SPEC design) in background."""
     model = data.get('model', 'gemini-2.5-flash')
     goal = data.get('goal', '')
-    
-    from ...core.config import settings
-    if getattr(settings, "orchestrator_mode", "legacy") == "graph":
-        from ...pipeline.graph_orchestrator import run_graph_pipeline, is_graph_mode_available
-        if is_graph_mode_available():
-            background_tasks.add_task(run_graph_pipeline, goal, model)
-            return "OK"
-            
-    background_tasks.add_task(run_agent_pipeline, goal, model)
+
+    if not is_graph_mode_available():
+        raise HTTPException(status_code=500, detail="LangGraph no está disponible. Verifica la instalación.")
+
+    background_tasks.add_task(run_graph_pipeline, goal, model)
     return "OK"
 
 
@@ -60,27 +57,22 @@ Reescribe y actualiza la especificación técnica aplicando el feedback del usua
 @router.post("/api/spec/approve")
 def api_spec_approve(background_tasks: BackgroundTasks):
     """Approve the SPEC.md and run Phase 2 (code building) in background."""
-    from ...core.config import settings
-    if getattr(settings, "orchestrator_mode", "legacy") == "graph":
-        from ...pipeline.graph_orchestrator import resume_after_spec_approval, is_graph_mode_available
-        if is_graph_mode_available() and state.graph_run_id:
-            background_tasks.add_task(resume_after_spec_approval, state.graph_run_id)
-            return {"success": True, "message": "Fase 2 del enjambre (Grafo) iniciada en segundo plano."}
-    
-    background_tasks.add_task(run_agent_pipeline_phase_2)
-    return {"success": True, "message": "Fase 2 del enjambre iniciada en segundo plano."}
+    if not is_graph_mode_available():
+        raise HTTPException(status_code=500, detail="LangGraph no está disponible.")
+    if not state.graph_run_id:
+        raise HTTPException(status_code=400, detail="No hay ninguna ejecución activa del grafo.")
+
+    background_tasks.add_task(resume_after_spec_approval, state.graph_run_id)
+    return {"success": True, "message": "Fase 2 del enjambre (Grafo) iniciada en segundo plano."}
 
 
 @router.post("/api/agent/spec/approve")
 def api_agent_spec_approve(background_tasks: BackgroundTasks):
     """LangGraph SPEC approval endpoint."""
-    from ...core.config import settings
-    from ...pipeline.graph_orchestrator import resume_after_spec_approval, is_graph_mode_available
     if not is_graph_mode_available():
         raise HTTPException(status_code=400, detail="LangGraph no está disponible.")
     if not state.graph_run_id:
         raise HTTPException(status_code=400, detail="No hay ninguna ejecución activa del grafo.")
-    
+
     background_tasks.add_task(resume_after_spec_approval, state.graph_run_id)
     return {"success": True, "message": "Grafo reanudado tras aprobación de especificación."}
-
