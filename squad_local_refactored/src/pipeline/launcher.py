@@ -253,7 +253,35 @@ def run_launch_sequence(model: str) -> Tuple[bool, str]:
             entry_file = "main_output.py" if os.path.exists(os.path.join(SysTools.WORKSPACE, "main_output.py")) else "app.py"
             if not os.path.exists(os.path.join(SysTools.WORKSPACE, entry_file)):
                 entry_file = "main_output.py"
-            cmd = f'"{pip_exe}" install fastapi uvicorn jinja2 && "{python_exe}" {entry_file}'
+            
+            # Check if entry_file contains uvicorn.run
+            has_uvicorn_run = False
+            entry_file_path = os.path.join(SysTools.WORKSPACE, entry_file)
+            if os.path.exists(entry_file_path):
+                try:
+                    with open(entry_file_path, "r", encoding="utf-8") as fe:
+                        fe_content = fe.read()
+                    if "uvicorn.run" in fe_content:
+                        has_uvicorn_run = True
+                except Exception:
+                    pass
+
+            entry_module = entry_file.replace(".py", "")
+            if has_uvicorn_run:
+                cmd = f'"{pip_exe}" install fastapi uvicorn jinja2 && "{python_exe}" {entry_file}'
+            else:
+                instance_name = "app"
+                if os.path.exists(entry_file_path):
+                    try:
+                        with open(entry_file_path, "r", encoding="utf-8") as fe:
+                            for line in fe:
+                                match = re.match(r'^\s*([a-zA-Z0-9_]+)\s*=\s*FastAPI\s*\(', line)
+                                if match:
+                                    instance_name = match.group(1)
+                                    break
+                    except Exception:
+                        pass
+                cmd = f'"{pip_exe}" install fastapi uvicorn jinja2 && "{python_exe}" -m uvicorn {entry_module}:{instance_name} --host 0.0.0.0 --port 5000'
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "docker-compose.yml")):
             cmd = "docker-compose up --build"
         elif os.path.exists(os.path.join(SysTools.WORKSPACE, "package.json")):

@@ -499,8 +499,21 @@ class SysTools:
                         with open(path, 'r', encoding='utf-8') as file_obj:
                             content = file_obj.read()
                         
+                        # Heal direct cursor assignments: var = sqlite3.connect(...).cursor() -> conn = sqlite3.connect(...); var = conn.cursor()
+                        direct_cursor_pattern = r'^([ \t]*)(\w+)\s*=\s*sqlite3\.connect\(([^)]+)\)\.cursor\(\)'
+                        def repl_direct_cursor(m):
+                            indent = m.group(1)
+                            cursor_var = m.group(2)
+                            db_args = m.group(3)
+                            return f'{indent}conn = sqlite3.connect({db_args})\n{indent}{cursor_var} = conn.cursor()'
+                        
+                        content = re.sub(direct_cursor_pattern, repl_direct_cursor, content, flags=re.MULTILINE)
+
                         # Idempotency check: don't double inject
                         if "journal_mode=WAL" in content:
+                            # Still write back healed cursor if modified
+                            with open(path, 'w', encoding='utf-8') as file_obj:
+                                file_obj.write(content)
                             continue
                             
                         # Matches start of line, indentation, connect statement and variable name
@@ -514,9 +527,9 @@ class SysTools:
                                     f'{indent}    {var_name}.execute("PRAGMA busy_timeout=5000")\n{indent}except Exception: pass')
 
                         new_content, count = re.subn(pattern, repl_py, content, flags=re.MULTILINE)
-                        if count > 0:
+                        if count > 0 or content != new_content:
                             with open(path, 'w', encoding='utf-8') as file_obj:
-                                file_obj.write(new_content)
+                                file_obj.write(new_content if count > 0 else content)
                     except Exception:
                         pass
                 elif f.endswith(('.js', '.ts')):
