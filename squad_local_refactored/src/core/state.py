@@ -51,7 +51,10 @@ class PipelineState:
     
     # Feature flags
     enable_rag: bool = True
+    rag_enabled: bool = False
+    rag_collection_name: str = "squad_workspace"
     interception_enabled: bool = True
+    force_local_mode: bool = False
     
     # Pending writes (for critical file interception)
     pending_writes: Dict[str, str] = field(default_factory=dict)

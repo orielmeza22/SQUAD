@@ -47,6 +47,7 @@ def _defaults() -> Dict[str, Any]:
         "graph_checkpoint_db": "squad_checkpoints.sqlite",
         "rag_enabled": False,
         "rag_collection_name": "squad_workspace",
+        "force_local_mode": False,
     }
 
 
@@ -72,6 +73,7 @@ def load_settings() -> Dict[str, Any]:
     state.enable_rag = defaults["enable_rag"]
     state.rag_enabled = defaults.get("rag_enabled", False)
     state.rag_collection_name = defaults.get("rag_collection_name", "squad_workspace")
+    state.force_local_mode = defaults.get("force_local_mode", False)
     state.default_port = defaults.get("default_port", 5000)
     state.system_prompt = defaults.get("system_prompt", "Eres el Orquestador V5. Responde siempre en JSON.")
     state.context_window = defaults.get("context_window", 16384)
@@ -88,6 +90,7 @@ def load_settings() -> Dict[str, Any]:
     pydantic_settings.enable_rag = defaults["enable_rag"]
     pydantic_settings.rag_enabled = defaults.get("rag_enabled", False)
     pydantic_settings.rag_collection_name = defaults.get("rag_collection_name", "squad_workspace")
+    pydantic_settings.force_local_mode = defaults.get("force_local_mode", False)
     pydantic_settings.interception_enabled = defaults.get("interception_enabled", True)
     pydantic_settings.smart_routing = defaults.get("smart_routing", False)
     pydantic_settings.sandbox_mode = defaults.get("sandbox_mode", "local")
@@ -119,6 +122,7 @@ def save_settings(new_settings: Dict[str, Any]) -> Tuple[bool, str]:
         state.enable_rag = current["enable_rag"]
         state.rag_enabled = current.get("rag_enabled", False)
         state.rag_collection_name = current.get("rag_collection_name", "squad_workspace")
+        state.force_local_mode = current.get("force_local_mode", False)
         state.default_port = current.get("default_port", 5000)
         state.system_prompt = current.get("system_prompt", "Eres el Orquestador V5. Responde siempre en JSON.")
         state.context_window = current.get("context_window", 16384)
@@ -133,6 +137,7 @@ def save_settings(new_settings: Dict[str, Any]) -> Tuple[bool, str]:
         pydantic_settings.enable_rag = current["enable_rag"]
         pydantic_settings.rag_enabled = current.get("rag_enabled", False)
         pydantic_settings.rag_collection_name = current.get("rag_collection_name", "squad_workspace")
+        pydantic_settings.force_local_mode = current.get("force_local_mode", False)
         pydantic_settings.interception_enabled = current.get("interception_enabled", True)
         pydantic_settings.smart_routing = current.get("smart_routing", False)
         pydantic_settings.sandbox_mode = current.get("sandbox_mode", "local")

@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     rag_collection_name: str = Field(default="squad_workspace", description="Nombre de la colección ChromaDB")
     interception_enabled: bool = Field(default=True, description="Enable critical file write interception")
     smart_routing: bool = Field(default=False, description="Enable smart model routing based on task type")
+    force_local_mode: bool = Field(default=False, description="Forzar uso de LLM local localmente sin requerir APIs Cloud")
     
     # Logging
     log_level: str = Field(default="INFO", description="Logging level")
