@@ -914,13 +914,12 @@ class SysTools:
         executor = ActionExecutor()
         calls = executor.parse(text)
         results = executor.execute_all(text)
-        
         successful_files = []
         for call, res in zip(calls, results):
             if res.success:
                 if call.tool == "legacy_fallback":
                     try:
-                        files = json.loads(res.message)
+                        files = call.parameters.get("files", [])
                         successful_files.extend(files)
                     except Exception:
                         pass
@@ -929,6 +928,8 @@ class SysTools:
                     if path:
                         successful_files.append(path)
         return list(set(successful_files))
+
+
 
     @staticmethod
     def _legacy_extract_and_write_multifile(text: str) -> List[str]:
