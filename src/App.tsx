@@ -160,6 +160,7 @@ function MainLayout() {
   const [activeBottomTab, setActiveBottomTab] = useState<any>('console');
   const [centralView, setCentralView] = useState<'editor' | 'graph'>('graph');
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
   // States for Tiers 1-4 UI features
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
@@ -576,25 +577,36 @@ function MainLayout() {
           <div className="flex-1"></div>
 
           {/* Model Dropdown */}
-          <div className="relative group">
-            <button className="flex items-center gap-2 px-3 py-1.5 glass rounded-lg text-xs font-medium hover:border-qwen-500/40 transition max-w-[240px]">
+          <div 
+            className="relative group"
+            onMouseLeave={() => setIsModelDropdownOpen(false)}
+          >
+            <button 
+              onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 glass rounded-lg text-xs font-medium hover:border-qwen-500/40 transition max-w-[240px] cursor-pointer"
+            >
               <div className="w-1.5 h-1.5 rounded-full bg-cyber-cyan pulse-dot-cyan flex-shrink-0"></div>
-              <span className="text-white truncate block flex-1" title={selectedModel}>{selectedModel}</span>
+              <span className="text-white truncate block flex-1 font-sans" title={selectedModel}>{selectedModel}</span>
               <span className="text-qwen-500 flex-shrink-0">·</span>
               <span className="text-qwen-400 font-mono text-[10px] flex-shrink-0">local</span>
               <ChevronDown size={12} className="text-qwen-400 flex-shrink-0" />
             </button>
-            <div className="absolute right-0 mt-1 hidden group-hover:block bg-[#13131A] border border-qwen-border rounded-lg shadow-xl py-1 z-50 min-w-[200px] max-h-60 overflow-y-auto scrollbar">
-              {models.map(m => (
-                <button
-                  key={m}
-                  onClick={() => setSelectedModel(m)}
-                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-white/5 ${selectedModel === m ? 'text-indigo-400 font-bold' : 'text-gray-300'}`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
+            {isModelDropdownOpen && (
+              <div className="absolute right-0 mt-1 bg-[#13131A] border border-qwen-border rounded-lg shadow-2xl py-1 z-[100] min-w-[220px] max-h-60 overflow-y-auto scrollbar animate-in fade-in slide-in-from-top-1 duration-150">
+                {models.map(m => (
+                  <button
+                    key={m}
+                    onClick={() => {
+                      setSelectedModel(m);
+                      setIsModelDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-white/5 transition font-mono ${selectedModel === m ? 'text-indigo-400 font-bold bg-indigo-500/5' : 'text-gray-300'}`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Status Badge */}
@@ -831,9 +843,11 @@ function MainLayout() {
             {/* Drag handle for Left Sidebar */}
             <div
               onMouseDown={startResizingFileTree}
-              className="w-1 cursor-col-resize hover:bg-amber-500/40 active:bg-amber-500 transition-colors z-20 shrink-0 -ml-[2px]"
+              className="w-2.5 -mx-1.5 cursor-col-resize hover:bg-indigo-500/20 active:bg-indigo-500/50 transition-colors z-30 shrink-0 relative flex justify-center items-center group"
               title="Arrastra para regular el tamaño del explorador"
-            />
+            >
+              <div className="w-[1px] h-full bg-white/10 group-hover:bg-indigo-500/50 group-active:bg-indigo-500 transition-colors"></div>
+            </div>
           </>
         )}
 
@@ -858,9 +872,11 @@ function MainLayout() {
           {showBottomPanel && (
             <div
               onMouseDown={startResizingBottomPanel}
-              className="h-1 cursor-row-resize hover:bg-amber-500/40 active:bg-amber-500 transition-colors z-20 shrink-0"
+              className="h-2.5 -my-1.5 cursor-row-resize hover:bg-indigo-500/20 active:bg-indigo-500/50 transition-colors z-30 shrink-0 relative flex flex-col justify-center items-center group"
               title="Arrastra para regular la altura de la consola"
-            />
+            >
+              <div className="h-[1px] w-full bg-white/10 group-hover:bg-indigo-500/50 group-active:bg-indigo-500 transition-colors"></div>
+            </div>
           )}
 
           {/* Bottom Panel Drawer */}
@@ -1315,9 +1331,11 @@ function MainLayout() {
         {showRightPanel && (
           <div
             onMouseDown={startResizingRightPanel}
-            className="w-1 cursor-col-resize hover:bg-amber-500/40 active:bg-amber-500 transition-colors z-20 shrink-0 -ml-[2px]"
+            className="w-2.5 -mx-1.5 cursor-col-resize hover:bg-indigo-500/20 active:bg-indigo-500/50 transition-colors z-30 shrink-0 relative flex justify-center items-center group"
             title="Arrastra para regular el tamaño del panel de IA"
-          />
+          >
+            <div className="w-[1px] h-full bg-white/10 group-hover:bg-indigo-500/50 group-active:bg-indigo-500 transition-colors"></div>
+          </div>
         )}
 
         {/* Right Sidebar Panel: AI Assistant */}
