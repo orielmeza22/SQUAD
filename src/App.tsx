@@ -154,7 +154,7 @@ function MainLayout() {
   const [isRefiningSpec, setIsRefiningSpec] = useState(false);
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
-  const [activeRightTab, setActiveRightTab] = useState<'prompt' | 'chat' | 'settings' | 'ux'>('prompt');
+  const [activeRightTab, setActiveRightTab] = useState<'chat' | 'hitl' | 'settings' | 'ux'>('chat');
   const [showBottomPanel, setShowBottomPanel] = useState(false);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(320);
   const [activeBottomTab, setActiveBottomTab] = useState<any>('console');
@@ -1453,10 +1453,10 @@ function MainLayout() {
             <div className="h-9 bg-black/40 border-b border-white/5 flex items-center justify-between px-3 shrink-0 select-none">
               <div className="flex space-x-3">
                 <button 
-                  onClick={() => setActiveRightTab('prompt')}
-                  className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeRightTab === 'prompt' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  onClick={() => setActiveRightTab('chat')}
+                  className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeRightTab === 'chat' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                 >
-                  Console
+                  Chat
                 </button>
                 <button 
                   onClick={() => setActiveRightTab('hitl')}
@@ -1466,12 +1466,6 @@ function MainLayout() {
                   {pendingWrites.length > 0 && (
                     <span className="ml-1 bg-amber-500 text-black text-[8px] font-extrabold px-1 rounded-full">{pendingWrites.length}</span>
                   )}
-                </button>
-                <button 
-                  onClick={() => setActiveRightTab('chat')}
-                  className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeRightTab === 'chat' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                >
-                  Chat
                 </button>
                 <button 
                   onClick={() => setActiveRightTab('settings')}
@@ -1493,24 +1487,6 @@ function MainLayout() {
             {/* Right Tab Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
               
-              {/* Tab: Prompt & swarm controllers */}
-              {/* Tab: Console Terminal REPL (mockup style) */}
-              {activeRightTab === 'prompt' && (
-                <div className="flex flex-col h-[calc(100vh-120px)] bg-[#0A0A0F]/80 rounded-xl border border-qwen-border overflow-hidden fade-in">
-                  <div className="text-qwen-500 p-3.5 border-b border-qwen-border flex items-center gap-2 text-[10px] uppercase tracking-wider bg-black/40">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-rose-400/80"></div>
-                      <div className="w-2 h-2 rounded-full bg-yellow-400/80"></div>
-                      <div className="w-2 h-2 rounded-full bg-emerald-400/80"></div>
-                    </div>
-                    <span className="ml-2 font-mono">Backend Agent · REPL session</span>
-                  </div>
-                  <div className="flex-1 overflow-y-auto scrollbar p-4">
-                    <AgentConsole />
-                  </div>
-                </div>
-              )}
-
               {/* Tab: HITL Decisions */}
               {activeRightTab === 'hitl' && (
                 <div className="space-y-4 fade-in">
