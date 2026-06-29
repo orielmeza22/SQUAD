@@ -45,6 +45,8 @@ def _defaults() -> Dict[str, Any]:
         "orchestrator_mode": "legacy",
         "graph_max_retries": 3,
         "graph_checkpoint_db": "squad_checkpoints.sqlite",
+        "rag_enabled": False,
+        "rag_collection_name": "squad_workspace",
     }
 
 
@@ -68,6 +70,8 @@ def load_settings() -> Dict[str, Any]:
     state.active_model = defaults["default_model"]
     state.temperature = defaults["temperature"]
     state.enable_rag = defaults["enable_rag"]
+    state.rag_enabled = defaults.get("rag_enabled", False)
+    state.rag_collection_name = defaults.get("rag_collection_name", "squad_workspace")
     state.default_port = defaults.get("default_port", 5000)
     state.system_prompt = defaults.get("system_prompt", "Eres el Orquestador V5. Responde siempre en JSON.")
     state.context_window = defaults.get("context_window", 16384)
@@ -82,6 +86,8 @@ def load_settings() -> Dict[str, Any]:
     pydantic_settings.temperature = defaults["temperature"]
     pydantic_settings.context_window = defaults.get("context_window", 16384)
     pydantic_settings.enable_rag = defaults["enable_rag"]
+    pydantic_settings.rag_enabled = defaults.get("rag_enabled", False)
+    pydantic_settings.rag_collection_name = defaults.get("rag_collection_name", "squad_workspace")
     pydantic_settings.interception_enabled = defaults.get("interception_enabled", True)
     pydantic_settings.smart_routing = defaults.get("smart_routing", False)
     pydantic_settings.sandbox_mode = defaults.get("sandbox_mode", "local")
@@ -111,15 +117,28 @@ def save_settings(new_settings: Dict[str, Any]) -> Tuple[bool, str]:
         state.active_model = current["default_model"]
         state.temperature = current["temperature"]
         state.enable_rag = current["enable_rag"]
+        state.rag_enabled = current.get("rag_enabled", False)
+        state.rag_collection_name = current.get("rag_collection_name", "squad_workspace")
         state.default_port = current.get("default_port", 5000)
         state.system_prompt = current.get("system_prompt", "Eres el Orquestador V5. Responde siempre en JSON.")
         state.context_window = current.get("context_window", 16384)
         state.interception_enabled = current.get("interception_enabled", True)
         state.smart_routing = current.get("smart_routing", False)
         state.design_identity = current.get("design_identity", _defaults()["design_identity"])
+        pydantic_settings.workspace = current["workspace"]
+        pydantic_settings.ollama_host = current["ollama_host"]
+        pydantic_settings.default_model = current["default_model"]
+        pydantic_settings.temperature = current["temperature"]
+        pydantic_settings.context_window = current.get("context_window", 16384)
+        pydantic_settings.enable_rag = current["enable_rag"]
+        pydantic_settings.rag_enabled = current.get("rag_enabled", False)
+        pydantic_settings.rag_collection_name = current.get("rag_collection_name", "squad_workspace")
+        pydantic_settings.interception_enabled = current.get("interception_enabled", True)
+        pydantic_settings.smart_routing = current.get("smart_routing", False)
         pydantic_settings.sandbox_mode = current.get("sandbox_mode", "local")
         pydantic_settings.docker_image_python = current.get("docker_image_python", "python:3.11-slim")
         pydantic_settings.docker_image_node = current.get("docker_image_node", "node:20-slim")
+        pydantic_settings.design_identity = current.get("design_identity", _defaults()["design_identity"])
         pydantic_settings.orchestrator_mode = current.get("orchestrator_mode", "legacy")
         pydantic_settings.graph_max_retries = current.get("graph_max_retries", 3)
         pydantic_settings.graph_checkpoint_db = current.get("graph_checkpoint_db", "squad_checkpoints.sqlite")

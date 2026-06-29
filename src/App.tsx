@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppContextProvider, useApp } from './context/AppContext';
+import { useGraphStore } from './stores/graphStore';
 import { 
   Play, Square, Save, Folder, FolderOpen, File, FileCode, Settings, Search, 
   Trash2, Download, RefreshCw, Send, Terminal, Cpu, Layers, GitBranch, 
@@ -13,6 +14,7 @@ import FileTree from './components/FileTree';
 import MonacoEditorPanel from './components/MonacoEditorPanel';
 import DatabaseVisualizer from './components/DatabaseVisualizer';
 import AgentConsole from './components/AgentConsole';
+import GraphVisualizer from './components/GraphVisualizer';
 
 const categories = {
   "Databases & Cache": [
@@ -140,7 +142,7 @@ function MainLayout() {
   const [activeRightTab, setActiveRightTab] = useState<'prompt' | 'chat' | 'settings' | 'ux'>('prompt');
   const [showBottomPanel, setShowBottomPanel] = useState(false);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(260);
-  const [activeBottomTab, setActiveBottomTab] = useState<'console' | 'database' | 'infra' | 'deploy'>('console');
+  const [activeBottomTab, setActiveBottomTab] = useState<'console' | 'database' | 'infra' | 'deploy' | 'graph'>('console');
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
 
   const startResizingConfig = (mouseDownEvent: React.MouseEvent) => {
@@ -228,6 +230,20 @@ function MainLayout() {
   };
   // LLM sub-tabs
   const [llmSubTab, setLlmSubTab] = useState<'provider' | 'params' | 'system' | 'vault' | 'ux'>('provider');
+
+  // --- LangGraph State (Zustand) ---
+  const graphIsPausedSpec = useGraphStore((s) => s.isPausedSpec);
+  const graphApproveSpec = useGraphStore((s) => s.approveSpec);
+  const graphIsPausedHitl = useGraphStore((s) => s.isPausedHitl);
+  const graphApproveHitl = useGraphStore((s) => s.approveHitl);
+  const graphConnectSSE = useGraphStore((s) => s.connectSSE);
+  const graphDisconnectSSE = useGraphStore((s) => s.disconnectSSE);
+
+  useEffect(() => {
+    graphConnectSSE();
+    return () => graphDisconnectSSE();
+  }, []);
+
   // CI/CD state
   const [cicdPlatform, setCicdPlatform] = useState<'github' | 'gitlab'>('github');
   const [cicdYaml, setCicdYaml] = useState('');
@@ -611,11 +627,17 @@ function MainLayout() {
                   >
                     🔌 Variables & Docker
                   </button>
-                  <button 
+                  <button
                     onClick={() => setActiveBottomTab('deploy')}
                     className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeBottomTab === 'deploy' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🚀 Despliegue Cloud
+                  </button>
+                  <button
+                    onClick={() => setActiveBottomTab('graph')}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeBottomTab === 'graph' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                  >
+                    🕸️ Grafo
                   </button>
                 </div>
                 <button 
@@ -628,16 +650,25 @@ function MainLayout() {
               </div>
 
               {/* Bottom Tab Content */}
-              <div className="flex-1 overflow-y-auto p-4 min-h-0">
+              <div className="flex-1 overflow-hidden p-0 min-h-0">
                 {activeBottomTab === 'console' && (
-                  <AgentConsole />
+                  <div className="h-full overflow-y-auto p-4">
+                    <AgentConsole />
+                  </div>
                 )}
 
                 {activeBottomTab === 'database' && (
-                  <DatabaseVisualizer />
+                  <div className="h-full overflow-y-auto p-4">
+                    <DatabaseVisualizer />
+                  </div>
+                )}
+
+                {activeBottomTab === 'graph' && (
+                  <GraphVisualizer />
                 )}
 
                 {activeBottomTab === 'infra' && (
+                  <div className="h-full overflow-y-auto p-4">
                   <div className="space-y-4 max-w-4xl">
                     {/* Visual .env Editor */}
                     <div className="bg-black/30 border border-white/5 rounded-lg p-3.5 space-y-2 shadow-lg">
@@ -796,9 +827,11 @@ function MainLayout() {
                       </div>
                     </div>
                   </div>
+                  </div>
                 )}
 
                 {activeBottomTab === 'deploy' && (
+                  <div className="h-full overflow-y-auto p-4">
                   <div className="space-y-4 max-w-4xl">
                     <div className="grid grid-cols-2 gap-4">
                       {/* Real Cloud Deployment Panel */}
@@ -933,6 +966,7 @@ function MainLayout() {
                       )}
                     </div>
                   </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -1028,6 +1062,52 @@ function MainLayout() {
                       className="w-full h-36 bg-[#0A0A0C]/80 border border-white/10 rounded p-2.5 text-xs text-emerald-100 focus:outline-none focus:border-indigo-500 resize-none font-sans leading-relaxed" 
                       placeholder="Ej: Crea una API en Express con una base de datos SQLite para llevar inventario, y un frontend animado..."
                     />
+
+                    {/* SPEC approval banner (LangGraph HITL) */}
+                    {graphIsPausedSpec && (
+                      <div className="bg-indigo-500/10 border border-indigo-500/40 rounded-lg p-3.5 space-y-2.5 shadow-lg">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2 h-2 bg-indigo-400 rounded-full animate-ping"></span>
+                          <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+                            ⏸️ SPEC GENERADA — PENDIENTE APROBACIÓN
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-gray-300 leading-relaxed">
+                          El Arquitecto generó SPEC.md. Revísalo en el explorador de archivos y apruébalo para que el enjambre continúe (DBA + Frontend + Backend + QA).
+                        </p>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={graphApproveSpec}
+                            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[9px] uppercase tracking-widest py-2 rounded transition-all cursor-pointer"
+                          >
+                            ✅ Aprobar SPEC
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* HITL approval banner (destructive command) */}
+                    {graphIsPausedHitl && (
+                      <div className="bg-amber-500/10 border border-amber-500/40 rounded-lg p-3.5 space-y-2.5 shadow-lg">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2 h-2 bg-amber-400 rounded-full animate-ping"></span>
+                          <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
+                            ⚠️ ACCIÓN DESTRUCTIVA DETECTADA — REVISAR
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-gray-300 leading-relaxed">
+                          El Linter quiere ejecutar un comando potencialmente destructivo. Apruébalo solo si lo reconoces.
+                        </p>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={graphApproveHitl}
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[9px] uppercase py-2 rounded transition-all cursor-pointer"
+                          >
+                            ✅ Aprobar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex space-x-2 pt-1">
                       <button 
                         onClick={() => {

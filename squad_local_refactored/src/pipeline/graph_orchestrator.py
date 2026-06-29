@@ -110,6 +110,18 @@ def node_architect(state_val: SquadGraphState) -> dict:
         "files": allowed_files
     }
     SysTools.write("build_manifest.json", json.dumps(manifest_data, indent=2), force=True)
+    
+    # RAG: Index SPEC.md if enabled
+    from ..core.config import settings
+    if getattr(settings, "rag_enabled", False):
+        try:
+            from ..tools.rag_indexer import RAGIndexer
+            indexer = RAGIndexer(SysTools.WORKSPACE, getattr(settings, "rag_collection_name", "squad_workspace"))
+            indexer.index_file("SPEC.md", plan, "markdown")
+            state.log("🔍 [RAG]: SPEC.md indexado en base vectorial.")
+        except Exception as e:
+            state.log(f"⚠️ Error indexing SPEC.md: {e}")
+
     state.log("✅ Especificación del Proyecto generada (SPEC.md).")
     
     state.set_node_status("architect", "done")
@@ -186,13 +198,29 @@ def node_frontend(state_val: SquadGraphState) -> dict:
     from ..agents.prompts import style_memory_str, frontend_prompt
     style_mem_s = style_memory_str(style_mem)
 
+    # RAG enrichment
+    from ..tools.context_enricher import enrich_context
+    rag_ctx = enrich_context("frontend", plan)
     ui_p = frontend_prompt(plan, existing_context, style_mem_s, stack=stack)
+    if rag_ctx:
+        ui_p += "\n\n" + rag_ctx
+
     if retries["frontend"] > 1 and state_val["last_errors"]:
         ui_p += f"\n\n⚠️ REINTENTO {retries['frontend']}/{settings.graph_max_retries}: El intento anterior falló por: {state_val['last_errors'][-1]}.\nCorrige específicamente ese error. NO regeneres todo desde cero; aplica el fix puntual."
 
     ui_raw = AIProvider().generate(model=target_model, prompt=ui_p)
     from ..tools.action_executor import ActionExecutor
     ActionExecutor().execute_all(ui_raw)
+
+    # RAG workspace re-indexing
+    if getattr(settings, "rag_enabled", False):
+        try:
+            from ..tools.rag_indexer import RAGIndexer
+            RAGIndexer(SysTools.WORKSPACE, getattr(settings, "rag_collection_name", "squad_workspace")).index_workspace()
+            state.log("🔍 [RAG]: Workspace re-indexado tras Frontend.")
+        except Exception as e:
+            state.log(f"⚠️ Error re-indexing workspace: {e}")
+
     state.log("✅ Sistema de Diseño Frontend/UI creado.")
 
     state.set_node_status("frontend", "done")
@@ -213,7 +241,14 @@ def node_backend(state_val: SquadGraphState) -> dict:
 
     existing_context = _existing_context(prompt)
     from ..agents.prompts import backend_prompt
+    
+    # RAG enrichment
+    from ..tools.context_enricher import enrich_context
+    rag_ctx = enrich_context("backend", plan)
     code_p = backend_prompt(plan, existing_context, stack=stack)
+    if rag_ctx:
+        code_p += "\n\n" + rag_ctx
+
     if retries["backend"] > 1 and state_val["last_errors"]:
         code_p += f"\n\n⚠️ REINTENTO {retries['backend']}/{settings.graph_max_retries}: El intento anterior falló por: {state_val['last_errors'][-1]}.\nCorrige específicamente ese error. NO regeneres todo desde cero; aplica el fix puntual."
 
@@ -221,6 +256,16 @@ def node_backend(state_val: SquadGraphState) -> dict:
     back_raw = AIProvider().generate(model=target_model, prompt=code_p)
     from ..tools.action_executor import ActionExecutor
     ActionExecutor().execute_all(back_raw)
+    
+    # RAG workspace re-indexing
+    if getattr(settings, "rag_enabled", False):
+        try:
+            from ..tools.rag_indexer import RAGIndexer
+            RAGIndexer(SysTools.WORKSPACE, getattr(settings, "rag_collection_name", "squad_workspace")).index_workspace()
+            state.log("🔍 [RAG]: Workspace re-indexado tras Backend.")
+        except Exception as e:
+            state.log(f"⚠️ Error re-indexing workspace: {e}")
+
     state.log("✅ Lógica de Negocio Backend creada con éxito.")
 
     created_files = _get_created_files(stack)
@@ -239,8 +284,37 @@ def node_review(state_val: SquadGraphState) -> dict:
     created_files = state_val["created_files"]
 
     state.log(f"🤖 [AGENTE CODE REVIEWER] ({target_model}): Analizando calidad de código generado...")
+    
+    # RAG Judge comparison
+    rag_context = ""
+    if getattr(settings, "rag_enabled", False):
+        try:
+            from ..tools.rag_indexer import RAGIndexer
+            indexer = RAGIndexer(SysTools.WORKSPACE, getattr(settings, "rag_collection_name", "squad_workspace"))
+            spec_queries = plan[:500].split('\n')[:5]
+            results = []
+            for q in spec_queries:
+                if q.strip():
+                    results.extend(indexer.query(q, n_results=2))
+            if results:
+                seen_res = set()
+                uniq_res = []
+                for r in results:
+                    key = (r["source"], r["start_line"])
+                    if key not in seen_res:
+                        seen_res.add(key)
+                        uniq_res.append(r)
+                rag_context = "## FRAGMENTOS DE CÓDIGO vs SPEC (RAG Judge)\n\n"
+                for r in uniq_res[:5]:
+                    rag_context += f"**{r['source']}** (sim: {1 - r['distance']:.2f}):\n{r['document'][:500]}\n\n"
+        except Exception as e:
+            state.log(f"⚠️ Error in RAG Judge: {e}")
+
     from ..agents.prompts import code_review_prompt
     review_p = code_review_prompt(plan, created_files)
+    if rag_context:
+        review_p += "\n\n" + rag_context
+
     code_review = AIProvider().generate(model=target_model, prompt=review_p)
 
     verdict = "PASS"
@@ -282,6 +356,13 @@ def node_fix(state_val: SquadGraphState) -> dict:
         state.log("⚠️ Inyectando AGENTE LINTER AUTÓNOMO para aplicar correcciones...")
         from ..agents.prompts import fix_prompt
         fix_p = fix_prompt(last_errors[-1])
+        
+        # RAG enrichment
+        from ..tools.context_enricher import enrich_context
+        rag_ctx = enrich_context("fix", last_errors[-1])
+        if rag_ctx:
+            fix_p += "\n\n" + rag_ctx
+
         fix_out = AIProvider().generate(model=target_model, prompt=fix_p)
         
         # HITL: verificar acciones destructivas antes de ejecutar
@@ -306,6 +387,16 @@ def node_fix(state_val: SquadGraphState) -> dict:
             }
             
         executor.execute_all(fix_out)
+        
+        # RAG workspace re-indexing
+        if getattr(settings, "rag_enabled", False):
+            try:
+                from ..tools.rag_indexer import RAGIndexer
+                RAGIndexer(SysTools.WORKSPACE, getattr(settings, "rag_collection_name", "squad_workspace")).index_workspace()
+                state.log("🔍 [RAG]: Workspace re-indexado tras Fix.")
+            except Exception as e:
+                state.log(f"⚠️ Error re-indexing workspace: {e}")
+
         state.log("🧹 Linter Autónomo resolvió los bugs del Review.")
 
     state.set_node_status("fix", "done")
@@ -340,6 +431,14 @@ def node_qa(state_val: SquadGraphState) -> dict:
     state.log(f"🧪 [AGENTE QA & DEVOPS] ({target_model}): Scripts de Testing y Pipeline CI/CD...")
     from ..agents.prompts import qa_devops_prompt
     qa_p = qa_devops_prompt()
+    
+    # RAG enrichment
+    from ..tools.context_enricher import enrich_context
+    plan = SysTools.read("SPEC.md") or state_val["plan"]
+    rag_ctx = enrich_context("qa", plan)
+    if rag_ctx:
+        qa_p += "\n\n" + rag_ctx
+
     test_out = AIProvider().generate(model=target_model, prompt=qa_p)
     from ..tools.action_executor import ActionExecutor
     ActionExecutor().execute_all(test_out)

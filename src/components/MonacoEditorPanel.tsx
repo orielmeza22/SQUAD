@@ -1,6 +1,7 @@
 import React from 'react';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import { useApp } from '../context/AppContext';
+import { useGraphStore } from '../stores/graphStore';
 import { Save, Eye, EyeOff, GitBranch, RefreshCw, Play } from 'lucide-react';
 
 export default function MonacoEditorPanel() {
@@ -33,6 +34,12 @@ export default function MonacoEditorPanel() {
     gitCheckout,
     gitRestoreHead
   } = useApp();
+
+  // LangGraph HITL diff state (Zustand)
+  const graphShowDiff = useGraphStore((s) => s.showDiffPanel);
+  const graphDiffData = useGraphStore((s) => s.diffData);
+  const graphApproveHitl = useGraphStore((s) => s.approveHitl);
+  const graphSetDiffData = useGraphStore((s) => s.setDiffData);
 
   const [previewUrl, setPreviewUrl] = React.useState(`http://localhost:${activePort}`);
   const [selectedText, setSelectedText] = React.useState('');
@@ -347,6 +354,49 @@ export default function MonacoEditorPanel() {
 
       {/* Editor Content Area */}
       <div className="flex-1 flex min-h-0 relative">
+
+        {/* HITL Diff Panel (LangGraph) — shown when a destructive patch needs approval */}
+        {graphShowDiff && graphDiffData && (
+          <div className="absolute inset-0 z-40 flex flex-col bg-[#0A0A0C]">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-black/60 border-b border-amber-500/30 shrink-0">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 bg-amber-400 rounded-full animate-ping"></span>
+                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest font-mono">
+                  ⚠️ HITL — Revisión de parche: {graphDiffData.filename}
+                </span>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => graphApproveHitl()}
+                  className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded text-[9px] font-bold cursor-pointer transition-all"
+                >
+                  ✅ Aprobar parche
+                </button>
+                <button
+                  onClick={() => graphSetDiffData(null)}
+                  className="bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 px-3 py-1 rounded text-[9px] font-bold cursor-pointer transition-all"
+                >
+                  ❌ Rechazar
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0">
+              <DiffEditor
+                original={graphDiffData.original}
+                modified={graphDiffData.modified}
+                language={getFileLanguage(graphDiffData.filename)}
+                theme="vs-dark"
+                options={{
+                  minimap: { enabled: false },
+                  wordWrap: 'on',
+                  renderSideBySide: true,
+                  readOnly: true,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {isSpecialTab ? (
           <div className="flex-1 flex items-center justify-center text-white/30 text-xs italic">
             Visualizador especial cargado. Dirígete a la barra de herramientas de infraestructura.

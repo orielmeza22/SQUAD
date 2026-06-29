@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     
     # Feature Flags
     enable_rag: bool = Field(default=True, description="Enable RAG (Retrieval Augmented Generation)")
+    rag_enabled: bool = Field(default=False, description="Activar RAG con ChromaDB")
+    rag_collection_name: str = Field(default="squad_workspace", description="Nombre de la colección ChromaDB")
     interception_enabled: bool = Field(default=True, description="Enable critical file write interception")
     smart_routing: bool = Field(default=False, description="Enable smart model routing based on task type")
     
@@ -85,7 +87,7 @@ def load_settings_from_json(json_path: str) -> None:
         # Update settings that are allowed to be overridden
         allowed_overrides = [
             "workspace", "ollama_host", "default_model", "temperature",
-            "context_window", "enable_rag", "interception_enabled",
+            "context_window", "enable_rag", "rag_enabled", "rag_collection_name", "interception_enabled",
             "smart_routing", "design_identity", "system_prompt"
         ]
         
