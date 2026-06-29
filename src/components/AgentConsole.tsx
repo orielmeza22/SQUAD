@@ -183,7 +183,7 @@ export default function AgentConsole() {
             <button
               onClick={() => setConsoleTab('audit')}
               className={`pb-1 cursor-pointer transition-colors ${
-                consoleTab === 'audit' ? 'text-amber-400 border-b border-amber-400' : 'text-gray-500 hover:text-white'
+                consoleTab === 'audit' ? 'text-indigo-400 border-b border-indigo-400' : 'text-gray-500 hover:text-white'
               }`}
             >
               Auditoría
@@ -191,7 +191,7 @@ export default function AgentConsole() {
             <button
               onClick={() => setConsoleTab('diagnostic')}
               className={`pb-1 cursor-pointer transition-colors flex items-center space-x-1 ${
-                consoleTab === 'diagnostic' ? 'text-amber-400 border-b border-amber-400' : 'text-gray-500 hover:text-white'
+                consoleTab === 'diagnostic' ? 'text-indigo-400 border-b border-indigo-400' : 'text-gray-500 hover:text-white'
               }`}
             >
               <span>Diagnósticos</span>
@@ -200,7 +200,7 @@ export default function AgentConsole() {
               )}
             </button>
           </div>
-          <span className={`text-[9px] font-bold ${isPipelineRunning ? "text-amber-500 animate-pulse" : "text-blue-400"}`}>
+          <span className={`text-[9px] font-bold ${isPipelineRunning ? "text-indigo-400 animate-pulse" : "text-blue-400"}`}>
             {isPipelineRunning ? 'EJECUTANDO' : 'IDLE'}
           </span>
         </div>

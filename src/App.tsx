@@ -892,67 +892,67 @@ function MainLayout() {
                 <div className="flex items-center space-x-4 overflow-x-auto max-w-[85%] scrollbar-none">
                   <button 
                     onClick={() => setActiveBottomTab('console')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'console' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'console' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     💻 Consola & Logs
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('database')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'database' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'database' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🗄️ Base de Datos
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('graph')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'graph' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'graph' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🕸️ Grafo
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('repl')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'repl' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'repl' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     📟 Multi-Session REPL
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('preview')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'preview' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'preview' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     📺 Vista Previa
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('skills')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'skills' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'skills' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🧪 Habilidades
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('memory')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'memory' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'memory' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🧠 Memoria & Ledger
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('conversation')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'conversation' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'conversation' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     💬 Diálogos
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('dependency')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'dependency' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'dependency' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🌿 Dependencias
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('heatmap')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'heatmap' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'heatmap' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     🔥 Confianza Código
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('scrubber')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'scrubber' ? 'text-amber-400 border-amber-400' : 'text-gray-500 border-transparent hover:text-white'}`}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'scrubber' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     ⏱️ Scrubber
                   </button>
@@ -1530,112 +1530,170 @@ function MainLayout() {
               {/* Tab: Debates chatbot */}
               {activeRightTab === 'chat' && (
                 <div className="flex flex-col h-[calc(100vh-120px)]">
-                  {/* Chat history — 2-column for debate mode */}
-                  {chatTarget === 'debate' ? (
-                    <div className="flex-1 overflow-y-auto mb-4 min-h-0 space-y-2">
-                      <div className="text-[9px] text-center text-white/30 uppercase tracking-widest mb-3 font-mono border-b border-white/5 pb-2">
-                        Modo Debate Activo
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {/* Model A Column */}
-                        <div className="flex flex-col space-y-2">
-                          <div className="text-[8px] font-bold text-rose-400 uppercase tracking-widest px-2 py-1 bg-rose-500/10 border border-rose-500/20 rounded text-center">🔴 Perspectiva A</div>
-                          {chatHistory.filter((_, i) => i % 2 === 1 && chatHistory[i]?.role === 'assistant').map((m, i) => (
-                            <div key={i} className="bg-rose-950/20 border border-rose-500/15 rounded-lg p-2 text-[9px] text-rose-100 leading-relaxed font-sans select-text">
-                              <p className="whitespace-pre-wrap">{m.content}</p>
-                            </div>
-                          ))}
+                  {chatHistory.length === 0 ? (
+                    <div className="flex-1 flex flex-col justify-center p-4 space-y-4 font-sans select-none animate-in fade-in duration-200">
+                      <div className="text-center space-y-1.5">
+                        <div className="w-10 h-10 rounded-xl gradient-aurora flex items-center justify-center shadow-qwen-glow mx-auto mb-2">
+                          <Sparkles size={18} className="text-white" />
                         </div>
-                        {/* Model B Column */}
-                        <div className="flex flex-col space-y-2">
-                          <div className="text-[8px] font-bold text-blue-400 uppercase tracking-widest px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded text-center">🔵 Perspectiva B</div>
-                          {chatHistory.filter((_, i) => i % 2 === 0 && chatHistory[i]?.role === 'assistant').map((m, i) => (
-                            <div key={i} className="bg-blue-950/20 border border-blue-500/15 rounded-lg p-2 text-[9px] text-blue-100 leading-relaxed font-sans select-text">
-                              <p className="whitespace-pre-wrap">{m.content}</p>
-                            </div>
-                          ))}
+                        <h3 className="text-xs font-bold text-white uppercase tracking-widest">Iniciar Nuevo Proyecto</h3>
+                        <p className="text-[10px] text-gray-400 leading-relaxed">Describe lo que deseas construir. El enjambre de agentes (Arquitecto, DBA, Dev, QA, Linter) se encargará del desarrollo.</p>
+                      </div>
+                      
+                      <div className="bg-[#13131A] border border-qwen-border rounded-xl p-3.5 space-y-3">
+                        <textarea
+                          value={promptInput}
+                          onChange={(e) => setPromptInput(e.target.value)}
+                          placeholder="Ej: Crea una API en Express con una base de datos SQLite para llevar inventario y un frontend animado..."
+                          className="w-full h-32 bg-[#0A0A0C] border border-white/5 rounded p-2 text-xs text-white font-sans outline-none focus:border-indigo-500/30 resize-none leading-relaxed"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => optimizePrompt()}
+                            className="flex-1 bg-white/5 hover:bg-white/10 text-white font-semibold py-2 rounded-lg text-[10px] uppercase transition cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <Sparkles size={10} />
+                            Optimizar
+                          </button>
+                          <button
+                            onClick={startBuildPipeline}
+                            disabled={isPipelineRunning || !promptInput.trim()}
+                            className="flex-1 btn-primary py-2 rounded-lg text-[10px] font-semibold text-white flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <Play size={10} fill="white" className="mr-0.5" />
+                            Iniciar Enjambre
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-bold">Plantillas Rápidas</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => applyProjectTemplate('fastapi')}
+                            className="p-2.5 glass rounded-xl text-left text-[9px] hover:border-indigo-500/30 transition cursor-pointer font-mono text-emerald-400"
+                          >
+                            🐍 FastAPI + SQLite
+                          </button>
+                          <button
+                            onClick={() => applyProjectTemplate('express')}
+                            className="p-2.5 glass rounded-xl text-left text-[9px] hover:border-indigo-500/30 transition cursor-pointer font-mono text-amber-400"
+                          >
+                            ⚡ Express.js Node
+                          </button>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex-1 overflow-y-auto mb-4 min-h-0 space-y-3 pr-1">
-                      {chatHistory.map((m, i) => (
-                        <div 
-                          key={i} 
-                          className={`rounded-lg p-3 text-[10px] leading-relaxed font-sans select-text border ${
-                            m.role === 'user' 
-                              ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-100 ml-6' 
-                              : m.role === 'system'
-                                ? 'bg-white/3 border-white/5 text-gray-500 italic text-[9px]'
-                                : 'bg-black/30 border-white/5 text-gray-200 mr-6'
-                          }`}
-                        >
-                          <div className="flex justify-between items-center mb-1 font-mono text-[8px] text-white/30 uppercase tracking-widest">
-                            <span>{m.role === 'user' ? 'Tú (Usuario)' : m.role === 'system' ? 'Sistema' : `Agente: ${chatTarget.toUpperCase()}`}</span>
+                    <>
+                      {/* Chat history — 2-column for debate mode */}
+                      {chatTarget === 'debate' ? (
+                        <div className="flex-1 overflow-y-auto mb-4 min-h-0 space-y-2">
+                          <div className="text-[9px] text-center text-white/30 uppercase tracking-widest mb-3 font-mono border-b border-white/5 pb-2">
+                            Modo Debate Activo
                           </div>
-                          <p className="whitespace-pre-wrap">{m.content}</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {/* Model A Column */}
+                            <div className="flex flex-col space-y-2">
+                              <div className="text-[8px] font-bold text-rose-400 uppercase tracking-widest px-2 py-1 bg-rose-500/10 border border-rose-500/20 rounded text-center">🔴 Perspectiva A</div>
+                              {chatHistory.filter((_, i) => i % 2 === 1 && chatHistory[i]?.role === 'assistant').map((m, i) => (
+                                <div key={i} className="bg-rose-950/20 border border-rose-500/15 rounded-lg p-2 text-[9px] text-rose-100 leading-relaxed font-sans select-text">
+                                  <p className="whitespace-pre-wrap">{m.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                            {/* Model B Column */}
+                            <div className="flex flex-col space-y-2">
+                              <div className="text-[8px] font-bold text-blue-400 uppercase tracking-widest px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded text-center">🔵 Perspectiva B</div>
+                              {chatHistory.filter((_, i) => i % 2 === 0 && chatHistory[i]?.role === 'assistant').map((m, i) => (
+                                <div key={i} className="bg-blue-950/20 border border-blue-500/15 rounded-lg p-2 text-[9px] text-blue-100 leading-relaxed font-sans select-text">
+                                  <p className="whitespace-pre-wrap">{m.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      ))}
-                      {isChatThinking && (
-                        <div className="bg-white/5 border border-white/5 rounded-lg p-3 text-[10px] text-gray-400 italic mr-6 animate-pulse font-sans">
-                          <div>El enjambre está analizando y respondiendo...</div>
-                          {pipelineLogs.length > 0 && (
-                            <div className="text-[9px] text-indigo-400 font-mono border-t border-white/5 pt-1.5 mt-1.5 break-all not-italic">
-                              {pipelineLogs[pipelineLogs.length - 1]}
+                      ) : (
+                        <div className="flex-1 overflow-y-auto mb-4 min-h-0 space-y-3 pr-1">
+                          {chatHistory.map((m, i) => (
+                            <div 
+                              key={i} 
+                              className={`rounded-lg p-3 text-[10px] leading-relaxed font-sans select-text border ${
+                                m.role === 'user' 
+                                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-100 ml-6' 
+                                  : m.role === 'system'
+                                    ? 'bg-white/3 border-white/5 text-gray-500 italic text-[9px]'
+                                    : 'bg-black/30 border-white/5 text-gray-200 mr-6'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-1 font-mono text-[8px] text-white/30 uppercase tracking-widest">
+                                <span>{m.role === 'user' ? 'Tú (Usuario)' : m.role === 'system' ? 'Sistema' : `Agente: ${chatTarget.toUpperCase()}`}</span>
+                              </div>
+                              <p className="whitespace-pre-wrap">{m.content}</p>
+                            </div>
+                          ))}
+                          {isChatThinking && (
+                            <div className="bg-white/5 border border-white/5 rounded-lg p-3 text-[10px] text-gray-400 italic mr-6 animate-pulse font-sans">
+                              <div>El enjambre está analizando y respondiendo...</div>
+                              {pipelineLogs.length > 0 && (
+                                <div className="text-[9px] text-indigo-400 font-mono border-t border-white/5 pt-1.5 mt-1.5 break-all not-italic">
+                                  {pipelineLogs[pipelineLogs.length - 1]}
+                                </div>
+                              )}
                             </div>
                           )}
+                          <div ref={chatHistoryRef} />
                         </div>
                       )}
-                      <div ref={chatHistoryRef} />
-                    </div>
+
+                      {/* Input form */}
+                      <div className="mt-auto border-t border-white/5 pt-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[8px] text-gray-500 uppercase font-bold font-mono">Modelo / IA Activa:</span>
+                          <select 
+                            value={selectedModel}
+                            onChange={(e) => setSelectedModel(e.target.value)}
+                            className="bg-[#13131A] border border-qwen-border rounded text-[9px] text-cyber-cyan font-mono px-2 py-0.5 outline-none max-w-[170px] truncate"
+                          >
+                            {models.map(m => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </div>
+
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[8px] text-gray-500 uppercase font-bold font-mono">Destinatario del Chat:</span>
+                          <select 
+                            value={chatTarget}
+                            onChange={(e) => setChatTarget(e.target.value as any)}
+                            className="bg-[#13131A] border border-qwen-border rounded text-[9px] text-indigo-400 font-mono px-2 py-0.5 outline-none"
+                          >
+                            <option value="general">Enjambre General</option>
+                            <option value="architect">Arquitecto (Planificador)</option>
+                            <option value="qa">QA Agent (Verificador)</option>
+                            <option value="devops">DevOps Cloud</option>
+                            <option value="debate">Debate Multi-Modelo</option>
+                          </select>
+                        </div>
+
+                        <div className="flex space-x-1.5">
+                          <input 
+                            type="text" 
+                            value={chatMessage}
+                            onChange={(e) => setChatMessage(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !isChatThinking) sendChatMessage(); }}
+                            placeholder={chatTarget === 'debate' ? "Escribe la tesis a debatir..." : "Pregunta sobre el código, arquitectura..."}
+                            className="flex-1 bg-black border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-indigo-500/50 font-sans"
+                          />
+                          <button 
+                            onClick={sendChatMessage}
+                            disabled={isChatThinking || !chatMessage.trim()}
+                            className="btn-primary disabled:opacity-50 text-white font-semibold text-[10px] uppercase px-3.5 rounded-lg transition-all cursor-pointer shadow-none"
+                          >
+                            Enviar
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   )}
-
-                  {/* Input form */}
-                  <div className="mt-auto border-t border-white/5 pt-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[8px] text-gray-500 uppercase font-bold font-mono">Modelo / IA Activa:</span>
-                      <select 
-                        value={selectedModel}
-                        onChange={(e) => setSelectedModel(e.target.value)}
-                        className="bg-[#13131A] border border-qwen-border rounded text-[9px] text-cyber-cyan font-mono px-2 py-0.5 outline-none max-w-[170px] truncate"
-                      >
-                        {models.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[8px] text-gray-500 uppercase font-bold font-mono">Destinatario del Chat:</span>
-                      <select 
-                        value={chatTarget}
-                        onChange={(e) => setChatTarget(e.target.value as any)}
-                        className="bg-[#13131A] border border-qwen-border rounded text-[9px] text-indigo-400 font-mono px-2 py-0.5 outline-none"
-                      >
-                        <option value="general">Enjambre General</option>
-                        <option value="architect">Arquitecto (Planificador)</option>
-                        <option value="qa">QA Agent (Verificador)</option>
-                        <option value="devops">DevOps Cloud</option>
-                        <option value="debate">Debate Multi-Modelo</option>
-                      </select>
-                    </div>
-
-                    <div className="flex space-x-1.5">
-                      <input 
-                        type="text" 
-                        value={chatMessage}
-                        onChange={(e) => setChatMessage(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !isChatThinking) sendChatMessage(); }}
-                        placeholder={chatTarget === 'debate' ? "Escribe la tesis a debatir..." : "Pregunta sobre el código, arquitectura..."}
-                        className="flex-1 bg-black border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-indigo-500/50 font-sans"
-                      />
-                      <button 
-                        onClick={sendChatMessage}
-                        disabled={isChatThinking || !chatMessage.trim()}
-                        className="btn-primary disabled:opacity-50 text-white font-semibold text-[10px] uppercase px-3.5 rounded-lg transition-all cursor-pointer shadow-none"
-                      >
-                        Enviar
-                      </button>
-                    </div>
-                  </div>
                 </div>
 
               )}
