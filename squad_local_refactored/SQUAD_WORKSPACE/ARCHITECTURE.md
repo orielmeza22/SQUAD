@@ -2,186 +2,164 @@ STACK: FASTAPI_HTMX
 
 ### Especificación de Software (SPEC)
 
-#### 1. Introducción:
-La aplicación se diseñará para anotar los puntos del truco, utilizando el stack FASTAPI_HTMX. Esta elección se basa en la necesidad de crear un sistema robusto y escalable que permita gestionar y registrar puntos de manera eficiente.
+#### Resumen del Proyecto:
+El proyecto se trata de desarrollar un sistema web para gestionar turnos, similar a uno comercial pero adaptado a una escala más pequeña. El sistema debe ser capaz de manejar la creación, modificación y eliminación de turnos, así como permitir el acceso a los mismos por parte del personal.
 
-#### 2. Estructura del Proyecto:
-- **Backend:** Implementado con FastAPI y HTMX.
-- **Frontend:** Servido por FastAPI, utilizando HTML/CSS para la presentación visual.
-  
-#### 3. Archivos Actuales del Proyecto:
-- `squad_checkpoints.sqlite`: Base de datos SQLite que almacena los puntos del truco.
-- `main_output.py`: Punto de entrada del backend.
+#### Arquitectura del Sistema:
+La arquitectura elegida es FASTAPI_HTMX debido a su capacidad para crear un CRUD básico y eficiente. Además, HTMX proporcionará interactividad en tiempo real sin recargar la página completa, lo que mejorará la experiencia del usuario.
 
-#### 4. Estructura del Backend (main_output.py):
+### Estructura de Archivos:
+
+1. **main_output.py** - Punto de entrada principal del backend.
+2. **templates/turnos.html** - Plantilla HTML para el frontend.
+3. **static/css/style.css** - Archivo CSS para estilos.
+4. **static/js/main.js** - Archivo JS para lógica del cliente.
+
+### Estructura de carpetas:
+```
+sistema_turnos/
+├── main_output.py
+├── templates/
+│   ├── turnos.html
+├── static/
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── main.js
+└── spec.md  # Especificación de Software
+```
+
+### Estructura de las Tablas en SQLite:
+
+1. **Tabla `turnos`**:
+    - `id`: Integer, Primary Key, Autoincremental.
+    - `nombre`: Text (Nombre del turno).
+    - `descripcion`: Text (Descripción del turno).
+    - `activo`: Boolean (Indica si el turno está activo o no).
+
+### Endpoints y Rutas:
+
+1. **Crear un nuevo turno**:
+   - Método: POST
+   - Ruta: `/turnos`
+   - Input: JSON con los campos `nombre`, `descripcion` y `activo`.
+   - Output: JSON con el ID del nuevo turno.
+
+2. **Obtener todos los turnos**:
+   - Método: GET
+   - Ruta: `/turnos`
+   - Input: Ninguno.
+   - Output: JSON con una lista de todos los turnos.
+
+3. **Actualizar un turno**:
+   - Método: PUT
+   - Ruta: `/turnos/<id>`
+   - Input: JSON con los campos `nombre`, `descripcion` y `activo`.
+   - Output: JSON con el ID del turno actualizado.
+
+4. **Eliminar un turno**:
+   - Método: DELETE
+   - Ruta: `/turnos/<id>`
+   - Input: Ninguno.
+   - Output: JSON con un mensaje de éxito o error según la eliminación.
+
+### Documentación Detallada:
+
+1. **main_output.py**
 ```python
-# main_output.py
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel
 import sqlite3
 
 app = FastAPI()
 
-class Checkpoint(BaseModel):
+# Conexión a SQLite
+conn = sqlite3.connect('squad_checkpoints.sqlite')
+cursor = conn.cursor()
+
+class Turno(BaseModel):
     id: int
-    nombre_truco: str
-    puntos: float
+    nombre: str
+    descripcion: str
+    activo: bool
 
-@app.post("/checkpoints/")
-async def create_checkpoint(checkpoint: Checkpoint):
-    conn = sqlite3.connect("squad_checkpoints.sqlite")
-    cursor = conn.cursor()
-    
-    try:
-        # Insertar nuevo punto del truco en la base de datos
-        cursor.execute("""
-            INSERT INTO checkpoints (nombre_truco, puntos)
-            VALUES (?, ?)
-        """, (checkpoint.nombre_truco, checkpoint.puntos))
-        
-        conn.commit()
-        return {"message": "Checkpoint creado"}
-    except sqlite3.IntegrityError:
-        raise HTTPException(status_code=409, detail="El truco ya existe")
-    finally:
-        cursor.close()
-        conn.close()
+@app.post("/turnos")
+async def crear_turno(turno: Turno):
+    cursor.execute("INSERT INTO turnos (nombre, descripcion, activo) VALUES (?, ?, ?)", 
+                   (turno.nombre, turno.descripcion, turno.activo))
+    conn.commit()
+    return {"id": turno.id}
 
-@app.get("/checkpoints/{id}")
-async def get_checkpoint(id: int):
-    conn = sqlite3.connect("squad_checkpoints.sqlite")
-    cursor = conn.cursor()
-    
-    try:
-        # Obtener el punto del truco por su ID
-        cursor.execute("""
-            SELECT nombre_truco, puntos FROM checkpoints WHERE id = ?
-        """, (id,))
-        
-        result = cursor.fetchone()
-        if not result:
-            raise HTTPException(status_code=404, detail="Checkpoint no encontrado")
-            
-        return {"nombre_truco": result[0], "puntos": result[1]}
-    except sqlite3.Error as e:
-        print(f"Error en la consulta: {e}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
+@app.get("/turnos", response_model=list[Turno])
+async def obtener_turnos():
+    cursor.execute("SELECT * FROM turnos")
+    rows = cursor.fetchall()
+    return [Turno(id=row[0], nombre=row[1], descripcion=row[2], activo=row[3]) for row in rows]
 
-@app.put("/checkpoints/{id}")
-async def update_checkpoint(id: int, checkpoint: Checkpoint):
-    conn = sqlite3.connect("squad_checkpoints.sqlite")
-    cursor = conn.cursor()
-    
-    try:
-        # Actualizar el punto del truco por su ID
-        cursor.execute("""
-            UPDATE checkpoints SET nombre_truco = ?, puntos = ?
-            WHERE id = ?
-        """, (checkpoint.nombre_truco, checkpoint.puntos, id))
-        
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Checkpoint no encontrado")
-            
-        conn.commit()
-        return {"message": "Checkpoint actualizado"}
-    except sqlite3.Error as e:
-        print(f"Error en la consulta: {e}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
+@app.put("/turnos/{id}")
+async def actualizar_turno(id: int, turno: Turno):
+    cursor.execute("UPDATE turnos SET nombre=?, descripcion=?, activo=? WHERE id=?", 
+                   (turno.nombre, turno.descripcion, turno.activo, id))
+    conn.commit()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+    return {"id": id}
 
-@app.delete("/checkpoints/{id}")
-async def delete_checkpoint(id: int):
-    conn = sqlite3.connect("squad_checkpoints.sqlite")
-    cursor = conn.cursor()
-    
-    try:
-        # Eliminar el punto del truco por su ID
-        cursor.execute("""
-            DELETE FROM checkpoints WHERE id = ?
-        """, (id,))
-        
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Checkpoint no encontrado")
-            
-        conn.commit()
-        return {"message": "Checkpoint eliminado"}
-    except sqlite3.Error as e:
-        print(f"Error en la consulta: {e}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
-
-@app.get("/checkpoints/")
-async def list_checkpoints():
-    conn = sqlite3.connect("squad_checkpoints.sqlite")
-    cursor = conn.cursor()
-    
-    try:
-        # Listar todos los puntos del truco
-        cursor.execute("""
-            SELECT id, nombre_truco, puntos FROM checkpoints
-        """)
-        
-        results = cursor.fetchall()
-        return [{"id": row[0], "nombre_truco": row[1], "puntos": row[2]} for row in results]
-    except sqlite3.Error as e:
-        print(f"Error en la consulta: {e}")
-        raise
-    finally:
-        cursor.close()
-        conn.close()
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.delete("/turnos/{id}")
+async def eliminar_turno(id: int):
+    cursor.execute("DELETE FROM turnos WHERE id=?", (id,))
+    conn.commit()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+    return {"message": "Turno eliminado"}
 ```
 
-#### 5. Estructura del Frontend (HTML/CSS):
-El frontend será servido por FastAPI y no requerirá archivos .js ni package.json.
-
+2. **templates/turnos.html**
 ```html
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registrar Puntos de Truco</title>
-    <link rel="stylesheet" href="/styles.css">
+    <title>Administrar Turnos</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>Registrar Puntos del Truco</h1>
-    
-    <form id="checkpoint-form">
-        <label for="nombre_truco">Nombre del Truco:</label>
-        <input type="text" id="nombre_truco" name="nombre_truco"><br><br>
+    <h1>Administración de Turnos</h1>
 
-        <label for="puntos">Puntos del Truco:</label>
-        <input type="number" id="puntos" name="puntos"><br><br>
+    <form hx-post="/turnos" hx-target="#resultado" hx-swap="innerHTML">
+        <label for="nombre">Nombre del turno:</label>
+        <input type="text" id="nombre" name="nombre"><br><br>
+        
+        <label for="descripcion">Descripción del turno:</label>
+        <textarea id="descripcion" name="descripcion"></textarea><br><br>
 
-        <button type="submit">Registrar</button>
+        <label for="activo">Activo:</label>
+        <input type="checkbox" id="activo" name="activo"><br><br>
+
+        <button type="submit">Crear Turno</button>
     </form>
 
-    <div id="checkpoint-list"></div>
+    <div id="resultado"></div>
 
-    <script src="/main_output.js"></script>
+    <h2>Lista de Turnos</h2>
+    <ul id="lista-turnos">
+        {% for turno in turnos %}
+            <li>{{ turno.nombre }} - {{ turno.descripcion }} ({{ turno.activo ? "Activo" : "Inactivo" }})</li>
+        {% endfor %}
+    </ul>
+
+    <script src="/static/js/main.js"></script>
 </body>
 </html>
 ```
 
+3. **static/css/style.css**
 ```css
-<!-- styles.css -->
 body {
     font-family: Arial, sans-serif;
 }
 
-h1 {
+h1, h2 {
     text-align: center;
 }
 
@@ -191,67 +169,112 @@ form {
 
 label {
     display: block;
-    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
-input[type="text"],
-input[type="number"] {
+input[type="text"], textarea {
     width: 30%;
     padding: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
     font-size: 16px;
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
 }
 ```
 
+4. **static/js/main.js**
 ```javascript
-<!-- main_output.js -->
-document.getElementById("checkpoint-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    
-    const nombre_truco = document.getElementById("nombre_truco").value;
-    const puntos = parseFloat(document.getElementById("puntos").value);
-    
-    if (!isNaN(puntos)) {
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const resultado = document.getElementById('resultado');
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const nombre = document.getElementById('nombre').value;
+        const descripcion = document.getElementById('descripcion').value;
+        const activo = document.getElementById('activo').checked;
+
         try {
-            const response = await fetch("/checkpoints/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nombre_truco, puntos })
+            const response = await fetch('/turnos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, descripcion, activo })
             });
-            
+
             if (response.ok) {
-                alert("Punto del truco registrado correctamente");
-                
-                // Actualizar la lista de checkpoints
-                const list = document.getElementById("checkpoint-list");
-                list.innerHTML = "";
-                
-                const responseList = await fetch("/checkpoints/");
-                const data = await responseList.json();
-                
-                for (const checkpoint of data) {
-                    list.innerHTML += `<p>${checkpoint.nombre_truco}: ${checkpoint.puntos}</p>`;
-                }
+                const turno = await response.json();
+                resultado.innerHTML = `<p>Turno creado con éxito. ID: ${turno.id}</p>`;
             } else {
-                alert("Error al registrar el punto del truco");
+                throw new Error('Error al crear el turno');
             }
         } catch (error) {
             console.error(error);
-            alert("Error al registrar el punto del truco: " + error.message);
+            alert('Ha ocurrido un error al crear el turno.');
         }
-    } else {
-        alert("Por favor, ingresa un número válido para los puntos.");
-    }
+    });
 });
 ```
 
-#### 6. Documentación de Endpoints:
-- **POST /checkpoints/**: Crea un nuevo punto del truco.
-- **GET /checkpoints/{id}**: Obtiene el detalle de un punto del truco por su ID.
-- **PUT /checkpoints/{id}**: Actualiza los puntos de un truco existente.
-- **DELETE /checkpoints/{id}**: Elimina un punto del truco por su ID.
-- **GET /checkpoints/**: Lista todos los puntos del truco.
+### Documentación de Rutas y Endpoints:
 
-#### 7. Conclusion:
-La aplicación se ha diseñado utilizando el stack FASTAPI_HTMX, lo que garantiza una estructura robusta y escalable para gestionar y registrar puntos de truco. El backend utiliza FastAPI para manejar las rutas HTTP y SQLite como base de datos. El frontend es servido por FastAPI y no requiere archivos .js ni package.json.
+1. **Crear Turno**:
+   - Método: POST
+   - Ruta: `/turnos`
+   - Input: JSON con `nombre`, `descripcion` y `activo`.
+   - Output: JSON con el ID del turno creado.
 
-Este diseño cumple con todas las restricciones del sistema anfitrión, utilizando únicamente los recursos disponibles (Python + FastAPI + HTMX) y evitando la creación de archivos .js o subcarpetas backend.
+2. **Obtener Todos los Turnos**:
+   - Método: GET
+   - Ruta: `/turnos`
+   - Input: Ninguno.
+   - Output: JSON con una lista de todos los turnos.
+
+3. **Actualizar Turno**:
+   - Método: PUT
+   - Ruta: `/turnos/{id}`
+   - Input: JSON con `nombre`, `descripcion` y `activo`.
+   - Output: JSON con el ID del turno actualizado.
+
+4. **Eliminar Turno**:
+   - Método: DELETE
+   - Ruta: `/turnos/{id}`
+   - Input: Ninguno.
+   - Output: JSON con un mensaje de éxito o error según la eliminación.
+
+### Documentación Adicional:
+
+1. **Plantilla HTML (`templates/turnos.html`)**:
+   - Formulario para crear nuevos turnos.
+   - Listado dinámico de todos los turnos existentes.
+
+2. **Estilos CSS (`static/css/style.css`)**:
+   - Estilos básicos para el frontend.
+
+3. **Lógica del Cliente (`static/js/main.js`)**:
+   - Interacción con el servidor mediante hx-post.
+   - Actualización dinámica de la lista de turnos.
+
+### Documentación Final:
+
+Este documento proporciona una estructura clara y detallada para desarrollar un sistema web de gestión de turnos utilizando FastAPI, HTMX y SQLite. La arquitectura se centra en el backend con FastAPI, mientras que el frontend utiliza HTMX para mejorar la interactividad sin recargar páginas completas.
+
+Para ejecutar este proyecto localmente:
+
+1. Clona el repositorio.
+2. Ejecuta `pip install -r requirements.txt` para instalar las dependencias necesarias.
+3. Ejecuta `uvicorn main_output:app --reload` para iniciar el servidor FastAPI en modo de desarrollo.
+
+Este esquema garantiza una implementación robusta y fácilmente escalable, adaptada a la escala más pequeña del proyecto.
