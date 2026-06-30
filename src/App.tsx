@@ -120,8 +120,9 @@ function MainLayout() {
     isApplyingTemplate, applyProjectTemplate,
     models, selectedModel, setSelectedModel,
     promptInput, setPromptInput,
-    pipelineLogs, isPipelineRunning, startBuildPipeline, clearWorkspaceAction,
-    chatMessage, setChatMessage, chatHistory, isChatThinking, chatTarget, setChatTarget, sendChatMessage,
+    pipelineLogs, setPipelineLogs, isPipelineRunning, startBuildPipeline, clearWorkspaceAction,
+    chatMessage, setChatMessage, chatHistory, setChatHistory, isChatThinking, chatTarget, setChatTarget, sendChatMessage,
+    setLauncherLogs,
     vercelUrl, isDeployingVercel, deployToVercel,
     tokenIn, tokenOut, costUsd, cacheHits, saveToVault,
     vaultPrompts,
@@ -378,13 +379,27 @@ function MainLayout() {
       .then(r => r.json())
       .then(d => {
         if (d.success) {
-          alert("Workspace destruido.");
+          showToast("Workspace destruido.", "success");
+          setPromptInput('');
+          setChatHistory([]);
+          setPipelineLogs([]);
+          setLauncherLogs([]);
+          setHasUserStarted(false);
+          useGraphStore.setState({ 
+            nodeStatus: {}, 
+            retries: {}, 
+            current_node: null, 
+            lastError: null, 
+            pipeline_status: null,
+            isPausedSpec: false,
+            isPausedHitl: false
+          });
           fetchFiles();
         } else {
-          alert("Error destruyendo workspace: " + d.message);
+          showToast("Error destruyendo workspace: " + d.message, "error");
         }
       })
-      .catch(e => alert("Error: " + e));
+      .catch(e => showToast("Error: " + e.message, "error"));
   };
 
   const triggerTimeTravelRevert = () => {
