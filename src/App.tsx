@@ -725,7 +725,7 @@ return (
         {/* Core Workspace Splits */}
         <div className="flex-1 flex min-h-0 overflow-hidden relative">
 
-        {showLeftPanel && (
+        {showLeftPanel && centralView === 'editor' && (
           <>
             <section 
               style={{ width: `${fileTreeWidth}px` }}
@@ -1307,7 +1307,7 @@ return (
         </section>
 
         {/* Drag handle for Right Sidebar */}
-        {showRightPanel && (
+        {showRightPanel && centralView === 'editor' && (
           <div
             onMouseDown={startResizingRightPanel}
             className="w-2.5 -mx-1.5 cursor-col-resize hover:bg-indigo-500/20 active:bg-indigo-500/50 transition-colors z-30 shrink-0 relative flex justify-center items-center group"
@@ -1318,7 +1318,7 @@ return (
         )}
 
         {/* Right Sidebar Panel: AI Assistant */}
-        {showRightPanel && (
+        {showRightPanel && centralView === 'editor' && (
           <section 
             style={{ width: `${configPanelWidth}px` }}
             className={`border-l ${tc.border} ${tc.card} flex flex-col shrink-0 overflow-hidden bg-[#0A0A0C]`}
