@@ -158,6 +158,7 @@ function MainLayout() {
   const [showBottomPanel, setShowBottomPanel] = useState(true);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(320);
   const [activeBottomTab, setActiveBottomTab] = useState<any>('console');
+  const [isMoreTabsOpen, setIsMoreTabsOpen] = useState(false);
   const [centralView, setCentralView] = useState<'editor' | 'graph'>('graph');
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
@@ -874,17 +875,12 @@ function MainLayout() {
               {/* Bottom Tab Bar */}
               <div className="h-9 bg-black/40 border-b border-white/5 flex items-center justify-between px-4 shrink-0 select-none">
                 <div className="flex items-center space-x-4 overflow-x-auto max-w-[85%] scrollbar-none">
+                  {/* Visible Tabs */}
                   <button 
                     onClick={() => setActiveBottomTab('console')}
                     className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'console' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     💻 Consola & Logs
-                  </button>
-                  <button 
-                    onClick={() => setActiveBottomTab('database')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'database' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    🗄️ Base de Datos
                   </button>
                   <button 
                     onClick={() => setActiveBottomTab('graph')}
@@ -893,53 +889,88 @@ function MainLayout() {
                     🕸️ Grafo
                   </button>
                   <button 
-                    onClick={() => setActiveBottomTab('repl')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'repl' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    📟 Multi-Session REPL
-                  </button>
-                  <button 
                     onClick={() => setActiveBottomTab('preview')}
                     className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'preview' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                   >
                     📺 Vista Previa
                   </button>
-                  <button 
-                    onClick={() => setActiveBottomTab('skills')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'skills' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    🧪 Habilidades
-                  </button>
-                  <button 
-                    onClick={() => setActiveBottomTab('memory')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'memory' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    🧠 Memoria & Ledger
-                  </button>
-                  <button 
-                    onClick={() => setActiveBottomTab('conversation')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'conversation' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    💬 Diálogos
-                  </button>
-                  <button 
-                    onClick={() => setActiveBottomTab('dependency')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'dependency' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    🌿 Dependencias
-                  </button>
-                  <button 
-                    onClick={() => setActiveBottomTab('heatmap')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'heatmap' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    🔥 Confianza Código
-                  </button>
-                  <button 
-                    onClick={() => setActiveBottomTab('scrubber')}
-                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 shrink-0 ${activeBottomTab === 'scrubber' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                  >
-                    ⏱️ Scrubber
-                  </button>
+
+                  {/* Dropdown for remaining tabs */}
+                  <div className="relative shrink-0 mt-2">
+                    <button
+                      onClick={() => setIsMoreTabsOpen(!isMoreTabsOpen)}
+                      className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 border-b-2 flex items-center gap-1 ${
+                        ['database', 'repl', 'skills', 'memory', 'conversation', 'dependency', 'heatmap', 'scrubber'].includes(activeBottomTab)
+                          ? 'text-indigo-400 border-indigo-400'
+                          : 'text-gray-500 border-transparent hover:text-white'
+                      }`}
+                    >
+                      <span>{
+                        activeBottomTab === 'database' ? '🗄️ Base de Datos' :
+                        activeBottomTab === 'repl' ? '📟 Multi-Session REPL' :
+                        activeBottomTab === 'skills' ? '🧪 Habilidades' :
+                        activeBottomTab === 'memory' ? '🧠 Memoria & Ledger' :
+                        activeBottomTab === 'conversation' ? '💬 Diálogos' :
+                        activeBottomTab === 'dependency' ? '🌿 Dependencias' :
+                        activeBottomTab === 'heatmap' ? '🔥 Confianza Código' :
+                        activeBottomTab === 'scrubber' ? '⏱️ Scrubber' : '➕ Más'
+                      }</span>
+                      <span className="text-[7px]">▼</span>
+                    </button>
+
+                    {isMoreTabsOpen && (
+                      <div className="absolute bottom-6 left-0 bg-[#0E0E14] border border-[#222233] rounded-lg shadow-xl p-1.5 z-[120] min-w-[150px] space-y-0.5 font-sans">
+                        <button
+                          onClick={() => { setActiveBottomTab('database'); setIsMoreTabsOpen(false); }}
+                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
+                        >
+                          🗄️ Base de Datos
+                        </button>
+                        <button
+                          onClick={() => { setActiveBottomTab('repl'); setIsMoreTabsOpen(false); }}
+                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
+                        >
+                          📟 Multi-Session REPL
+                        </button>
+                        <button
+                          onClick={() => { setActiveBottomTab('skills'); setIsMoreTabsOpen(false); }}
+                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
+                        >
+                          🧪 Habilidades
+                        </button>
+                        <button
+                          onClick={() => { setActiveBottomTab('memory'); setIsMoreTabsOpen(false); }}
+                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
+                        >
+                          🧠 Memoria & Ledger
+                        </button>
+                        <button
+                          onClick={() => { setActiveBottomTab('conversation'); setIsMoreTabsOpen(false); }}
+                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
+                        >
+                          💬 Diálogos
+                        </button>
+                        <button
+                          onClick={() => { setActiveBottomTab('dependency'); setIsMoreTabsOpen(false); }}
+                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
+                        >
+                          🌿 Dependencias
+                        </button>
+                        <button
+                          onClick={() => { setActiveBottomTab('heatmap'); setIsMoreTabsOpen(false); }}
+                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
+                        >
+                          🔥 Confianza Código
+                        </button>
+                        <button
+                          onClick={() => { setActiveBottomTab('scrubber'); setIsMoreTabsOpen(false); }}
+                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
+                        >
+                          ⏱️ Scrubber
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <button 

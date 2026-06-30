@@ -119,69 +119,6 @@ export default function AgentConsole() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 space-y-4">
-      {/* 0. SWARM FLOW TOPOLOGY */}
-      <div className="bg-[#0b0c10]/40 border border-white/5 rounded-lg p-3 shadow-lg font-mono select-none">
-        <style>{`
-          @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.5; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(0.95); opacity: 0.5; }
-          }
-          .agent-active-glow {
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
-            animation: pulse-ring 2s infinite ease-in-out;
-          }
-        `}</style>
-        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-3 border-b border-white/5 pb-2">
-          Flujo de Enjambre (Swarm Topology)
-        </span>
-        
-        <div className="flex items-center justify-between overflow-x-auto py-1 px-1 space-x-1.5 scrollbar-thin">
-          {agents.map((agent, index) => {
-            const isActive = activeAgent === agent.id;
-            return (
-              <React.Fragment key={agent.id}>
-                {/* Agent Node */}
-                <div className="flex flex-col items-center min-w-[70px] transition-all duration-300">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm transition-all duration-500 border ${
-                    isActive 
-                      ? 'bg-amber-500/10 border-amber-400 text-amber-400 agent-active-glow scale-105' 
-                      : isPipelineRunning 
-                        ? 'bg-blue-500/5 border-blue-500/15 text-blue-300/50' 
-                        : 'bg-white/5 border-white/10 text-white/20'
-                  }`}>
-                    {agent.icon}
-                  </div>
-                  <span className={`text-[8px] font-bold mt-1 transition-colors duration-300 ${
-                    isActive ? 'text-amber-400' : 'text-white/40'
-                  }`}>
-                    {agent.name}
-                  </span>
-                  <span className="text-[6px] text-white/25 text-center mt-0.5">
-                    {agent.desc}
-                  </span>
-                </div>
-
-                {/* Connecting Arrow */}
-                {index < agents.length - 1 && (
-                  <div className="flex-1 flex items-center justify-center min-w-[12px]">
-                    <svg className="w-full h-1.5 min-w-[12px]" viewBox="0 0 40 8" fill="none">
-                      <path 
-                        d="M0 4H36M36 4L32 1M36 4L32 7" 
-                        stroke={isActive && isPipelineRunning ? '#f59e0b' : '#1e293b'} 
-                        strokeWidth="2"
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
-      </div>
-
       {/* 1. AGENTS AUDIT LOGS / CRASH PANEL */}
       <div className="bg-black/30 border border-white/5 rounded p-3 flex-1 flex flex-col overflow-hidden min-h-[160px] shadow-lg font-mono">
         <div className="flex border-b border-white/5 pb-1 select-none items-center justify-between shrink-0">
