@@ -22,7 +22,9 @@ export default function AgentConsole() {
     activeDiagnostic,
     setActiveTab,
     refactorCodeAction,
-    showToast
+    showToast,
+    pendingWrites,
+    resolvePendingWrites
   } = useApp();
 
   const API_BASE = window.location.port === '3000' ? 'http://localhost:8000' : '';
@@ -218,6 +220,30 @@ export default function AgentConsole() {
               if (log.includes('🔎') || log.includes('⏱️')) color = 'text-blue-300 mt-2 block';
               return <div key={i} className={color}>{log}</div>;
             })}
+            
+            {pendingWrites && pendingWrites.map((pw: any, idx: number) => (
+              <div key={`pw-${idx}`} className="mt-3 p-3 border border-pink-500/20 bg-pink-500/5 rounded font-sans animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 text-pink-400 font-bold text-[10px] uppercase mb-1">
+                  <span>?</span>
+                  <span>decisión: El archivo "{pw.file}" requiere aprobación humana.</span>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <button 
+                    onClick={() => resolvePendingWrites('confirm', [pw.file])}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-bold uppercase tracking-wider px-3 py-1 rounded cursor-pointer transition-all"
+                  >
+                    Aprobar Escritura
+                  </button>
+                  <button 
+                    onClick={() => resolvePendingWrites('reject', [pw.file])}
+                    className="bg-transparent hover:bg-white/5 border border-white/10 text-gray-300 text-[9px] font-bold uppercase tracking-wider px-3 py-1 rounded cursor-pointer transition-all"
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            ))}
+
             {pipelineLogs.length === 0 && (
               <div className="text-white/20 italic">{'>> Waiting for user target...'}</div>
             )}

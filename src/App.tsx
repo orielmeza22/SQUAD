@@ -165,6 +165,15 @@ function MainLayout() {
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false);
   const [currentWorkspace, setCurrentWorkspace] = useState('sanatorio-mx');
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [hasUserStarted, setHasUserStarted] = useState(false);
+
+  const showIdleScreen = !hasUserStarted && !isPipelineRunning && chatHistory.length === 0;
+
+  const handleStartSwarm = () => {
+    setHasUserStarted(true);
+    startBuildPipeline();
+  };
+
 
   useEffect(() => {
     let interval: any;
@@ -392,236 +401,148 @@ function MainLayout() {
       .catch(() => alert("Error de comunicación de Time Travel."));
   };
 
-  return (
+return (
     <div className="flex h-screen relative overflow-hidden qwen-bg font-sans text-gray-200 select-none">
       
       {/* Decorative radial orbs */}
       <div className="orb-1" style={{ top: '-100px', right: '-100px' }}></div>
       <div className="orb-2" style={{ bottom: '10%', left: '40%' }}></div>
 
-        
-        {/* Left Navigation Sidebar Menu */}
-        {/* Left Navigation Sidebar Menu */}
-        <nav className={`w-56 border-r ${tc.border} bg-[#0A0A0C]/90 flex flex-col justify-between py-6 px-4 shrink-0 z-10 backdrop-blur-xl select-none font-sans`}>
-          <div className="space-y-6">
-            {/* Top Logo */}
-            <div className="flex items-center space-x-2 px-2 pb-2 border-b border-white/5">
-              <div className="w-5 h-5 bg-indigo-600 rounded flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-indigo-600/30">
-                S
-              </div>
-              <div>
-                <span className="text-[11px] font-bold text-white tracking-wider block">SQUAD</span>
-                <span className="text-[8px] text-gray-500 font-mono">v0.7.0 • beta</span>
-              </div>
-            </div>
+      {showIdleScreen ? (
+        /* ===== IDLE SCREEN ===== */
+        <div className="flex-1 flex flex-col items-center justify-center relative z-10 grid-bg animate-in fade-in duration-300">
+          <div className="text-[12px] font-bold text-indigo-400/80 tracking-[0.2em] uppercase mb-8 select-none">
+            squad · autonomous swarm
+          </div>
 
-            {/* Workspace Select */}
-            <div className="relative">
-              <div 
-                onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-                className="bg-[#141419]/60 border border-white/5 rounded-lg p-2 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all"
-              >
-                <div>
-                  <span className="text-[10px] font-bold text-gray-200 block">{currentWorkspace}</span>
-                  <span className="text-[8.5px] text-gray-500 font-mono">run_34929f • live</span>
-                </div>
-                <ChevronDown size={12} className="text-gray-500" />
+          <div className="w-full max-w-[640px] px-6">
+            <div className="bg-[#12121C] border border-[#222233] focus-within:border-indigo-500 rounded-lg overflow-hidden transition-all shadow-2xl focus-within:ring-2 focus-within:ring-indigo-500/20">
+              <div className="text-[9px] uppercase tracking-widest text-gray-500 px-4 pt-3 select-none">
+                Prompt
               </div>
-              
-              {isWorkspaceDropdownOpen && (
-                <div className="absolute left-0 mt-1 w-full bg-[#13131A] border border-qwen-border rounded-lg shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <button 
-                    onClick={() => {
-                      setCurrentWorkspace('sanatorio-mx');
-                      showToast("Cambiado al workspace: sanatorio-mx", 'success');
-                      setIsWorkspaceDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 text-[10px] font-mono border-b border-white/5 cursor-pointer ${currentWorkspace === 'sanatorio-mx' ? 'text-indigo-400 bg-indigo-500/5 font-bold' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
-                  >
-                    sanatorio-mx {currentWorkspace === 'sanatorio-mx' ? '(active)' : ''}
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setCurrentWorkspace('clinica-la-luz');
-                      showToast("Cambiado al workspace: clinica-la-luz", 'success');
-                      setIsWorkspaceDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 text-[10px] font-mono border-b border-white/5 cursor-pointer ${currentWorkspace === 'clinica-la-luz' ? 'text-indigo-400 bg-indigo-500/5 font-bold' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
-                  >
-                    clinica-la-luz {currentWorkspace === 'clinica-la-luz' ? '(active)' : ''}
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setCurrentWorkspace('ecommerce-shop');
-                      showToast("Cambiado al workspace: ecommerce-shop", 'success');
-                      setIsWorkspaceDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 text-[10px] font-mono cursor-pointer ${currentWorkspace === 'ecommerce-shop' ? 'text-indigo-400 bg-indigo-500/5 font-bold' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
-                  >
-                    ecommerce-shop {currentWorkspace === 'ecommerce-shop' ? '(active)' : ''}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Orchestration Section */}
-            <div className="space-y-1">
-              <span className="text-[8.5px] font-mono text-gray-600 tracking-wider block uppercase px-2 mb-1.5 font-bold">Orchestration</span>
-              <button 
-                onClick={() => {
-                  setCentralView('graph');
+              <textarea
+                value={promptInput}
+                onChange={(e) => setPromptInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (promptInput.trim()) {
+                      handleStartSwarm();
+                    }
+                  }
                 }}
-                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                className="w-full bg-transparent border-none outline-none text-white font-mono text-sm px-4 py-3 resize-none min-h-[90px]"
+                placeholder="Describe el sistema que quieres construir..."
+                autoFocus
+              />
+              <div className="flex items-center justify-between px-4 py-3 border-t border-[#222233] bg-[#0C0C14]/40">
+                <div className="flex gap-2 select-none">
+                  <span onClick={() => setPromptInput("Crear una API REST con FastAPI y SQLite para gestionar turnos médicos")} className="text-[9px] text-gray-400 border border-[#222233] hover:border-indigo-500 hover:text-indigo-400 px-2 py-0.5 rounded cursor-pointer transition-all bg-[#0C0C14]">
+                    fastapi
+                  </span>
+                  <span onClick={() => setPromptInput("Una app frontend simple con HTMX y CSS nativo")} className="text-[9px] text-gray-400 border border-[#222233] hover:border-indigo-500 hover:text-indigo-400 px-2 py-0.5 rounded cursor-pointer transition-all bg-[#0C0C14]">
+                    htmx
+                  </span>
+                  <span onClick={() => setPromptInput("Un script de análisis de datos")} className="text-[9px] text-gray-400 border border-[#222233] hover:border-indigo-500 hover:text-indigo-400 px-2 py-0.5 rounded cursor-pointer transition-all bg-[#0C0C14]">
+                    sqlite
+                  </span>
+                </div>
+                <button
+                  onClick={handleStartSwarm}
+                  disabled={!promptInput.trim() || isPipelineRunning}
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-[10px] uppercase tracking-wider px-5 py-1.5 rounded transition-all cursor-pointer shadow-lg shadow-indigo-600/30"
+                >
+                  Run ↵
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-gray-500 mt-6 select-none">
+            <kbd className="px-1.5 py-0.5 border border-[#222233] bg-[#12121C] rounded text-[9px] mr-1">Ctrl</kbd> + 
+            <kbd className="px-1.5 py-0.5 border border-[#222233] bg-[#12121C] rounded text-[9px] mx-1">K</kbd> command palette · 
+            <kbd className="px-1.5 py-0.5 border border-[#222233] bg-[#12121C] rounded text-[9px] ml-1">Enter</kbd> run pipeline
+          </div>
+        </div>
+      ) : (
+        /* ===== ACTIVE WORKSPACE SCREEN ===== */
+        <>
+          {/* 4-Icon Sidebar */}
+          <nav className="w-14 border-r border-[#222233] bg-[#0C0C14] flex flex-col items-center py-6 justify-between shrink-0 z-20 select-none">
+            <div className="flex flex-col items-center w-full gap-5">
+              {/* Logo */}
+              <div onClick={() => setHasUserStarted(false)} className="w-8 h-8 border-1.5 border-indigo-500 hover:bg-indigo-500/10 transition-all flex items-center justify-center cursor-pointer mb-2" title="SQUAD">
+                <div className="w-2 h-2 bg-indigo-500"></div>
+              </div>
+
+              {/* Items */}
+              <button
+                onClick={() => setCentralView('graph')}
+                className={`w-9 h-9 rounded flex items-center justify-center transition-all border ${
                   centralView === 'graph'
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
-                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'border-indigo-500/20 text-indigo-400 bg-indigo-500/10'
+                    : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5'
                 }`}
+                title="Pipeline Graph"
               >
-                <GitBranch size={12} />
-                <span>Pipeline Graph</span>
+                <GitBranch size={16} />
               </button>
-              <button 
+
+              <button
                 onClick={() => {
                   setCentralView('editor');
                   setShowLeftPanel(true);
                 }}
-                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                className={`w-9 h-9 rounded flex items-center justify-center transition-all border ${
                   centralView === 'editor' && showLeftPanel
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
-                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'border-indigo-500/20 text-indigo-400 bg-indigo-500/10'
+                    : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5'
                 }`}
+                title="Code Editor"
               >
-                <FileCode size={12} />
-                <span>Code Editor</span>
+                <FileCode size={16} />
               </button>
-              <button 
+
+              <button
                 onClick={() => {
                   setCentralView('editor');
                   setActiveBottomTab('console');
                   setShowBottomPanel(true);
                 }}
-                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
+                className={`w-9 h-9 rounded flex items-center justify-center transition-all border ${
                   activeBottomTab === 'console' && showBottomPanel && centralView === 'editor'
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
-                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'border-indigo-500/20 text-indigo-400 bg-indigo-500/10'
+                    : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5'
                 }`}
+                title="Test Suite / Console"
               >
-                <Terminal size={12} />
-                <span>Terminal</span>
+                <Terminal size={16} />
               </button>
-              <button 
-                onClick={() => {
-                  setCentralView('editor');
-                  setActiveBottomTab('repl');
-                  setShowBottomPanel(true);
-                }}
-                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'repl' && showBottomPanel && centralView === 'editor'
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
-                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
+
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="w-9 h-9 rounded flex items-center justify-center transition-all text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                title="Settings"
               >
-                <Layers size={12} />
-                <span>Test Suite</span>
-              </button>
-              <button 
-                onClick={() => {
-                  setCentralView('editor');
-                  setActiveBottomTab('infra');
-                  setShowBottomPanel(true);
-                }}
-                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'infra' && showBottomPanel && centralView === 'editor'
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
-                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Activity size={12} />
-                <span>Observability</span>
+                <Settings size={16} />
               </button>
             </div>
 
-            {/* Intelligence Section */}
-            <div className="space-y-1">
-              <span className="text-[8.5px] font-mono text-gray-600 tracking-wider block uppercase px-2 mb-1.5 font-bold">Intelligence</span>
-              <button 
-                onClick={() => {
-                  setCentralView('editor');
-                  setActiveBottomTab('skills');
-                  setShowBottomPanel(true);
-                }}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'skills' && showBottomPanel && centralView === 'editor'
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
-                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
+            {/* Bottom Status */}
+            <div className="flex flex-col items-center gap-4 relative">
+              <div 
+                onClick={() => setIsProfilePopoverOpen(!isProfilePopoverOpen)}
+                className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-[8px] font-bold text-white cursor-pointer hover:scale-105 transition-all"
+                title="Oriel Meza"
               >
-                <div className="flex items-center space-x-2.5">
-                  <BookOpen size={12} />
-                  <span>Skills Library</span>
-                </div>
-                <span className="bg-indigo-500/20 text-indigo-300 text-[8px] font-bold px-1.5 rounded-full">47</span>
-              </button>
-              <button 
-                onClick={() => {
-                  setCentralView('editor');
-                  setActiveBottomTab('memory');
-                  setShowBottomPanel(true);
-                }}
-                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'memory' && showBottomPanel && centralView === 'editor'
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
-                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Brain size={12} />
-                <span>Memory Store</span>
-              </button>
-              <button 
-                onClick={() => {
-                  setCentralView('editor');
-                  setActiveBottomTab('scrubber');
-                  setShowBottomPanel(true);
-                }}
-                className={`w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] transition-all cursor-pointer border ${
-                  activeBottomTab === 'scrubber' && showBottomPanel && centralView === 'editor'
-                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300 font-bold' 
-                    : 'bg-transparent border-transparent text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Clock size={12} />
-                <span>Run History</span>
-              </button>
-
-            </div>
-          </div>
-
-          {/* Bottom Settings and User */}
-          <div className="space-y-4 font-sans relative">
-            <button 
-              onClick={() => setShowSettingsModal(true)}
-              className="w-full flex items-center space-x-2.5 px-2 py-1.5 rounded-lg text-[10.5px] text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition-all border border-transparent"
-            >
-              <Settings size={12} />
-              <span>Settings</span>
-            </button>
-            <div 
-              onClick={() => setIsProfilePopoverOpen(!isProfilePopoverOpen)}
-              className="flex items-center space-x-2.5 px-2 pt-2 border-t border-white/5 cursor-pointer hover:bg-white/5 rounded-lg py-1 transition-all relative"
-            >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-[10px] font-bold text-white">
                 OM
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-bold text-gray-200 block truncate">Oriel Meza</span>
-                <span className="text-[8px] text-gray-500 block truncate">pro plan</span>
               </div>
               
               {isProfilePopoverOpen && (
-                <div className="absolute bottom-10 left-0 w-48 bg-[#13131A] border border-qwen-border rounded-lg shadow-2xl p-3 space-y-2 z-50 text-[10px] font-sans animate-in fade-in slide-in-from-bottom-1 duration-150">
+                <div className="absolute bottom-12 left-10 w-48 bg-[#13131A] border border-[#222233] rounded-lg shadow-2xl p-3 space-y-2 z-50 text-[10px] font-sans animate-in fade-in slide-in-from-bottom-1 duration-150">
                   <div className="font-bold text-white">Oriel Meza</div>
                   <div className="text-gray-400">Plan: Pro Swarm Plan</div>
-                  <div className="text-qwen-400 font-mono text-[9px]">API tokens: 145.2k</div>
+                  <div className="text-indigo-400 font-mono text-[9px]">API tokens: 145.2k</div>
                   <div className="border-t border-white/5 pt-1.5 mt-1.5">
                     <button 
                       onClick={() => showToast("Cerrando sesión...")}
@@ -632,12 +553,14 @@ function MainLayout() {
                   </div>
                 </div>
               )}
+
+              <div className="w-8 h-8 flex items-center justify-center" title="Backend Online">
+                <div className="w-2 h-2 bg-[#34D399] rounded-full animate-pulse shadow-lg shadow-emerald-500/50"></div>
+              </div>
             </div>
-          </div>
-        </nav>
+          </nav>
 
-
-      {/* Right Main Container */}
+          {/* Right Main Container */}
       <main className="flex-1 flex flex-col overflow-hidden relative z-10">
         
         {/* Top Header Bar */}
@@ -2582,6 +2505,8 @@ function MainLayout() {
         </div>
       )}
       </main>
+    </>
+  )}
 
       {/* Tiers Overlay components */}
 

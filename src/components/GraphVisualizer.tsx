@@ -52,28 +52,83 @@ interface AgentNodeData {
 }
 
 function AgentNode({ data }: { data: AgentNodeData }) {
-  const colors = STATUS_COLORS[data.status] || STATUS_COLORS.idle;
-  const isCurrent = data.status === 'thinking' || data.status === 'executing';
-  const isPaused = data.status === 'paused_hitl';
+  const status = data.status || 'idle';
+  const colors = STATUS_COLORS[status] || STATUS_COLORS.idle;
+  const isCurrent = status === 'thinking' || status === 'executing';
+  const isPaused = status === 'paused_hitl';
+
+  const getMetadata = (label: string) => {
+    const l = label.toLowerCase();
+    if (l.includes('architect')) {
+      return { desc: 'spec.md · stack · schema', tokens: '1.2k tkn', meta: 'approved' };
+    } else if (l.includes('dba')) {
+      return { desc: 'database · migrations', tokens: '0.8k tkn', meta: 'ready' };
+    } else if (l.includes('frontend')) {
+      return { desc: 'views · templates · ui', tokens: '2.1k tkn', meta: 'ready' };
+    } else if (l.includes('backend')) {
+      return { desc: 'routes · apis · logic', tokens: '4.2k tkn', meta: 'running' };
+    } else if (l.includes('review')) {
+      return { desc: 'code quality inspection', tokens: '1.1k tkn', meta: 'queued' };
+    } else if (l.includes('fix')) {
+      return { desc: 'syntactic self-healing', tokens: '0.5k tkn', meta: 'ready' };
+    } else if (l.includes('qa')) {
+      return { desc: 'tests · devops run', tokens: '1.5k tkn', meta: 'queued' };
+    } else {
+      return { desc: 'infrastructure deploy', tokens: '—', meta: 'idle' };
+    }
+  };
+
+  const metaInfo = getMetadata(data.label);
 
   return (
     <div
-      className={`px-4 py-2.5 rounded-lg border-2 ${colors.bg} ${colors.border} ${
-        isCurrent ? 'animate-pulse shadow-lg shadow-amber-500/20' : ''
-      } ${isPaused ? 'animate-pulse shadow-lg shadow-purple-500/20' : ''} min-w-[130px] text-center transition-all select-none`}
+      className={`px-4 py-3 rounded-lg border bg-[#12121C] text-left transition-all select-none min-w-[170px] ${
+        status === 'done' ? 'border-emerald-500/30' : ''
+      } ${
+        isCurrent ? 'border-violet-500 shadow-2xl shadow-violet-500/10 animate-pulse' : 'border-[#222233]'
+      } ${
+        isPaused ? 'border-amber-500 shadow-lg shadow-amber-500/15' : ''
+      }`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-gray-600 !w-2 !h-2" />
-      <div className={`text-[10px] font-bold ${colors.text} font-mono`}>
+      <Handle type="target" position={Position.Top} className="!bg-gray-600 !w-1.5 !h-1.5" />
+      
+      <div className="flex items-center justify-between mb-1.5">
+        <span className={`text-[8px] font-bold uppercase tracking-wider ${
+          status === 'done' ? 'text-emerald-400' :
+          isCurrent ? 'text-violet-400' :
+          status === 'error' ? 'text-rose-400' : 'text-gray-500'
+        }`}>
+          {status}
+        </span>
+        {data.retries > 0 && (
+          <span className="text-[7.5px] bg-amber-500/20 text-amber-400 px-1 rounded font-mono font-bold">
+            {data.retries}R
+          </span>
+        )}
+      </div>
+
+      <div className="text-[11px] font-bold text-gray-100 font-mono">
         {data.label}
       </div>
-      <div className={`text-[8px] mt-0.5 ${colors.text} opacity-70 font-mono`}>
-        {data.status.toUpperCase()}
-        {data.retries > 0 && ` · ${data.retries}R`}
+
+      <div className="text-[8.5px] text-gray-500 font-mono mt-0.5 leading-tight">
+        {metaInfo.desc}
       </div>
-      {isPaused && (
-        <div className="mt-1 text-[7px] text-purple-400 font-bold">⏸️ WAITING APPROVAL</div>
+
+      {isCurrent && (
+        <div className="h-[2px] bg-gray-800 rounded-full overflow-hidden my-2">
+          <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 animate-pulse w-3/4"></div>
+        </div>
       )}
-      <Handle type="source" position={Position.Bottom} className="!bg-gray-600 !w-2 !h-2" />
+
+      <div className="flex items-center justify-between text-[8px] text-gray-500 font-mono mt-2 pt-1.5 border-t border-[#222233]">
+        <span>{metaInfo.tokens}</span>
+        <span className={status === 'done' ? 'text-emerald-400 font-semibold' : ''}>
+          {status === 'done' ? 'ready' : metaInfo.meta}
+        </span>
+      </div>
+
+      <Handle type="source" position={Position.Bottom} className="!bg-gray-600 !w-1.5 !h-1.5" />
     </div>
   );
 }
