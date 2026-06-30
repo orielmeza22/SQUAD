@@ -168,7 +168,7 @@ function MainLayout() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [hasUserStarted, setHasUserStarted] = useState(false);
 
-  const showIdleScreen = !hasUserStarted;
+  const showIdleScreen = !isPipelineRunning;
 
   const handleStartSwarm = () => {
     setHasUserStarted(true);
