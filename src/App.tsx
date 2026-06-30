@@ -155,7 +155,7 @@ function MainLayout() {
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [activeRightTab, setActiveRightTab] = useState<'chat' | 'hitl' | 'settings' | 'ux'>('chat');
-  const [showBottomPanel, setShowBottomPanel] = useState(false);
+  const [showBottomPanel, setShowBottomPanel] = useState(true);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(320);
   const [activeBottomTab, setActiveBottomTab] = useState<any>('console');
   const [centralView, setCentralView] = useState<'editor' | 'graph'>('graph');
@@ -167,7 +167,7 @@ function MainLayout() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [hasUserStarted, setHasUserStarted] = useState(false);
 
-  const showIdleScreen = !hasUserStarted && !isPipelineRunning;
+  const showIdleScreen = !hasUserStarted;
 
   const handleStartSwarm = () => {
     setHasUserStarted(true);
