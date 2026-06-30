@@ -401,15 +401,15 @@ function MainLayout() {
       .catch(() => alert("Error de comunicación de Time Travel."));
   };
 
-return (
-    <div className="flex h-screen relative overflow-hidden qwen-bg font-sans text-gray-200 select-none">
-      
-      {/* Decorative radial orbs */}
-      <div className="orb-1" style={{ top: '-100px', right: '-100px' }}></div>
-      <div className="orb-2" style={{ bottom: '10%', left: '40%' }}></div>
+  if (showIdleScreen) {
+    return (
+      <div className="flex h-screen relative overflow-hidden qwen-bg font-sans text-gray-200 select-none">
+        
+        {/* Decorative radial orbs */}
+        <div className="orb-1" style={{ top: '-100px', right: '-100px' }}></div>
+        <div className="orb-2" style={{ bottom: '10%', left: '40%' }}></div>
 
-      {showIdleScreen ? (
-        /* ===== IDLE SCREEN ===== */
+        {/* ===== IDLE SCREEN ===== */}
         <div className="flex-1 flex flex-col items-center justify-center relative z-10 grid-bg animate-in fade-in duration-300">
           <div className="text-[12px] font-bold text-indigo-400/80 tracking-[0.2em] uppercase mb-8 select-none">
             squad · autonomous swarm
@@ -464,10 +464,17 @@ return (
             <kbd className="px-1.5 py-0.5 border border-[#222233] bg-[#12121C] rounded text-[9px] ml-1">Enter</kbd> run pipeline
           </div>
         </div>
-      ) : (
-        /* ===== ACTIVE WORKSPACE SCREEN ===== */
-        <>
-          {/* 4-Icon Sidebar */}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen relative overflow-hidden qwen-bg font-sans text-gray-200 select-none">
+      
+      {/* Decorative radial orbs */}
+      <div className="orb-1" style={{ top: '-100px', right: '-100px' }}></div>
+      <div className="orb-2" style={{ bottom: '10%', left: '40%' }}></div>
+      {/* 4-Icon Sidebar */}
           <nav className="w-14 border-r border-[#222233] bg-[#0C0C14] flex flex-col items-center py-6 justify-between shrink-0 z-20 select-none">
             <div className="flex flex-col items-center w-full gap-5">
               {/* Logo */}
@@ -2331,8 +2338,6 @@ return (
         </div>
       )}
       </main>
-    </>
-  )}
 
       {/* Tiers Overlay components */}
 
