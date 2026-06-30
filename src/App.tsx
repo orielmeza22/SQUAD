@@ -141,7 +141,7 @@ function MainLayout() {
     chatHistoryRef,
     fetchFiles, fetchListeningPorts, fetchTelemetry,
     tc,
-    pipelineStatus, activePort, activeDiagnostic, designIdentity, setDesignIdentity, smartRouting, setSmartRouting,
+    pipelineStatus, activePort, activeDiagnostic, setActiveDiagnostic, designIdentity, setDesignIdentity, smartRouting, setSmartRouting,
     optimizePrompt, adjustSpec, approveSpec, seedDb, runUxAudit, runUxFix, extractUxStyle, gitCheckout, gitRestoreHead
   } = useApp();
 
@@ -384,6 +384,7 @@ function MainLayout() {
           setChatHistory([]);
           setPipelineLogs([]);
           setLauncherLogs([]);
+          setActiveDiagnostic(null);
           setHasUserStarted(false);
           useGraphStore.setState({ 
             nodeStatus: {}, 

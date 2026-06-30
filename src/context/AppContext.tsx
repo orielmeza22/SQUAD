@@ -128,6 +128,7 @@ interface AppContextType {
   
   // Pipeline & Agent Runs
   pipelineLogs: string[];
+  setPipelineLogs: React.Dispatch<React.SetStateAction<string[]>>;
   isPipelineRunning: boolean;
   startBuildPipeline: () => void;
   
@@ -240,6 +241,7 @@ interface AppContextType {
   pipelineStatus: 'idle' | 'running' | 'waiting_spec_approval';
   activePort: number;
   activeDiagnostic: any;
+  setActiveDiagnostic: React.Dispatch<React.SetStateAction<any>>;
   designIdentity: any;
   setDesignIdentity: React.Dispatch<React.SetStateAction<any>>;
   smartRouting: boolean;
@@ -876,6 +878,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setChatHistory([]);
           setPipelineLogs([]);
           setLauncherLogs([]);
+          setActiveDiagnostic(null);
           fetchFiles();
         } else {
           showToast(`❌ Error al limpiar workspace: ${d.message}`, "error");
@@ -1520,7 +1523,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       sqliteDbs, selectedSqliteDb, setSelectedSqliteDb, sqliteTables, selectedSqliteTable, setSelectedSqliteTable, sqliteData, fetchSqliteDbs, fetchSqliteTables, fetchSqliteTableData,
       currentFiles, setCurrentFiles, openTabs, setOpenTabs, activeTab, setActiveTab, expandedFolders, setExpandedFolders, fileSearchQuery, setFileSearchQuery, globalSearchQuery, setGlobalSearchQuery, fetchFiles, saveActiveFile,
       models, selectedModel, setSelectedModel, promptInput, setPromptInput, temperature, setTemperature, contextWindow, setContextWindow, forceJson, setForceJson, systemPrompt, setSystemPrompt,
-      pipelineLogs, isPipelineRunning, startBuildPipeline,
+      pipelineLogs, setPipelineLogs, isPipelineRunning, startBuildPipeline,
       launcherLogs, setLauncherLogs, isAppLaunching, setIsAppLaunching, launchAppSystem,
       chatMessage, setChatMessage, chatHistory, setChatHistory, isChatThinking, chatTarget, setChatTarget, sendChatMessage,
       hwTime, hwCpuTemp, hwCpuUsage, hwRamUsage, hwRamPercentage, hwDiskUsage, hwDiskPercentage, dockerContainers, dockerError, vercelUrl, isDeployingVercel, deployToVercel, tokenIn, tokenOut, costUsd, cacheHits, vaultPrompts, fetchTelemetry, saveToVault,
@@ -1536,7 +1539,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       listeningPorts, fetchListeningPorts, killListeningPort,
       deployToRealProvider, refactorCodeAction, runDockerCompose,
       deleteVaultPrompt, providersList, fetchProvidersList, pullOllamaModel,
-      pipelineStatus, activePort, activeDiagnostic, designIdentity, setDesignIdentity, smartRouting, setSmartRouting,
+      pipelineStatus, activePort, activeDiagnostic, setActiveDiagnostic, designIdentity, setDesignIdentity, smartRouting, setSmartRouting,
       optimizePrompt, adjustSpec, approveSpec, seedDb, runUxAudit, runUxFix, extractUxStyle, gitCheckout, gitRestoreHead,
       clearWorkspaceAction
     }}>
