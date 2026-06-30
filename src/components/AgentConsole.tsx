@@ -24,7 +24,11 @@ export default function AgentConsole() {
     refactorCodeAction,
     showToast,
     pendingWrites,
-    resolvePendingWrites
+    resolvePendingWrites,
+    graphIsPausedSpec,
+    graphApproveSpec,
+    graphIsPausedHitl,
+    graphApproveHitl
   } = useApp();
 
   const API_BASE = window.location.port === '3000' ? 'http://localhost:8000' : '';
@@ -221,6 +225,40 @@ export default function AgentConsole() {
               return <div key={i} className={color}>{log}</div>;
             })}
             
+            {graphIsPausedSpec && (
+              <div className="mt-3 p-3 border border-indigo-500/20 bg-indigo-500/5 rounded font-sans animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 text-indigo-400 font-bold text-[10px] uppercase mb-1">
+                  <span>?</span>
+                  <span>decisión: Especificación Generada. ¿Aprobar planos del proyecto para iniciar la construcción?</span>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <button 
+                    onClick={graphApproveSpec}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-bold uppercase tracking-wider px-3 py-1 rounded cursor-pointer transition-all"
+                  >
+                    Aprobar SPEC
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {graphIsPausedHitl && (
+              <div className="mt-3 p-3 border border-amber-500/20 bg-amber-500/5 rounded font-sans animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 text-amber-400 font-bold text-[10px] uppercase mb-1">
+                  <span>?</span>
+                  <span>decisión: Comando Administrativo detectado. ¿Autorizar ejecución del comando?</span>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <button 
+                    onClick={graphApproveHitl}
+                    className="bg-amber-600 hover:bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider px-3 py-1 rounded cursor-pointer transition-all"
+                  >
+                    Autorizar
+                  </button>
+                </div>
+              </div>
+            )}
+
             {pendingWrites && pendingWrites.map((pw: any, idx: number) => (
               <div key={`pw-${idx}`} className="mt-3 p-3 border border-pink-500/20 bg-pink-500/5 rounded font-sans animate-in fade-in duration-200">
                 <div className="flex items-center gap-2 text-pink-400 font-bold text-[10px] uppercase mb-1">

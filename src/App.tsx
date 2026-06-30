@@ -167,7 +167,7 @@ function MainLayout() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [hasUserStarted, setHasUserStarted] = useState(false);
 
-  const showIdleScreen = !hasUserStarted && !isPipelineRunning && chatHistory.length === 0;
+  const showIdleScreen = !hasUserStarted && !isPipelineRunning;
 
   const handleStartSwarm = () => {
     setHasUserStarted(true);
@@ -477,7 +477,11 @@ return (
 
               {/* Items */}
               <button
-                onClick={() => setCentralView('graph')}
+                onClick={() => {
+                  setCentralView('graph');
+                  setShowLeftPanel(false);
+                  setShowRightPanel(false);
+                }}
                 className={`w-9 h-9 rounded flex items-center justify-center transition-all border ${
                   centralView === 'graph'
                     ? 'border-indigo-500/20 text-indigo-400 bg-indigo-500/10'
@@ -492,6 +496,7 @@ return (
                 onClick={() => {
                   setCentralView('editor');
                   setShowLeftPanel(true);
+                  setShowRightPanel(true);
                 }}
                 className={`w-9 h-9 rounded flex items-center justify-center transition-all border ${
                   centralView === 'editor' && showLeftPanel
@@ -508,6 +513,8 @@ return (
                   setCentralView('editor');
                   setActiveBottomTab('console');
                   setShowBottomPanel(true);
+                  setShowLeftPanel(true);
+                  setShowRightPanel(true);
                 }}
                 className={`w-9 h-9 rounded flex items-center justify-center transition-all border ${
                   activeBottomTab === 'console' && showBottomPanel && centralView === 'editor'
@@ -713,63 +720,7 @@ return (
           </div>
         </div>
 
-        {/* Compact Stats Row */}
-        <div className="px-6 py-1.5 border-b border-qwen-border bg-[#09090D]/50 backdrop-blur-sm grid grid-cols-6 gap-3 relative z-10 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-qwen-500/10 border border-qwen-500/20 flex items-center justify-center">
-              <Clock size={11} className="text-qwen-400" />
-            </div>
-            <div>
-              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Elapsed</div>
-              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">{formatTime(elapsedTime)}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-cyber-cyan/10 border border-cyber-cyan/20 flex items-center justify-center">
-              <CheckCircle size={11} className="text-cyber-cyan" />
-            </div>
-            <div>
-              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Nodes Done</div>
-              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">5 <span className="text-qwen-600 font-normal">/ 8</span></div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-cyber-pink/10 border border-cyber-pink/20 flex items-center justify-center">
-              <Layers size={11} className="text-cyber-pink" />
-            </div>
-            <div>
-              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Active Agents</div>
-              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">2</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-cyber-lime/10 border border-cyber-lime/20 flex items-center justify-center">
-              <Coins size={11} className="text-cyber-lime" />
-            </div>
-            <div>
-              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Tokens</div>
-              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">{(tokenIn + tokenOut) ? `${((tokenIn + tokenOut) / 1000).toFixed(1)}k` : '0'}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-cyber-orange/10 border border-cyber-orange/20 flex items-center justify-center">
-              <Terminal size={11} className="text-cyber-orange" />
-            </div>
-            <div>
-              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">REPL Sessions</div>
-              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">3 active</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              <ShieldAlert size={11} className="text-rose-400" />
-            </div>
-            <div>
-              <div className="text-[8px] text-qwen-500 uppercase tracking-wider font-semibold font-sans">Issues</div>
-              <div className="text-[10px] font-bold text-white font-mono leading-none mt-0.5">{pendingWrites.length} <span className="text-qwen-600 font-normal font-sans">HITL</span></div>
-            </div>
-          </div>
-        </div>
+
 
         {/* Core Workspace Splits */}
         <div className="flex-1 flex min-h-0 overflow-hidden relative">
@@ -1382,15 +1333,6 @@ return (
                   Chat
                 </button>
                 <button 
-                  onClick={() => setActiveRightTab('hitl')}
-                  className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 flex items-center ${activeRightTab === 'hitl' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
-                >
-                  <span>HITL</span>
-                  {pendingWrites.length > 0 && (
-                    <span className="ml-1 bg-amber-500 text-black text-[8px] font-extrabold px-1 rounded-full">{pendingWrites.length}</span>
-                  )}
-                </button>
-                <button 
                   onClick={() => setActiveRightTab('settings')}
                   className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 mt-2 border-b-2 ${activeRightTab === 'settings' ? 'text-indigo-400 border-indigo-400' : 'text-gray-500 border-transparent hover:text-white'}`}
                 >
@@ -1410,123 +1352,7 @@ return (
             {/* Right Tab Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
               
-              {/* Tab: HITL Decisions */}
-              {activeRightTab === 'hitl' && (
-                <div className="space-y-4 fade-in">
-                  {/* LangGraph Spec HITL */}
-                  {graphIsPausedSpec && (
-                    <div className="p-4 border border-indigo-500/30 bg-indigo-500/10 rounded-lg">
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-9 h-9 rounded-lg gradient-aurora flex items-center justify-center flex-shrink-0 shadow-qwen">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="text-xs font-bold text-white">Especificación Generada</div>
-                            <span className="badge-primary text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold">HITL</span>
-                          </div>
-                          <p className="text-[11px] text-gray-300 leading-relaxed mb-3">
-                            El Arquitecto generó los planos del proyecto. ¿Deseas aprobarlos e iniciar la construcción?
-                          </p>
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={graphApproveSpec}
-                              className="flex-1 btn-primary py-2 rounded-lg text-xs font-semibold text-white"
-                            >
-                              Aprobar SPEC
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* LangGraph Command HITL */}
-                  {graphIsPausedHitl && (
-                    <div className="p-4 border border-amber-500/30 bg-amber-500/10 rounded-lg">
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                          <ShieldAlert size={16} className="text-amber-400" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="text-xs font-bold text-white">Comando Detectado</div>
-                            <span className="badge-orange text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold">HITL</span>
-                          </div>
-                          <p className="text-[11px] text-gray-300 leading-relaxed mb-3">
-                            El enjambre solicita autorización para ejecutar un comando administrativo.
-                          </p>
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={graphApproveHitl}
-                              className="flex-1 btn-primary py-2 rounded-lg text-xs font-semibold text-white"
-                            >
-                              Autorizar
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Files interceptor HITL */}
-                  {pendingWrites.map((pw: any, idx: number) => (
-                    <div key={idx} className="p-4 border border-qwen-border bg-gradient-to-br from-qwen-500/10 via-cyber-pink/5 to-transparent rounded-lg">
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-9 h-9 rounded-lg gradient-aurora flex items-center justify-center flex-shrink-0 shadow-qwen">
-                          <ShieldAlert size={16} className="text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="text-xs font-bold text-white">Decisión requerida</div>
-                            <span className="badge-primary text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold">conf 0.42</span>
-                          </div>
-                          <p className="text-[11px] text-gray-300 leading-relaxed mb-3">
-                            El SPEC.md no define el esquema de autenticación. ¿Qué enfoque prefieres?
-                            <pre className="text-[9px] bg-black/40 p-2 rounded mt-2.5 overflow-x-auto text-gray-400 max-h-24 font-mono">{pw.file}</pre>
-                          </p>
-                          <div className="space-y-1.5 mb-3">
-                            <label className="flex items-start gap-2 p-2.5 glass rounded-lg cursor-pointer hover:border-qwen-500/50 transition">
-                              <input type="radio" name="auth" defaultChecked className="mt-0.5 accent-qwen-500" />
-                              <div className="flex-1">
-                                <div className="text-xs font-semibold text-white">JWT + bcrypt</div>
-                                <div className="text-[10px] text-gray-400 mt-0.5">Recomendado · stateless · 15 líneas</div>
-                              </div>
-                            </label>
-                            <label className="flex items-start gap-2 p-2.5 glass rounded-lg cursor-pointer hover:border-qwen-500/50 transition">
-                              <input type="radio" name="auth" className="mt-0.5 accent-qwen-500" />
-                              <div className="flex-1">
-                                <div className="text-xs font-semibold text-white">Sessions + Argon2</div>
-                                <div className="text-[10px] text-gray-400 mt-0.5">Más seguro · requiere Redis</div>
-                              </div>
-                            </label>
-                          </div>
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => resolvePendingWrites('confirm', [pw.file])}
-                              className="flex-1 btn-primary py-2 rounded-lg text-xs font-semibold text-white"
-                            >
-                              Confirmar
-                            </button>
-                            <button 
-                              onClick={() => resolvePendingWrites('reject', [pw.file])}
-                              className="btn-ghost px-3 py-2 rounded-lg text-xs font-medium text-gray-300"
-                            >
-                              Skip
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {pendingWrites.length === 0 && !graphIsPausedSpec && !graphIsPausedHitl && (
-                    <div className="text-center py-8 text-gray-500 text-xs font-sans">
-                      No hay peticiones HITL pendientes. El enjambre opera de forma autónoma.
-                    </div>
-                  )}
-                </div>
-              )}
 
 
               {/* Tab: Debates chatbot */}
