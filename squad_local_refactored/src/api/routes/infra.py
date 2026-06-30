@@ -311,6 +311,14 @@ def api_destroy():
                         os.remove(path)
                 except Exception as ex:
                     print(f"Error removing {path} during destroy: {ex}")
+        
+        # 4. Clear transient backend state
+        state.pending_writes = {}
+        state.chat_history = []
+        state.logs = []
+        state.launcher_logs = []
+        state.active_diagnostic = None
+
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
