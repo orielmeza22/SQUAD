@@ -895,82 +895,30 @@ function MainLayout() {
                     📺 Vista Previa
                   </button>
 
-                  {/* Dropdown for remaining tabs */}
-                  <div className="relative shrink-0 mt-2">
-                    <button
-                      onClick={() => setIsMoreTabsOpen(!isMoreTabsOpen)}
-                      className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer pb-1.5 border-b-2 flex items-center gap-1 ${
-                        ['database', 'repl', 'skills', 'memory', 'conversation', 'dependency', 'heatmap', 'scrubber'].includes(activeBottomTab)
-                          ? 'text-indigo-400 border-indigo-400'
-                          : 'text-gray-500 border-transparent hover:text-white'
-                      }`}
-                    >
-                      <span>{
-                        activeBottomTab === 'database' ? '🗄️ Base de Datos' :
-                        activeBottomTab === 'repl' ? '📟 Multi-Session REPL' :
-                        activeBottomTab === 'skills' ? '🧪 Habilidades' :
-                        activeBottomTab === 'memory' ? '🧠 Memoria & Ledger' :
-                        activeBottomTab === 'conversation' ? '💬 Diálogos' :
-                        activeBottomTab === 'dependency' ? '🌿 Dependencias' :
-                        activeBottomTab === 'heatmap' ? '🔥 Confianza Código' :
-                        activeBottomTab === 'scrubber' ? '⏱️ Scrubber' : '➕ Más'
-                      }</span>
-                      <span className="text-[7px]">▼</span>
-                    </button>
-
-                    {isMoreTabsOpen && (
-                      <div className="absolute bottom-6 left-0 bg-[#0E0E14] border border-[#222233] rounded-lg shadow-xl p-1.5 z-[120] min-w-[150px] space-y-0.5 font-sans">
-                        <button
-                          onClick={() => { setActiveBottomTab('database'); setIsMoreTabsOpen(false); }}
-                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
-                        >
-                          🗄️ Base de Datos
-                        </button>
-                        <button
-                          onClick={() => { setActiveBottomTab('repl'); setIsMoreTabsOpen(false); }}
-                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
-                        >
-                          📟 Multi-Session REPL
-                        </button>
-                        <button
-                          onClick={() => { setActiveBottomTab('skills'); setIsMoreTabsOpen(false); }}
-                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
-                        >
-                          🧪 Habilidades
-                        </button>
-                        <button
-                          onClick={() => { setActiveBottomTab('memory'); setIsMoreTabsOpen(false); }}
-                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
-                        >
-                          🧠 Memoria & Ledger
-                        </button>
-                        <button
-                          onClick={() => { setActiveBottomTab('conversation'); setIsMoreTabsOpen(false); }}
-                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
-                        >
-                          💬 Diálogos
-                        </button>
-                        <button
-                          onClick={() => { setActiveBottomTab('dependency'); setIsMoreTabsOpen(false); }}
-                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
-                        >
-                          🌿 Dependencias
-                        </button>
-                        <button
-                          onClick={() => { setActiveBottomTab('heatmap'); setIsMoreTabsOpen(false); }}
-                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
-                        >
-                          🔥 Confianza Código
-                        </button>
-                        <button
-                          onClick={() => { setActiveBottomTab('scrubber'); setIsMoreTabsOpen(false); }}
-                          className="w-full text-left text-[9px] text-gray-400 hover:bg-white/5 hover:text-white p-1 rounded transition-all font-bold cursor-pointer"
-                        >
-                          ⏱️ Scrubber
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  {/* Dropdown for remaining tabs using native select to avoid CSS overflow clipping */}
+                  <select
+                    value={['database', 'repl', 'skills', 'memory', 'conversation', 'dependency', 'heatmap', 'scrubber'].includes(activeBottomTab) ? activeBottomTab : ''}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setActiveBottomTab(e.target.value);
+                      }
+                    }}
+                    className={`text-[9px] uppercase tracking-wider font-bold transition-all cursor-pointer bg-transparent border-none outline-none pb-1.5 mt-2 border-b-2 shrink-0 ${
+                      ['database', 'repl', 'skills', 'memory', 'conversation', 'dependency', 'heatmap', 'scrubber'].includes(activeBottomTab)
+                        ? 'text-indigo-400 border-indigo-400'
+                        : 'text-gray-500 border-transparent hover:text-white'
+                    }`}
+                  >
+                    <option value="" disabled className="bg-[#0E0E14] text-gray-400">➕ Más</option>
+                    <option value="database" className="bg-[#0E0E14] text-gray-200">🗄️ Base de Datos</option>
+                    <option value="repl" className="bg-[#0E0E14] text-gray-200">📟 Multi-Session REPL</option>
+                    <option value="skills" className="bg-[#0E0E14] text-gray-200">🧪 Habilidades</option>
+                    <option value="memory" className="bg-[#0E0E14] text-gray-200">🧠 Memoria & Ledger</option>
+                    <option value="conversation" className="bg-[#0E0E14] text-gray-200">💬 Diálogos</option>
+                    <option value="dependency" className="bg-[#0E0E14] text-gray-200">🌿 Dependencias</option>
+                    <option value="heatmap" className="bg-[#0E0E14] text-gray-200">🔥 Confianza Código</option>
+                    <option value="scrubber" className="bg-[#0E0E14] text-gray-200">⏱️ Scrubber</option>
+                  </select>
                 </div>
 
                 <button 
