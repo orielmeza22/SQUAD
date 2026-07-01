@@ -169,7 +169,7 @@ function MainLayout() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [hasUserStarted, setHasUserStarted] = useState(false);
 
-  const showIdleScreen = !isPipelineRunning;
+  const showIdleScreen = !isPipelineRunning && !hasUserStarted;
 
   const handleStartSwarm = () => {
     setHasUserStarted(true);
@@ -184,6 +184,8 @@ function MainLayout() {
       interval = setInterval(() => {
         setElapsedTime(prev => prev + 1);
       }, 1000);
+    } else {
+      setHasUserStarted(false);
     }
     return () => clearInterval(interval);
   }, [isPipelineRunning]);

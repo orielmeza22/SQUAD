@@ -49,6 +49,7 @@ El objetivo de esta aplicación es proporcionar una interfaz sencilla para gesti
       }
     ]
     ```
+
 ##### 4.2 **Ruta: /patients**
 - **Método:** POST
   - **Descripción:** Crea un nuevo paciente.
@@ -66,6 +67,7 @@ El objetivo de esta aplicación es proporcionar una interfaz sencilla para gesti
       "created_at": "2023-10-03T12:00:00Z"
     }
     ```
+
 ##### 4.3 **Ruta: /patients/{patient_id}/turns**
 - **Método:** GET
   - **Descripción:** Retorna una lista de turnos registrados para un paciente específico.
@@ -84,6 +86,7 @@ El objetivo de esta aplicación es proporcionar una interfaz sencilla para gesti
       }
     ]
     ```
+
 ##### 4.4 **Ruta: /patients/{patient_id}/turns**
 - **Método:** POST
   - **Descripción:** Crea un nuevo turno para un paciente específico.
