@@ -187,7 +187,10 @@ function MainLayout() {
   };
 
   const handleGraphNodeClick = (event: React.MouseEvent, node: any) => {
-    const rect = event.currentTarget.getBoundingClientRect();
+    const nodeEl = document.querySelector(`[data-id="${node.id}"]`);
+    if (!nodeEl) return;
+
+    const rect = nodeEl.getBoundingClientRect();
     const spaceRight = window.innerWidth - rect.right;
     const cardWidth = 320;
     const padding = 12;
