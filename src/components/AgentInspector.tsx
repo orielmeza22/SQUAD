@@ -133,6 +133,7 @@ export default function AgentInspector({
   onEscalate
 }: AgentInspectorProps) {
   const { pipelineLogs, isPipelineRunning } = useApp();
+  const isPausedHitl = useGraphStore((s) => s.isPausedHitl) || false;
   const ref = React.useRef<HTMLDivElement>(null);
 
   // Esc key closure
@@ -198,7 +199,8 @@ export default function AgentInspector({
   };
 
   // Format tokens count
-  const agentTokens = useGraphStore.getState().nodeTokens[nodeData.id] || 0;
+  const nodeTokens = useGraphStore((s) => s.nodeTokens) || {};
+  const agentTokens = nodeTokens[nodeData.id] || 0;
   const formatTokens = (t: number) => {
     if (!t || t <= 0) return '—';
     if (t >= 1000) return `${(t / 1000).toFixed(1)}k tkn`;
@@ -352,7 +354,7 @@ export default function AgentInspector({
           </button>
         )}
 
-        {(nodeData.status.toLowerCase() === 'paused_hitl' || useGraphStore.getState().isPausedHitl) && (
+        {(nodeData.status.toLowerCase() === 'paused_hitl' || isPausedHitl) && (
           <button 
             onClick={onEscalate}
             className="w-full text-center bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 border border-amber-500/30 py-1.5 rounded transition-all cursor-pointer font-bold uppercase tracking-wider"

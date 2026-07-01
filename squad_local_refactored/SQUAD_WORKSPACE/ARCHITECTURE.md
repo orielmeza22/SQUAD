@@ -5,6 +5,7 @@
 El objetivo de esta aplicación es proporcionar una interfaz sencilla para gestionar turnos médicos utilizando FastAPI como backend y HTMX para la interactividad en el frontend, todo ello integrado con SQLite como base de datos.
 
 #### 2. **Arquitectura del Sistema**
+
 ##### 2.1 **Backend (FastAPI)**
 - **Archivo:** main_output.py
   - **Responsabilidades:**
@@ -31,6 +32,7 @@ El objetivo de esta aplicación es proporcionar una interfaz sencilla para gesti
       - `appointment_time` (DATETIME)
 
 #### 4. **Endpoints y Rutas**
+
 ##### 4.1 **Ruta: /patients**
 - **Método:** GET
   - **Descripción:** Retorna una lista de todos los pacientes registrados.
