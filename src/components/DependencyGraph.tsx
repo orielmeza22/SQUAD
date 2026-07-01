@@ -1,5 +1,6 @@
 import React from 'react';
-import { GitBranch, FileCode, Database, Layers } from 'lucide-react';
+import { GitBranch, FileCode, Database } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 interface FileNode {
   name: string;
@@ -7,15 +8,69 @@ interface FileNode {
   imports: string[];
 }
 
+function parseDependencies(currentFiles: Record<string, string>): FileNode[] {
+  const filepaths = Object.keys(currentFiles);
+  if (filepaths.length === 0) {
+    return [
+      { name: 'Ningún archivo generado aún en el Workspace.', type: 'config', imports: [] }
+    ];
+  }
+
+  return filepaths.map(filepath => {
+    const filename = filepath.split('/').pop() || filepath;
+    const content = currentFiles[filepath] || '';
+    
+    // Determine type by extension
+    let type: 'backend' | 'frontend' | 'database' | 'config' = 'config';
+    const ext = filename.split('.').pop()?.toLowerCase();
+    if (['py'].includes(ext || '')) {
+      type = 'backend';
+    } else if (['html', 'css', 'js', 'ts', 'jsx', 'tsx', 'json'].includes(ext || '')) {
+      // package.json is config, but index.html is frontend
+      if (filename === 'package.json') {
+        type = 'config';
+      } else {
+        type = 'frontend';
+      }
+    } else if (['sql', 'db', 'sqlite', 'sqlite3'].includes(ext || '')) {
+      type = 'database';
+    }
+    
+    // Scan imports matching other files in the workspace
+    const imports: string[] = [];
+    const lines = content.split('\n');
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      filepaths.forEach(otherPath => {
+        const otherName = otherPath.split('/').pop() || otherPath;
+        if (otherName === filename) return;
+        
+        // Remove extension for matching base import statements
+        const otherBase = otherName.split('.').slice(0, -1).join('.');
+        if (!otherBase) return;
+        
+        if (type === 'backend') {
+          // e.g. import models or from models import ...
+          const pyImportRegex = new RegExp(`\\b(import|from)\\s+${otherBase}\\b`);
+          if (pyImportRegex.test(trimmed) && !imports.includes(otherName)) {
+            imports.push(otherName);
+          }
+        } else if (type === 'frontend') {
+          // e.g. import ... from './models' or require('./models')
+          if (trimmed.includes(otherBase) && !imports.includes(otherName)) {
+            imports.push(otherName);
+          }
+        }
+      });
+    });
+
+    return { name: filename, type, imports };
+  });
+}
+
 export default function DependencyGraph() {
-  const files: FileNode[] = [
-    { name: 'main_output.py', type: 'backend', imports: ['models.py', 'database.py'] },
-    { name: 'models.py', type: 'backend', imports: ['database.py'] },
-    { name: 'database.py', type: 'database', imports: [] },
-    { name: 'templates/index.html', type: 'frontend', imports: ['static/app.css'] },
-    { name: 'static/app.css', type: 'frontend', imports: [] },
-    { name: 'requirements.txt', type: 'config', imports: [] }
-  ];
+  const { currentFiles } = useApp();
+  const files = parseDependencies(currentFiles);
 
   const getColor = (type: 'backend' | 'frontend' | 'database' | 'config') => {
     if (type === 'backend') return 'border-indigo-500 bg-indigo-500/10 text-indigo-300';
@@ -33,7 +88,7 @@ export default function DependencyGraph() {
         </div>
         <div>
           <h2 className="text-xs font-bold uppercase tracking-wider">Dependency Graph (File-level)</h2>
-          <span className="text-[9px] text-gray-400">Estructura e importaciones de los archivos del Workspace</span>
+          <span className="text-[9px] text-gray-400">Estructura e importaciones de los archivos del Workspace en tiempo real</span>
         </div>
       </div>
 
@@ -45,6 +100,7 @@ export default function DependencyGraph() {
           <span className="flex items-center space-x-1"><span className="w-1.5 h-1.5 rounded bg-indigo-500" /> <span>Backend</span></span>
           <span className="flex items-center space-x-1"><span className="w-1.5 h-1.5 rounded bg-amber-500" /> <span>Frontend</span></span>
           <span className="flex items-center space-x-1"><span className="w-1.5 h-1.5 rounded bg-purple-500" /> <span>Database</span></span>
+          <span className="flex items-center space-x-1"><span className="w-1.5 h-1.5 rounded bg-gray-500" /> <span>Config</span></span>
         </div>
 
         {/* Custom interactive flow render */}
@@ -53,6 +109,7 @@ export default function DependencyGraph() {
             <div 
               key={idx} 
               className={`px-3 py-2 border rounded-lg text-[10px] flex items-center space-x-2 font-mono hover:scale-105 transition-all cursor-pointer ${getColor(file.type)}`}
+              title={file.imports.length > 0 ? `Importa: ${file.imports.join(', ')}` : 'Sin dependencias internas'}
             >
               {file.type === 'database' ? <Database size={10} /> : <FileCode size={10} />}
               <span>{file.name}</span>

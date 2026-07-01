@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Monitor, Tablet, Smartphone, ExternalLink, RefreshCw } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 export default function LiveAppPreview() {
+  const { activePort } = useApp();
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [key, setKey] = useState(0);
 
@@ -10,6 +12,8 @@ export default function LiveAppPreview() {
     if (device === 'tablet') return 'w-[768px] h-[1024px]';
     return 'w-full h-full';
   };
+
+  const previewUrl = `http://localhost:${activePort || 5000}`;
 
   return (
     <div className="w-full h-full flex flex-col space-y-4 text-white p-4 font-sans select-text">
@@ -21,7 +25,7 @@ export default function LiveAppPreview() {
           </div>
           <div>
             <h2 className="text-xs font-bold uppercase tracking-wider">Live App Preview</h2>
-            <span className="text-[9px] text-gray-400">Interactúa con la aplicación en tiempo real en localhost:5000</span>
+            <span className="text-[9px] text-gray-400">Interactúa con la aplicación en tiempo real en {previewUrl}</span>
           </div>
         </div>
 
@@ -57,7 +61,7 @@ export default function LiveAppPreview() {
             <RefreshCw size={14} />
           </button>
           <a
-            href="http://localhost:5000"
+            href={previewUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="p-1.5 rounded text-gray-500 hover:text-white cursor-pointer transition-all"
@@ -73,7 +77,7 @@ export default function LiveAppPreview() {
         <div className={`transition-all duration-300 shadow-2xl border border-white/10 rounded-lg overflow-hidden bg-white ${getDeviceWidth()}`}>
           <iframe
             key={key}
-            src="http://localhost:5000"
+            src={previewUrl}
             title="Localhost Preview"
             className="w-full h-full border-none bg-white"
             sandbox="allow-scripts allow-same-origin allow-forms"

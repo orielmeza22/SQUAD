@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Terminal, Cpu, Database, Eye } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 interface REPLSession {
   id: string;
@@ -10,41 +11,74 @@ interface REPLSession {
 }
 
 export default function MultiSessionREPL() {
+  const { pipelineLogs, isPipelineRunning, activeNode } = useApp();
   const [activeSession, setActiveSession] = useState('architect');
+
+  // Filter logs dynamically based on the session keyword matches
+  const getSessionLogs = (sessionId: string): string[] => {
+    let filterKeywords: string[] = [];
+    if (sessionId === 'architect') {
+      filterKeywords = ['architect', 'planificador', 'diseño', 'spec.md'];
+    } else if (sessionId === 'dba') {
+      filterKeywords = ['dba', 'sql', 'esquema', 'migracion', 'database'];
+    } else if (sessionId === 'backend') {
+      filterKeywords = ['backend', 'uvicorn', 'fastapi', 'rutas', 'api'];
+    } else if (sessionId === 'qa') {
+      filterKeywords = ['qa', 'review', 'fix', 'test', 'linter', 'flake8', 'pytest'];
+    }
+
+    const filtered = pipelineLogs.filter(log => {
+      const lower = log.toLowerCase();
+      return filterKeywords.some(kw => lower.includes(kw));
+    });
+
+    if (filtered.length === 0) {
+      return [`[INFO] Esperando a que el agente correspondiente inicie su tarea...`];
+    }
+    return filtered;
+  };
+
+  // Determine status based on activeNode from orchestrator
+  const getSessionStatus = (sessionId: string): 'active' | 'idle' | 'error' => {
+    if (!isPipelineRunning) return 'idle';
+    
+    const active = String(activeNode || '').toLowerCase();
+    if (sessionId === 'architect' && active.includes('architect')) return 'active';
+    if (sessionId === 'dba' && active.includes('dba')) return 'active';
+    if (sessionId === 'backend' && active.includes('backend')) return 'active';
+    if (sessionId === 'qa' && (active.includes('qa') || active.includes('review') || active.includes('fix'))) return 'active';
+    
+    return 'idle';
+  };
 
   const sessions: REPLSession[] = [
     {
       id: 'architect',
       name: 'Architect Session',
-      status: 'idle',
+      status: getSessionStatus('architect'),
       icon: <Cpu size={12} />,
-      logs: [
-        '[12:30:15] [INFO] Iniciando módulo Arquitecto...',
-        '[12:30:18] [INFO] Cargando SPEC.md...',
-        '[12:31:02] [SUCCESS] Arquitectura validada y guardada.'
-      ]
+      logs: getSessionLogs('architect')
     },
     {
       id: 'dba',
       name: 'DBA Session',
-      status: 'active',
+      status: getSessionStatus('dba'),
       icon: <Database size={12} />,
-      logs: [
-        '[12:32:00] [INFO] Levantando conexión a base de datos de test...',
-        '[12:32:04] [INFO] Creando tablas desde el schema.sql...',
-        '[12:32:09] [SUCCESS] Todas las 8 tablas migradas correctamente.'
-      ]
+      logs: getSessionLogs('dba')
     },
     {
       id: 'backend',
       name: 'Backend Dev',
-      status: 'active',
+      status: getSessionStatus('backend'),
       icon: <Terminal size={12} />,
-      logs: [
-        '[12:33:02] [INFO] Levantando Uvicorn en http://localhost:5000...',
-        '[12:33:05] [INFO] Registrando rutas REST de /api/turnos...',
-        '[12:33:09] [WARNING] Módulo Pydantic v2 importado con advertencias de compatibilidad.'
-      ]
+      logs: getSessionLogs('backend')
+    },
+    {
+      id: 'qa',
+      name: 'QA & Review',
+      status: getSessionStatus('qa'),
+      icon: <Terminal size={12} />,
+      logs: getSessionLogs('qa')
     }
   ];
 
@@ -71,7 +105,12 @@ export default function MultiSessionREPL() {
                   : 'bg-white/5 border-transparent text-gray-500 hover:text-white hover:bg-white/10'
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(s.status)}`} />
+              <span className="relative flex h-1.5 w-1.5">
+                {s.status === 'active' && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${getStatusColor(s.status)}`}></span>
+              </span>
               {s.icon}
               <span>{s.name}</span>
             </button>

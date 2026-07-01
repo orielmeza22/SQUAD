@@ -716,3 +716,58 @@ def api_real_deploy(data: dict = Body(default={})):
         return {"success": True, "message": "Iniciando despliegue de Vercel/Netlify en segundo plano."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/infra/memory")
+def get_infra_memory():
+    """Retrieve decision memory and assumptions ledger from workspace."""
+    from ...tools.sys_tools import SysTools
+    import os
+    import json
+    
+    workspace = SysTools.WORKSPACE
+    decisions_path = os.path.join(workspace, ".squad_state", "decision_memory.json")
+    assumptions_path = os.path.join(workspace, ".squad_state", "assumptions_ledger.json")
+    
+    decisions = {}
+    if os.path.exists(decisions_path):
+        try:
+            with open(decisions_path, "r", encoding="utf-8") as f:
+                decisions = json.load(f)
+        except Exception:
+            pass
+            
+    assumptions = []
+    if os.path.exists(assumptions_path):
+        try:
+            with open(assumptions_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    assumptions = list(data.values())
+        except Exception:
+            pass
+            
+    return {
+        "decisions": decisions,
+        "assumptions": assumptions
+    }
+
+
+@router.post("/api/infra/memory/assumption/resolve")
+def resolve_assumption_endpoint(data: dict):
+    """Resolve an assumption in the ledger."""
+    from ...tools.sys_tools import SysTools
+    from ...tools.decision_memory import AssumptionsLedger
+    
+    id_ = data.get("id")
+    status = data.get("status", "confirmed")
+    value = data.get("value", "")
+    
+    if not id_:
+        raise HTTPException(status_code=400, detail="Falta el ID de la asunción.")
+        
+    ledger = AssumptionsLedger(SysTools.WORKSPACE)
+    backend_status = "approved" if status == "confirmed" else "rejected"
+    ledger.resolve_assumption(id_, value, backend_status)
+    return {"success": True}
+
