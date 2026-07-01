@@ -139,20 +139,28 @@ export default function GraphVisualizer({ onNodeClick }: { onNodeClick?: (node: 
   const nodeStatus = useGraphStore((s) => s.nodeStatus);
   const current_node = useGraphStore((s) => s.current_node);
   const retries = useGraphStore((s) => s.retries);
+  const pipeline_status = useGraphStore((s) => s.pipeline_status);
 
+  const isPipelineRunning = pipeline_status === 'running' || pipeline_status === 'waiting_spec_approval' || pipeline_status === 'waiting_hitl_approval';
 
   const nodes: Node[] = useMemo(() => {
-    return Object.entries(GRAPH_LAYOUT).map(([id, pos]) => ({
-      id,
-      type: 'agentNode',
-      position: pos,
-      data: {
-        label: GRAPH_LABELS[id] || id,
-        status: nodeStatus[id] || 'idle',
-        retries: retries[id] || 0,
-      },
-    }));
-  }, [nodeStatus, retries]);
+    return Object.entries(GRAPH_LAYOUT).map(([id, pos]) => {
+      let status = nodeStatus[id] || 'idle';
+      if (!isPipelineRunning) {
+        status = 'idle';
+      }
+      return {
+        id,
+        type: 'agentNode',
+        position: pos,
+        data: {
+          label: GRAPH_LABELS[id] || id,
+          status: status,
+          retries: retries[id] || 0,
+        },
+      };
+    });
+  }, [nodeStatus, retries, isPipelineRunning]);
 
   const edges: Edge[] = useMemo(() => {
     return [

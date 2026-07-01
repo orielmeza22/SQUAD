@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Cpu, Clock, Award, Shield, FileText } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 interface ToolCall {
   name: string;
@@ -16,26 +17,113 @@ interface AgentInspectorProps {
     label: string;
     status: string;
     agentType?: string;
-    confidence?: number;
-    thinking?: string[];
-    contextReceived?: {
-      spec?: string;
-      skills?: string[];
-      decisions?: string[];
-    };
-    toolCalls?: ToolCall[];
   } | null;
 }
 
+function parseInspectorLogs(label: string, logs: string[], isRunning: boolean) {
+  const l = label.toLowerCase();
+  
+  if (!isRunning && logs.length === 0) {
+    return {
+      thinking: ['SQUAD está en estado de reposo (IDLE). Envía un prompt para iniciar la ejecución del enjambre.'],
+      toolCalls: [],
+      confidence: 1.0,
+      specVersion: '—'
+    };
+  }
+
+  let prefix = '';
+  if (l.includes('architect') || l.includes('arquitecto')) prefix = 'ARQUITECTO';
+  else if (l.includes('dba')) prefix = 'DBA';
+  else if (l.includes('frontend')) prefix = 'FRONTEND';
+  else if (l.includes('backend')) prefix = 'BACKEND';
+  else if (l.includes('review')) prefix = 'REVISOR';
+  else if (l.includes('fix')) prefix = 'FIX';
+  else if (l.includes('qa')) prefix = 'QA';
+  else if (l.includes('devops')) prefix = 'DEVOPS';
+
+  if (!prefix) {
+    return {
+      thinking: ['En espera de inicialización...'],
+      toolCalls: [],
+      confidence: 1.0,
+      specVersion: '—'
+    };
+  }
+
+  // Filter logs for this specific agent
+  const agentLogs = logs.filter(log => {
+    const upper = log.toUpperCase();
+    return upper.includes(`[AGENTE ${prefix}]`) || upper.includes(`[AGENTE INFRA]`) || upper.includes(`[DEPLOY]`);
+  });
+
+  if (agentLogs.length === 0) {
+    return {
+      thinking: [`El Agente ${label} aún no ha iniciado tareas en esta ejecución.`],
+      toolCalls: [],
+      confidence: 1.0,
+      specVersion: '—'
+    };
+  }
+
+  // Clean log prefixes for thinking chain representation
+  const thinking = agentLogs.map(log => {
+    return log.replace(/^\[.*?\]:\s*/, '').replace(/^\[.*?\]\s*/, '');
+  });
+
+  // Extract tools dynamically from logs
+  const toolCalls: ToolCall[] = [];
+  agentLogs.forEach(log => {
+    const text = log.toLowerCase();
+    if (text.includes('escribiendo') || text.includes('creando') || text.includes('write')) {
+      const match = log.match(/(?:escribiendo|creando|write)\s+([a-zA-Z0-9_\-\.\/]+)/i);
+      toolCalls.push({
+        name: 'write_file',
+        args: JSON.stringify({ path: match ? match[1] : 'file' }),
+        status: 'success',
+        time: '1.2s'
+      });
+    } else if (text.includes('leyendo') || text.includes('read')) {
+      const match = log.match(/(?:leyendo|read)\s+([a-zA-Z0-9_\-\.\/]+)/i);
+      toolCalls.push({
+        name: 'read_file',
+        args: JSON.stringify({ path: match ? match[1] : 'file' }),
+        status: 'success',
+        time: '0.4s'
+      });
+    } else if (text.includes('validando') || text.includes('linter') || text.includes('flake8') || text.includes('test')) {
+      toolCalls.push({
+        name: 'run_validation',
+        args: JSON.stringify({ command: 'pytest/flake8' }),
+        status: 'success',
+        time: '2.5s'
+      });
+    }
+  });
+
+  let confidence = 0.95;
+  if (logs.some(log => log.toLowerCase().includes('error') || log.toLowerCase().includes('failed'))) {
+    confidence = 0.75;
+  }
+
+  return { 
+    thinking, 
+    toolCalls, 
+    confidence,
+    specVersion: logs.some(l => l.toLowerCase().includes('spec.md')) ? 'SPEC.md (v2.0)' : 'Ninguna'
+  };
+}
+
 export default function AgentInspector({ isOpen, onClose, nodeData }: AgentInspectorProps) {
+  const { pipelineLogs, isPipelineRunning } = useApp();
+  
   if (!isOpen || !nodeData) return null;
 
-  const confidence = nodeData.confidence ?? 0.85;
-  const toolCalls = nodeData.toolCalls ?? [
-    { name: 'read_file', args: '{"path": "SPEC.md"}', status: 'success', time: '0.4s' },
-    { name: 'write_file', args: '{"path": "db/schema.sql"}', status: 'success', time: '1.2s' },
-    { name: 'check_syntax', args: '{"file": "db/schema.sql"}', status: 'success', time: '0.8s' }
-  ];
+  const { thinking, toolCalls, confidence, specVersion } = parseInspectorLogs(
+    nodeData.label, 
+    pipelineLogs, 
+    isPipelineRunning
+  );
 
   const getConfidenceColor = (val: number) => {
     if (val >= 0.85) return 'from-emerald-500 to-teal-500';
@@ -78,12 +166,14 @@ export default function AgentInspector({ isOpen, onClose, nodeData }: AgentInspe
                 <Award size={14} className="text-indigo-400" />
                 <span>Confidence Score</span>
               </div>
-              <span className="text-xs font-mono font-bold text-indigo-300">{(confidence * 100).toFixed(0)}%</span>
+              <span className="text-xs font-mono font-bold text-indigo-300">
+                {isPipelineRunning || pipelineLogs.length > 0 ? `${(confidence * 100).toFixed(0)}%` : '—'}
+              </span>
             </div>
             <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5 p-[1px]">
               <div 
                 className={`bg-gradient-to-r ${getConfidenceColor(confidence)} h-full rounded-full transition-all duration-500`}
-                style={{ width: `${confidence * 100}%` }}
+                style={{ width: `${(isPipelineRunning || pipelineLogs.length > 0) ? confidence * 100 : 0}%` }}
               />
             </div>
           </div>
@@ -97,18 +187,12 @@ export default function AgentInspector({ isOpen, onClose, nodeData }: AgentInspe
             <div className="bg-black/30 border border-white/5 rounded-lg p-3 space-y-2.5">
               <div className="flex items-center justify-between text-[10px] text-gray-400">
                 <span>Especificación Activa:</span>
-                <span className="font-mono text-indigo-300">SPEC.md (v2.0)</span>
+                <span className="font-mono text-indigo-300">{specVersion}</span>
               </div>
               <div className="text-[10px] text-gray-400 space-y-1">
                 <div>Skills Inyectadas:</div>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {nodeData.contextReceived?.skills?.map((sk, idx) => (
-                    <span key={idx} className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider">
-                      {sk}
-                    </span>
-                  )) || (
-                    <span className="bg-white/5 text-gray-500 px-1.5 py-0.5 rounded text-[8px]">Ninguna</span>
-                  )}
+                  <span className="bg-white/5 text-gray-500 px-1.5 py-0.5 rounded text-[8px]">Ninguna</span>
                 </div>
               </div>
             </div>
@@ -121,20 +205,12 @@ export default function AgentInspector({ isOpen, onClose, nodeData }: AgentInspe
               <span>Thinking Chain (Razonamiento)</span>
             </div>
             <div className="bg-black/40 border border-white/5 rounded-lg p-4 font-mono text-[10px] text-gray-300 leading-relaxed space-y-3">
-              {nodeData.thinking?.map((thought, idx) => (
+              {thinking.map((thought, idx) => (
                 <div key={idx} className="flex items-start space-x-2">
                   <span className="text-indigo-400 select-none">›</span>
                   <p>{thought}</p>
                 </div>
-              )) || (
-                <div className="space-y-2.5">
-                  <p className="text-emerald-400">// Cargando especificaciones del proyecto...</p>
-                  <p>1. Analizando el prompt del usuario: Sanatorio Médico</p>
-                  <p>2. Determinando estructura óptima de la base de datos (SQLite)</p>
-                  <p>3. Planificando módulos del backend (fastapi) y UI (htmx/templates)</p>
-                  <p className="text-indigo-300">✓ Especificación generada con confianza alta.</p>
-                </div>
-              )}
+              ))}
             </div>
           </div>
 
@@ -145,20 +221,26 @@ export default function AgentInspector({ isOpen, onClose, nodeData }: AgentInspe
               <span>Llamadas a Herramientas</span>
             </div>
             <div className="space-y-2">
-              {toolCalls.map((call, idx) => (
-                <div key={idx} className="bg-[#141419]/60 border border-white/5 p-2.5 rounded-lg flex items-center justify-between text-[10px]">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono text-amber-400 font-bold">{call.name}()</span>
-                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1 rounded text-[8px] uppercase tracking-widest font-bold">
-                        {call.status}
-                      </span>
-                    </div>
-                    <code className="text-gray-500 text-[9px] block max-w-[280px] truncate">{call.args}</code>
-                  </div>
-                  <span className="font-mono text-gray-400 text-[9px]">{call.time}</span>
+              {toolCalls.length === 0 ? (
+                <div className="text-white/20 italic text-[10px] py-2 text-center">
+                  Ninguna llamada a herramienta registrada.
                 </div>
-              ))}
+              ) : (
+                toolCalls.map((call, idx) => (
+                  <div key={idx} className="bg-[#141419]/60 border border-white/5 p-2.5 rounded-lg flex items-center justify-between text-[10px]">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono text-amber-400 font-bold">{call.name}()</span>
+                        <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1 rounded text-[8px] uppercase tracking-widest font-bold">
+                          {call.status}
+                        </span>
+                      </div>
+                      <code className="text-gray-500 text-[9px] block max-w-[280px] truncate">{call.args}</code>
+                    </div>
+                    <span className="font-mono text-gray-400 text-[9px]">{call.time}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
