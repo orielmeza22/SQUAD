@@ -13,9 +13,9 @@ export default function ConfidenceHeatmap({ lines }: ConfidenceHeatmapProps) {
     { text: '', confidence: 'none' },
     { text: 'app = FastAPI(title="Sanatorio API")', confidence: 'high' },
     { text: '', confidence: 'none' },
-    { text: '# TODO: Implement proper role validation here', confidence: 'low' },
-    { text: 'def validate_user_role(role: str):', confidence: 'medium' },
-    { text: '    return role in ["doctor", "admin", "patient"]', confidence: 'medium' }
+    { text: 'def validate_user_role(role: str):', confidence: 'high' },
+    { text: '    allowed_roles = {"doctor", "admin", "patient"}', confidence: 'high' },
+    { text: '    return role in allowed_roles', confidence: 'high' }
   ];
 
   const getConfidenceStyle = (level: 'high' | 'medium' | 'low' | 'none') => {
