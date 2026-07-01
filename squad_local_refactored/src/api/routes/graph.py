@@ -40,6 +40,7 @@ def get_graph_status():
         "run_id": run_id,
         "current_node": current_node,
         "node_status": state.graph_node_status,
+        "node_tokens": getattr(state, "graph_node_tokens", {}),
         "retries": retries,
         "last_error": state.graph_last_error,
         "is_paused_hitl": is_paused_hitl

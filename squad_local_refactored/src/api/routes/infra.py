@@ -318,6 +318,8 @@ def api_destroy():
         state.logs = []
         state.launcher_logs = []
         state.active_diagnostic = None
+        state.graph_node_tokens = {}
+        state.graph_node_status = {}
 
         return {"success": True}
     except Exception as e:

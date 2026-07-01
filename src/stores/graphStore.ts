@@ -17,6 +17,7 @@ interface GraphState {
   runId: string | null;
   current_node: string | null;
   nodeStatus: GraphNodeStatus;
+  nodeTokens: Record<string, number>;
   retries: Record<string, number>;
   lastError: string | null;
   isPausedHitl: boolean;
@@ -55,6 +56,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   runId: null,
   current_node: null,
   nodeStatus: {},
+  nodeTokens: {},
   retries: {},
   lastError: null,
   isPausedHitl: false,
@@ -75,6 +77,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         runId: data.run_id || null,
         current_node: data.current_node || null,
         nodeStatus: data.node_status || {},
+        nodeTokens: data.node_tokens || {},
         retries: data.retries || {},
         lastError: data.last_error || null,
         isPausedHitl: data.is_paused_hitl || false,
@@ -134,6 +137,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         set({
           current_node: data.current_node || null,
           nodeStatus: data.node_status || {},
+          nodeTokens: data.node_tokens || {},
           retries: data.retries || {},
           lastError: data.last_error || null,
           isPausedHitl: data.is_paused_hitl || false,

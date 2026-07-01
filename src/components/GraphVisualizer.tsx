@@ -49,6 +49,7 @@ interface AgentNodeData {
   label: string;
   status: NodeStatus;
   retries: number;
+  tokens: number;
 }
 
 function AgentNode({ data }: { data: AgentNodeData }) {
@@ -78,55 +79,59 @@ function AgentNode({ data }: { data: AgentNodeData }) {
     }
   };
 
-  const metaInfo = getMetadata(data.label);
+      const formatTokens = (t: number) => {
+        if (!t || t <= 0) return '—';
+        if (t >= 1000) return `${(t / 1000).toFixed(1)}k tkn`;
+        return `${t} tkn`;
+      };
 
-  return (
-    <div
-      className={`px-4 py-3 rounded-lg border bg-[#12121C] text-left transition-all select-none min-w-[170px] ${
-        status === 'done' ? 'border-emerald-500/30' : ''
-      } ${
-        isCurrent ? 'border-violet-500 shadow-2xl shadow-violet-500/10 animate-pulse' : 'border-[#222233]'
-      } ${
-        isPaused ? 'border-amber-500 shadow-lg shadow-amber-500/15' : ''
-      }`}
-    >
-      <Handle type="target" position={Position.Top} className="!bg-gray-600 !w-1.5 !h-1.5" />
-      
-      <div className="flex items-center justify-between mb-1.5">
-        <span className={`text-[8px] font-bold uppercase tracking-wider ${
-          status === 'done' ? 'text-emerald-400' :
-          isCurrent ? 'text-violet-400' :
-          status === 'error' ? 'text-rose-400' : 'text-gray-500'
-        }`}>
-          {status}
-        </span>
-        {data.retries > 0 && (
-          <span className="text-[7.5px] bg-amber-500/20 text-amber-400 px-1 rounded font-mono font-bold">
-            {data.retries}R
-          </span>
-        )}
-      </div>
+      return (
+        <div
+          className={`px-4 py-3 rounded-lg border bg-[#12121C] text-left transition-all select-none min-w-[170px] ${
+            status === 'done' ? 'border-emerald-500/30' : ''
+          } ${
+            isCurrent ? 'border-violet-500 shadow-2xl shadow-violet-500/10 animate-pulse' : 'border-[#222233]'
+          } ${
+            isPaused ? 'border-amber-500 shadow-lg shadow-amber-500/15' : ''
+          }`}
+        >
+          <Handle type="target" position={Position.Top} className="!bg-gray-600 !w-1.5 !h-1.5" />
+          
+          <div className="flex items-center justify-between mb-1.5">
+            <span className={`text-[8px] font-bold uppercase tracking-wider ${
+              status === 'done' ? 'text-emerald-400' :
+              isCurrent ? 'text-violet-400' :
+              status === 'error' ? 'text-rose-400' : 'text-gray-500'
+            }`}>
+              {status}
+            </span>
+            {data.retries > 0 && (
+              <span className="text-[7.5px] bg-amber-500/20 text-amber-400 px-1 rounded font-mono font-bold">
+                {data.retries}R
+              </span>
+            )}
+          </div>
 
-      <div className="text-[11px] font-bold text-gray-100 font-mono">
-        {data.label}
-      </div>
+          <div className="text-[11px] font-bold text-gray-100 font-mono">
+            {data.label}
+          </div>
 
-      <div className="text-[8.5px] text-gray-500 font-mono mt-0.5 leading-tight">
-        {metaInfo.desc}
-      </div>
+          <div className="text-[8.5px] text-gray-500 font-mono mt-0.5 leading-tight">
+            {metaInfo.desc}
+          </div>
 
-      {isCurrent && (
-        <div className="h-[2px] bg-gray-800 rounded-full overflow-hidden my-2">
-          <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 animate-pulse w-3/4"></div>
-        </div>
-      )}
+          {isCurrent && (
+            <div className="h-[2px] bg-gray-800 rounded-full overflow-hidden my-2">
+              <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 animate-pulse w-3/4"></div>
+            </div>
+          )}
 
-      <div className="flex items-center justify-between text-[8px] text-gray-500 font-mono mt-2 pt-1.5 border-t border-[#222233]">
-        <span>{metaInfo.tokens}</span>
-        <span className={status === 'done' ? 'text-emerald-400 font-semibold' : ''}>
-          {status === 'done' ? 'ready' : metaInfo.meta}
-        </span>
-      </div>
+          <div className="flex items-center justify-between text-[8px] text-gray-500 font-mono mt-2 pt-1.5 border-t border-[#222233]">
+            <span>{formatTokens(data.tokens)}</span>
+            <span className={status === 'done' ? 'text-emerald-400 font-semibold' : ''}>
+              {status === 'done' ? 'ready' : metaInfo.meta}
+            </span>
+          </div>
 
       <Handle type="source" position={Position.Bottom} className="!bg-gray-600 !w-1.5 !h-1.5" />
     </div>
@@ -137,6 +142,7 @@ const nodeTypes = { agentNode: AgentNode };
 
 export default function GraphVisualizer({ onNodeClick }: { onNodeClick?: (node: any) => void }) {
   const nodeStatus = useGraphStore((s) => s.nodeStatus);
+  const nodeTokens = useGraphStore((s) => s.nodeTokens);
   const current_node = useGraphStore((s) => s.current_node);
   const retries = useGraphStore((s) => s.retries);
   const pipeline_status = useGraphStore((s) => s.pipeline_status);
@@ -157,10 +163,11 @@ export default function GraphVisualizer({ onNodeClick }: { onNodeClick?: (node: 
           label: GRAPH_LABELS[id] || id,
           status: status,
           retries: retries[id] || 0,
+          tokens: isPipelineRunning ? (nodeTokens[id] || 0) : 0,
         },
       };
     });
-  }, [nodeStatus, retries, isPipelineRunning]);
+  }, [nodeStatus, nodeTokens, retries, isPipelineRunning]);
 
   const edges: Edge[] = useMemo(() => {
     return [

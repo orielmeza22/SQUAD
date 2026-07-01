@@ -65,6 +65,7 @@ class PipelineState:
     # LangGraph state
     graph_run_id: Optional[str] = None        # ID del run actual para reanudar
     graph_node_status: Dict[str, str] = field(default_factory=dict)  # {agent_name: "thinking"|"executing"|"error"|"done"|"paused_hitl"}
+    graph_node_tokens: Dict[str, int] = field(default_factory=dict)  # {agent_name: token_count}
     graph_last_error: Optional[str] = None    # último error reportado por QA/reviewer
 
     def set_node_status(self, node: str, status: str) -> None:

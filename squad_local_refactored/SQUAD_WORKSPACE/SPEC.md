@@ -2,7 +2,7 @@
 **STACK:** FASTAPI_HTMX
 
 #### 1. **Descripción del Proyecto**
-El objetivo de esta aplicación es proporcionar una interfaz sencilla para anotar los puntos de juegos de mesa. La aplicación utilizará FastAPI como backend y HTMX para la interactividad en el frontend, todo ello integrado con SQLite como base de datos.
+El objetivo de esta aplicación es proporcionar una interfaz sencilla para gestionar turnos médicos utilizando FastAPI como backend y HTMX para la interactividad en el frontend, todo ello integrado con SQLite como base de datos.
 
 #### 2. **Arquitectura del Sistema**
 ##### 2.1 **Backend (FastAPI)**
@@ -18,95 +18,88 @@ El objetivo de esta aplicación es proporcionar una interfaz sencilla para anota
   - `static/css/style.css`: Archivo CSS para estilizar la aplicación.
 
 #### 3. **Base de Datos (SQLite)**
-- **Archivo:** squad_checkpoints.sqlite
+- **Archivo:** medical_turns.sqlite
   - **Tablas:**
-    - `games`
+    - `patients`
       - `id` (INTEGER, PRIMARY KEY)
       - `name` (TEXT)
       - `created_at` (DATETIME)
-    - `checkpoints`
+    - `turns`
       - `id` (INTEGER, PRIMARY KEY)
-      - `game_id` (INTEGER, FOREIGN KEY REFERENCES games(id))
-      - `player_name` (TEXT)
-      - `score` (INTEGER)
-      - `timestamp` (DATETIME)
+      - `patient_id` (INTEGER, FOREIGN KEY REFERENCES patients(id))
+      - `doctor_name` (TEXT)
+      - `appointment_time` (DATETIME)
 
 #### 4. **Endpoints y Rutas**
-##### 4.1 **Ruta: /games**
+##### 4.1 **Ruta: /patients**
 - **Método:** GET
-  - **Descripción:** Retorna una lista de todos los juegos registrados.
+  - **Descripción:** Retorna una lista de todos los pacientes registrados.
   - **Respuesta:**
     ```json
     [
       {
         "id": 1,
-        "name": "Juego 1",
+        "name": "Paciente A",
         "created_at": "2023-10-01T12:00:00Z"
       },
       {
         "id": 2,
-        "name": "Juego 2",
+        "name": "Paciente B",
         "created_at": "2023-10-02T12:00:00Z"
       }
     ]
     ```
-
-##### 4.2 **Ruta: /games**
+##### 4.2 **Ruta: /patients**
 - **Método:** POST
-  - **Descripción:** Crea un nuevo juego.
+  - **Descripción:** Crea un nuevo paciente.
   - **Entrada:**
     ```json
     {
-      "name": "Juego Nuevo"
+      "name": "Paciente Nuevo"
     }
     ```
   - **Respuesta:**
     ```json
     {
       "id": 3,
-      "name": "Juego Nuevo",
+      "name": "Paciente Nuevo",
       "created_at": "2023-10-03T12:00:00Z"
     }
     ```
-
-##### 4.3 **Ruta: /games/{game_id}/checkpoints**
+##### 4.3 **Ruta: /patients/{patient_id}/turns**
 - **Método:** GET
-  - **Descripción:** Retorna una lista de puntos anotados para un juego específico.
+  - **Descripción:** Retorna una lista de turnos registrados para un paciente específico.
   - **Respuesta:**
     ```json
     [
       {
         "id": 1,
-        "player_name": "Jugador A",
-        "score": 50,
-        "timestamp": "2023-10-01T12:00:00Z"
+        "doctor_name": "Doctor A",
+        "appointment_time": "2023-10-01T14:00:00Z"
       },
       {
         "id": 2,
-        "player_name": "Jugador B",
-        "score": 75,
-        "timestamp": "2023-10-01T12:05:00Z"
+        "doctor_name": "Doctor B",
+        "appointment_time": "2023-10-01T15:00:00Z"
       }
     ]
     ```
-
-##### 4.4 **Ruta: /games/{game_id}/checkpoints**
+##### 4.4 **Ruta: /patients/{patient_id}/turns**
 - **Método:** POST
-  - **Descripción:** Anota un nuevo punto para un juego específico.
+  - **Descripción:** Crea un nuevo turno para un paciente específico.
   - **Entrada:**
     ```json
     {
-      "player_name": "Jugador C",
-      "score": 100
+      "doctor_name": "Doctor C",
+      "appointment_time": "2023-10-01T16:00:00Z"
     }
     ```
   - **Respuesta:**
     ```json
     {
       "id": 3,
-      "player_name": "Jugador C",
-      "score": 100,
-      "timestamp": "2023-10-01T12:10:00Z"
+      "doctor_name": "Doctor C",
+      "appointment_time": "2023-10-01T16:00:00Z"
     }
     ```
 
@@ -119,7 +112,7 @@ project_root/
 ├── static/
 │   ├── css/
 │   │   └── style.css
-└── squad_checkpoints.sqlite
+└── medical_turns.sqlite
 ```
 
 #### 6. **Consideraciones Finales**

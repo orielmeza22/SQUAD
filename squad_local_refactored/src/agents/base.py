@@ -26,7 +26,7 @@ class BaseAgent(ABC):
 
     def generate(self, model: str, prompt: str, is_json: bool = False) -> str:
         """Generate text via the unified AI provider."""
-        return AIProvider().generate(model=model, prompt=prompt, is_json=is_json)
+        return AIProvider().generate(model=model, prompt=prompt, is_json=is_json, agent_name=self.name)
 
     @abstractmethod
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:

@@ -204,7 +204,16 @@ class AIProvider:
         if cached_response is not None:
             state.cache_hits += 1
             state.token_in += prompt_tokens
-            state.token_out += len(cached_response) // 4
+            response_tokens = len(cached_response) // 4
+            state.token_out += response_tokens
+            
+            agent_name = kwargs.get("agent_name")
+            if agent_name:
+                agent_key = agent_name.lower().strip()
+                if not hasattr(state, "graph_node_tokens"):
+                    state.graph_node_tokens = {}
+                state.graph_node_tokens[agent_key] = state.graph_node_tokens.get(agent_key, 0) + prompt_tokens + response_tokens
+            
             print("⚡ [LLM CACHE HIT] Retornando respuesta guardada de caché local.")
             return cached_response
         
@@ -225,6 +234,13 @@ class AIProvider:
         # Track response tokens and cost
         response_tokens = len(response) // 4
         state.token_out += response_tokens
+        
+        agent_name = kwargs.get("agent_name")
+        if agent_name:
+            agent_key = agent_name.lower().strip()
+            if not hasattr(state, "graph_node_tokens"):
+                state.graph_node_tokens = {}
+            state.graph_node_tokens[agent_key] = state.graph_node_tokens.get(agent_key, 0) + prompt_tokens + response_tokens
         
         # Update cost tracking (simplified estimation)
         if model.startswith("gemini-"):
