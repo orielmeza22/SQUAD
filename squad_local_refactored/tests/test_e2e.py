@@ -60,3 +60,25 @@ def test_full_pipeline_e2e(mock_available, mock_run_graph, client):
     # Verificar que se llamó al motor de grafos (no al legacy)
     mock_run_graph.assert_called_once_with("Crear una app de tareas", "gemini-2.5-flash")
 
+
+def test_infra_destroy_cleanup(client):
+    """Verifica que el endpoint /api/infra/destroy limpia las variables de estado transitorias."""
+    # 1. Set some mock active state
+    state.pending_writes = {"test.py": "content"}
+    state.chat_history = [{"role": "user", "content": "hello"}]
+    state.logs = ["log entry 1", "log entry 2"]
+    state.launcher_logs = ["launcher log 1"]
+    state.active_diagnostic = {"error": "test error", "file": "test.py", "line": 10}
+
+    # 2. Call destroy endpoint
+    response = client.post("/api/infra/destroy")
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+    # 3. Assert state is cleared
+    assert state.pending_writes == {}
+    assert state.chat_history == []
+    assert state.logs == []
+    assert state.launcher_logs == []
+    assert state.active_diagnostic is None
+

@@ -154,3 +154,11 @@ SQUAD (Software Engineering Autonomous Development) is a multi-agent system that
 1. Add tool functions in `src/tools/`
 2. Expose to agents via tool registry
 3. Document in agent prompts
+
+## Architecture Decision Records (ADRs)
+
+Hemos documentado las decisiones arquitectónicas clave del refactor del sistema:
+
+* [ADR 0001: Bifurcación de Layouts (Layout Switch) en Estado de Reposo](file:///c:/Users/miapu/Downloads/untitled/docs/adr/0001-layout-switch-for-idle-state.md)
+* [ADR 0002: Selector de Pestañas Secundarias Mediante Elemento Select Nativo](file:///c:/Users/miapu/Downloads/untitled/docs/adr/0002-native-tabs-select-dropdown.md)
+* [ADR 0003: Limpieza de Estado en Memoria durante la Destrucción del Entorno](file:///c:/Users/miapu/Downloads/untitled/docs/adr/0003-backend-transient-state-reset-on-environment-destruction.md)
