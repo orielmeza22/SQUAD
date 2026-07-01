@@ -1,22 +1,70 @@
 import React from 'react';
-import { Shield, Sparkles } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
-interface ConfidenceHeatmapProps {
-  lines?: { text: string; confidence: 'high' | 'medium' | 'low' | 'none' }[];
+interface ScannedLine {
+  text: string;
+  confidence: 'high' | 'medium' | 'low' | 'none';
 }
 
-export default function ConfidenceHeatmap({ lines }: ConfidenceHeatmapProps) {
-  const mockLines = lines ?? [
-    { text: 'import os', confidence: 'none' },
-    { text: 'from fastapi import FastAPI, Depends', confidence: 'high' },
-    { text: 'from pydantic import BaseModel', confidence: 'high' },
-    { text: '', confidence: 'none' },
-    { text: 'app = FastAPI(title="Sanatorio API")', confidence: 'high' },
-    { text: '', confidence: 'none' },
-    { text: 'def validate_user_role(role: str):', confidence: 'high' },
-    { text: '    allowed_roles = {"doctor", "admin", "patient"}', confidence: 'high' },
-    { text: '    return role in allowed_roles', confidence: 'high' }
-  ];
+function scanCode(code: string, filename: string): ScannedLine[] {
+  if (!code) {
+    return [{ text: 'Selecciona un archivo activo en el editor para ver el mapa de confianza heurístico en tiempo real.', confidence: 'none' }];
+  }
+  
+  const isPython = filename.endsWith('.py');
+  const isJSOrTS = filename.endsWith('.js') || filename.endsWith('.ts') || filename.endsWith('.jsx') || filename.endsWith('.tsx');
+  
+  const lines = code.split('\n');
+  return lines.map(line => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      return { text: line, confidence: 'none' };
+    }
+    
+    // 1. Low Confidence Indicators (TODOs, Placeholders, Hardcoded secrets, unhandled errors, formatting leftovers)
+    const hasTodo = /\b(TODO|FIXME|XXX)\b/i.test(trimmed);
+    const hasPlaceholder = /\b(implementar|completar|\.\.\.|implement\s+here)\b/i.test(trimmed);
+    const hasSecret = /\b(secret|passwd|password|api_key|token|auth_key|private_key)\b/i.test(trimmed) && /['"`][a-zA-Z0-9_\-]{4,}['"`]/.test(trimmed);
+    const hasExceptPass = isPython 
+      ? /except\b.*:\s*pass/i.test(trimmed) 
+      : isJSOrTS ? /catch\b.*\{\s*\}/i.test(trimmed) : false;
+      
+    if (hasTodo || hasPlaceholder || hasSecret || hasExceptPass) {
+      return { text: line, confidence: 'low' };
+    }
+    
+    // 2. High Confidence Indicators (Imports, Config setups, standard packages)
+    const isImport = /^(import\b|from\b|const\s+.*\s*=\s*require\(|import\s+.*\s+from\s+['"])/.test(trimmed);
+    if (isImport) {
+      return { text: line, confidence: 'high' };
+    }
+    
+    // 3. Functions and class definitions (Checking for type hints and docstrings)
+    const isFunctionOrClass = /^(def\b|class\b|function\b|const\s+.*\s*=\s*\(.*\)\s*=>)/.test(trimmed);
+    if (isFunctionOrClass) {
+      // If it contains type annotations (colon or arrow)
+      const hasTypeHints = /:\s*[a-zA-Z_]+|->\s*[a-zA-Z_]+/.test(trimmed);
+      return { text: line, confidence: hasTypeHints ? 'high' : 'medium' };
+    }
+    
+    // 4. Default return / business logic
+    // Comments are usually none, actual logic is high
+    const isComment = isPython ? trimmed.startsWith('#') : isJSOrTS ? trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*') : false;
+    if (isComment) {
+      return { text: line, confidence: 'none' };
+    }
+    
+    return { text: line, confidence: 'high' };
+  });
+}
+
+export default function ConfidenceHeatmap() {
+  const { currentFiles, activeTab } = useApp();
+  
+  const filename = activeTab ? activeTab.split('/').pop() || activeTab : '';
+  const fileContent = activeTab ? (currentFiles[activeTab] || '') : '';
+  const scannedLines = scanCode(fileContent, filename);
 
   const getConfidenceStyle = (level: 'high' | 'medium' | 'low' | 'none') => {
     if (level === 'high') return 'border-l-2 border-emerald-500 bg-emerald-500/5';
@@ -32,15 +80,17 @@ export default function ConfidenceHeatmap({ lines }: ConfidenceHeatmapProps) {
         <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400 border border-indigo-500/20">
           <Shield size={16} />
         </div>
-        <div>
+        <div className="flex-1">
           <h2 className="text-xs font-bold uppercase tracking-wider">Confidence Heatmap</h2>
-          <span className="text-[9px] text-gray-400">Verificación de confianza heurística por línea de código</span>
+          <span className="text-[9px] text-gray-400">
+            {activeTab ? `Análisis heurístico en tiempo real de: ${filename}` : 'Verificación de confianza heurística por línea de código'}
+          </span>
         </div>
       </div>
 
       {/* Code heat list viewer */}
       <div className="flex-1 bg-black/45 border border-white/5 rounded-xl p-3 font-mono text-[10.5px] leading-relaxed overflow-y-auto space-y-1 select-text">
-        {mockLines.map((line, idx) => (
+        {scannedLines.map((line, idx) => (
           <div key={idx} className={`flex px-2 py-0.5 rounded transition-all ${getConfidenceStyle(line.confidence)}`}>
             <span className="text-[9px] text-gray-600 w-8 select-none font-mono text-right pr-2">{idx + 1}</span>
             <span className="flex-1 whitespace-pre select-text text-gray-200">{line.text}</span>
