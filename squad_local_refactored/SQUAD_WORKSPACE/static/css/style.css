@@ -1,0 +1,16 @@
+/* Estilos personalizados */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+h1 {
+    color: #34D399; /* Emerald accent */
+}
+
+form input, form button {
+    outline: none;
+}
+
+button:hover {
+    background-color: #22C55E;
+}

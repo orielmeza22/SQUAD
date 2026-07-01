@@ -24,6 +24,10 @@ interface GraphState {
   isPausedSpec: boolean;
   pipeline_status: string | null;
 
+  // Active REPL Session
+  activeReplSession: string;
+  setActiveReplSession: (session: string) => void;
+
   // Diff panel for HITL
   diffData: DiffData | null;
   showDiffPanel: boolean;
@@ -62,6 +66,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   isPausedHitl: false,
   isPausedSpec: false,
   pipeline_status: null,
+  activeReplSession: 'architect',
+  setActiveReplSession: (session: string) => set({ activeReplSession: session }),
   diffData: null,
   showDiffPanel: false,
   isLoading: false,

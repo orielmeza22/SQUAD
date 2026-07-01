@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Cpu, Clock, Award, Shield, FileText } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useGraphStore } from '../stores/graphStore';
 
 interface ToolCall {
   name: string;
@@ -18,6 +19,12 @@ interface AgentInspectorProps {
     status: string;
     agentType?: string;
   } | null;
+  position: { top: number; left: number } | null;
+  onViewCode: (label: string) => void;
+  onViewLogs: (label: string) => void;
+  onViewDiff: () => void;
+  onRetry: () => void;
+  onEscalate: () => void;
 }
 
 function parseInspectorLogs(label: string, logs: string[], isRunning: boolean) {
@@ -114,138 +121,245 @@ function parseInspectorLogs(label: string, logs: string[], isRunning: boolean) {
   };
 }
 
-export default function AgentInspector({ isOpen, onClose, nodeData }: AgentInspectorProps) {
+export default function AgentInspector({
+  isOpen,
+  onClose,
+  nodeData,
+  position,
+  onViewCode,
+  onViewLogs,
+  onViewDiff,
+  onRetry,
+  onEscalate
+}: AgentInspectorProps) {
   const { pipelineLogs, isPipelineRunning } = useApp();
-  
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  // Esc key closure
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Click outside closure (without blocking other clicks)
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.react-flow__node') && !target.closest('.agent-inspector')) {
+          onClose();
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
+
   if (!isOpen || !nodeData) return null;
 
-  const { thinking, toolCalls, confidence, specVersion } = parseInspectorLogs(
+  const { thinking, toolCalls, confidence } = parseInspectorLogs(
     nodeData.label, 
     pipelineLogs, 
     isPipelineRunning
   );
 
-  const getConfidenceColor = (val: number) => {
-    if (val >= 0.85) return 'from-emerald-500 to-teal-500';
-    if (val >= 0.6) return 'from-amber-500 to-orange-500';
-    return 'from-rose-500 to-red-500';
+  const getStatusColor = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === 'thinking' || s === 'executing') return 'bg-amber-400 animate-pulse';
+    if (s === 'done') return 'bg-emerald-400';
+    if (s === 'error') return 'bg-rose-500';
+    return 'bg-gray-500';
   };
 
+  const getMetadataDesc = (label: string) => {
+    const l = label.toLowerCase();
+    if (l.includes('architect')) return 'spec.md · stack · schema';
+    if (l.includes('dba')) return 'database · migrations';
+    if (l.includes('frontend')) return 'views · templates · ui';
+    if (l.includes('backend')) return 'routes · apis · logic';
+    if (l.includes('review')) return 'code quality inspection';
+    if (l.includes('fix')) return 'syntactic self-healing';
+    if (l.includes('qa')) return 'tests · devops run';
+    return 'infrastructure deploy';
+  };
+
+  // Helper to extract unique tool names
+  const getToolNames = () => {
+    const names = toolCalls.map(tc => tc.name);
+    if (names.length === 0) {
+      if (nodeData.label.toLowerCase().includes('architect')) return ['read_file', 'write_file'];
+      if (nodeData.label.toLowerCase().includes('dba')) return ['execute_sql', 'write_file'];
+      return ['repl_execute', 'write_file', 'skill'];
+    }
+    return Array.from(new Set(names));
+  };
+
+  // Format tokens count
+  const agentTokens = useGraphStore.getState().nodeTokens[nodeData.id] || 0;
+  const formatTokens = (t: number) => {
+    if (!t || t <= 0) return '—';
+    if (t >= 1000) return `${(t / 1000).toFixed(1)}k tkn`;
+    return `${t} tkn`;
+  };
+
+  const filesWrittenCount = toolCalls.filter(c => c.name === 'write_file').length || (isPipelineRunning ? 1 : 0);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-sm transition-all duration-300">
-      <div className="h-full w-[460px] border-l border-white/10 bg-[#0E0E12]/80 p-6 shadow-2xl backdrop-blur-xl flex flex-col space-y-6 animate-in slide-in-from-right duration-200">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20 text-indigo-400">
-              <Cpu size={18} />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">{nodeData.label}</h2>
-              <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-widest">
-                Agente: {nodeData.agentType || 'Orquestador'}
-              </span>
-            </div>
+    <div
+      ref={ref}
+      className="agent-inspector absolute w-[320px] bg-[#0A0A1A]/95 backdrop-blur-[20px] border border-indigo-500/30 rounded-xl p-4 shadow-[0_0_1px_rgba(74,158,255,0.3),0_0_40px_rgba(74,158,255,0.2),0_20px_60px_rgba(0,0,0,0.5)] z-[100] font-sans transition-all select-text text-left"
+      style={{
+        top: position ? `${position.top}px` : '20%',
+        left: position ? `${position.left}px` : '35%',
+      }}
+    >
+      <style>{`
+        .agent-inspector {
+          animation: inspector-in 0.2s ease-out;
+        }
+        @keyframes inspector-in {
+          from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
+
+      {/* Top Header line */}
+      <div className="flex items-center justify-between text-[8px] font-mono text-gray-500 mb-2">
+        <div className="flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(nodeData.status)}`} />
+          <span className="uppercase font-bold tracking-wider">{nodeData.status}</span>
+          <span>·</span>
+          <span>iter 2</span>
+        </div>
+        <button 
+          onClick={onClose}
+          className="text-gray-500 hover:text-white hover:underline transition-all cursor-pointer font-bold animate-pulse"
+        >
+          [x] cerrar
+        </button>
+      </div>
+
+      {/* Title block */}
+      <div className="mb-2">
+        <h3 className="text-[12px] font-bold text-white uppercase tracking-wider font-mono">
+          {nodeData.label}
+        </h3>
+        <p className="text-[9px] text-gray-400 font-mono">
+          {getMetadataDesc(nodeData.label)}
+        </p>
+      </div>
+
+      <hr className="border-indigo-500/10 my-2" />
+
+      {/* Métricas */}
+      <div className="font-mono text-[9px] text-gray-400 space-y-0.5">
+        <div className="text-[7.5px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Métricas</div>
+        <div>
+          Tokens: <span className="text-gray-200 font-semibold">{formatTokens(agentTokens)}</span>
+          {' · '}
+          Tiempo: <span className="text-gray-200 font-semibold">{isPipelineRunning ? '18s' : '55s'}</span>
+          {' · '}
+          Files: <span className="text-gray-200 font-semibold">{filesWrittenCount}</span>
+        </div>
+      </div>
+
+      <hr className="border-indigo-500/10 my-2" />
+
+      {/* Actividad Reciente */}
+      <div className="font-mono text-[9px] text-gray-400 space-y-1">
+        <div className="text-[7.5px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Actividad Reciente</div>
+        {thinking.length === 0 ? (
+          <div className="text-[8px] text-gray-600 italic">Esperando inicio de actividad...</div>
+        ) : (
+          <div className="bg-[#05050C]/50 border border-white/5 rounded p-2 text-[8.5px] text-gray-300 leading-relaxed max-h-[80px] overflow-y-auto space-y-1">
+            {thinking.slice(-3).map((thought, idx) => (
+              <div key={idx} className="flex items-start gap-1">
+                <span className="text-indigo-400">›</span>
+                <span className="truncate max-w-[250px]">{thought}</span>
+              </div>
+            ))}
           </div>
+        )}
+      </div>
+
+      <hr className="border-indigo-500/10 my-2" />
+
+      {/* Herramientas Usadas */}
+      <div className="font-mono text-[9px] text-gray-400">
+        <div className="text-[7.5px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Herramientas Usadas</div>
+        <div className="flex flex-wrap gap-1 mt-1">
+          {getToolNames().map((tool, idx) => (
+            <span key={idx} className="text-[8px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-1 rounded">
+              [{tool}]
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <hr className="border-indigo-500/10 my-2" />
+
+      {/* Confianza */}
+      <div className="font-mono text-[9px] text-gray-400 space-y-1">
+        <div className="flex justify-between items-center text-[7.5px] font-bold text-indigo-400 uppercase tracking-wider">
+          <span>Confianza</span>
+          <span className="text-[9px] font-semibold text-gray-200">{(confidence * 100).toFixed(0)}%</span>
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          <div className="flex-1 bg-white/5 h-2 rounded overflow-hidden border border-white/5 p-[1px]">
+            <div 
+              className="bg-indigo-500 h-full rounded transition-all duration-300"
+              style={{ width: `${confidence * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <hr className="border-indigo-500/10 my-2.5" />
+
+      {/* Acciones Disponibles */}
+      <div className="flex flex-col gap-1.5 font-mono text-[9px]">
+        <div className="flex justify-between gap-1 text-[8.5px]">
           <button 
-            onClick={onClose}
-            className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer"
+            onClick={() => onViewCode(nodeData.label)}
+            className="flex-1 text-center bg-indigo-600/15 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/20 py-1 rounded transition-all cursor-pointer font-bold"
           >
-            <X size={16} />
+            [Ver código]
+          </button>
+          <button 
+            onClick={() => onViewLogs(nodeData.label)}
+            className="flex-1 text-center bg-indigo-600/15 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/20 py-1 rounded transition-all cursor-pointer font-bold"
+          >
+            [Ver logs]
+          </button>
+          <button 
+            onClick={onViewDiff}
+            className="flex-1 text-center bg-indigo-600/15 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/20 py-1 rounded transition-all cursor-pointer font-bold"
+          >
+            [Ver diff]
           </button>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto space-y-6 pr-2 select-text font-sans">
-          
-          {/* Confidence Score */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 text-xs text-gray-300 font-bold">
-                <Award size={14} className="text-indigo-400" />
-                <span>Confidence Score</span>
-              </div>
-              <span className="text-xs font-mono font-bold text-indigo-300">
-                {isPipelineRunning || pipelineLogs.length > 0 ? `${(confidence * 100).toFixed(0)}%` : '—'}
-              </span>
-            </div>
-            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5 p-[1px]">
-              <div 
-                className={`bg-gradient-to-r ${getConfidenceColor(confidence)} h-full rounded-full transition-all duration-500`}
-                style={{ width: `${(isPipelineRunning || pipelineLogs.length > 0) ? confidence * 100 : 0}%` }}
-              />
-            </div>
-          </div>
+        {/* Conditional Buttons (Retry/HITL) */}
+        {nodeData.status.toLowerCase() === 'error' && (
+          <button 
+            onClick={onRetry}
+            className="w-full text-center bg-rose-500/25 hover:bg-rose-500/35 text-rose-300 border border-rose-500/30 py-1.5 rounded transition-all cursor-pointer font-bold uppercase tracking-wider"
+          >
+            🔄 Reintentar Nodo
+          </button>
+        )}
 
-          {/* Context Received */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-1.5 text-xs font-bold text-gray-300">
-              <FileText size={14} className="text-indigo-400" />
-              <span>Contexto Recibido</span>
-            </div>
-            <div className="bg-black/30 border border-white/5 rounded-lg p-3 space-y-2.5">
-              <div className="flex items-center justify-between text-[10px] text-gray-400">
-                <span>Especificación Activa:</span>
-                <span className="font-mono text-indigo-300">{specVersion}</span>
-              </div>
-              <div className="text-[10px] text-gray-400 space-y-1">
-                <div>Skills Inyectadas:</div>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  <span className="bg-white/5 text-gray-500 px-1.5 py-0.5 rounded text-[8px]">Ninguna</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Thinking Chain */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-1.5 text-xs font-bold text-gray-300">
-              <Shield size={14} className="text-indigo-400" />
-              <span>Thinking Chain (Razonamiento)</span>
-            </div>
-            <div className="bg-black/40 border border-white/5 rounded-lg p-4 font-mono text-[10px] text-gray-300 leading-relaxed space-y-3">
-              {thinking.map((thought, idx) => (
-                <div key={idx} className="flex items-start space-x-2">
-                  <span className="text-indigo-400 select-none">›</span>
-                  <p>{thought}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Cronología de Herramientas */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-1.5 text-xs font-bold text-gray-300">
-              <Clock size={14} className="text-indigo-400" />
-              <span>Llamadas a Herramientas</span>
-            </div>
-            <div className="space-y-2">
-              {toolCalls.length === 0 ? (
-                <div className="text-white/20 italic text-[10px] py-2 text-center">
-                  Ninguna llamada a herramienta registrada.
-                </div>
-              ) : (
-                toolCalls.map((call, idx) => (
-                  <div key={idx} className="bg-[#141419]/60 border border-white/5 p-2.5 rounded-lg flex items-center justify-between text-[10px]">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-amber-400 font-bold">{call.name}()</span>
-                        <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1 rounded text-[8px] uppercase tracking-widest font-bold">
-                          {call.status}
-                        </span>
-                      </div>
-                      <code className="text-gray-500 text-[9px] block max-w-[280px] truncate">{call.args}</code>
-                    </div>
-                    <span className="font-mono text-gray-400 text-[9px]">{call.time}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-        </div>
-
+        {(nodeData.status.toLowerCase() === 'paused_hitl' || useGraphStore.getState().isPausedHitl) && (
+          <button 
+            onClick={onEscalate}
+            className="w-full text-center bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 border border-amber-500/30 py-1.5 rounded transition-all cursor-pointer font-bold uppercase tracking-wider"
+          >
+            🙋 Escalar a HITL / Aprobar
+          </button>
+        )}
       </div>
     </div>
   );

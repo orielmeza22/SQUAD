@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang='es'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Gestión de Turnos Médicos</title>
+    <script src='https://unpkg.com/htmx.org@2.0.0'></script>
+    <script src='https://cdn.tailwindcss.com'></script>
+    <link rel='stylesheet' href='/static/css/style.css'>
+</head>
+<body class='bg-slate-900 text-white'>
+    <div class='container mx-auto p-4'>
+        <h1 class='text-3xl font-bold mb-4'>Gestión de Turnos Médicos</h1>
+        <div id='patients-list' hx-get='/patients' hx-trigger='load' hx-swap='innerHTML'>
+            Cargando pacientes...
+        </div>
+        <form class='mt-4' hx-post='/patients' hx-target='#patients-list' hx-swap='outerHTML'>
+            <input type='text' name='name' placeholder='Nombre del Paciente' required class='border border-gray-500 p-2 rounded mr-2'>
+            <button type='submit' class='bg-emerald-500 text-white px-4 py-2 rounded'>Agregar Paciente</button>
+        </form>
+    </div>
+</body>
+</html>

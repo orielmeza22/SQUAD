@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Terminal, Cpu, Database, Eye } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useGraphStore } from '../stores/graphStore';
 
 interface REPLSession {
   id: string;
@@ -12,7 +13,8 @@ interface REPLSession {
 
 export default function MultiSessionREPL() {
   const { pipelineLogs, isPipelineRunning, activeNode } = useApp();
-  const [activeSession, setActiveSession] = useState('architect');
+  const activeSession = useGraphStore((s) => s.activeReplSession);
+  const setActiveSession = useGraphStore((s) => s.setActiveReplSession);
 
   // Filter logs dynamically based on the session keyword matches
   const getSessionLogs = (sessionId: string): string[] => {

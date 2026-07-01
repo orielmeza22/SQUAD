@@ -50,6 +50,8 @@ interface AgentNodeData {
   status: NodeStatus;
   retries: number;
   tokens: number;
+  isHighlighted: boolean;
+  hasActiveInspector: boolean;
 }
 
 function AgentNode({ data }: { data: AgentNodeData }) {
@@ -81,22 +83,52 @@ function AgentNode({ data }: { data: AgentNodeData }) {
 
   const metaInfo = getMetadata(data.label);
 
+  const [showTooltip, setShowTooltip] = React.useState(false);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setShowTooltip(true);
+    }, 1000);
+  };
+
+  const handleMouseLeave = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setShowTooltip(false);
+  };
+
   const formatTokens = (t: number) => {
     if (!t || t <= 0) return '—';
     if (t >= 1000) return `${(t / 1000).toFixed(1)}k tkn`;
     return `${t} tkn`;
   };
 
+  const highlightClass = data.hasActiveInspector
+    ? data.isHighlighted
+      ? 'scale-[1.03] border-indigo-500/80 shadow-[0_0_20px_rgba(99,102,241,0.4)] opacity-100 z-50'
+      : 'opacity-40'
+    : 'opacity-100';
+
   return (
     <div
-      className={`px-4 py-3 rounded-lg border bg-[#12121C] text-left transition-all select-none min-w-[170px] ${
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`px-4 py-3 rounded-lg border bg-[#12121C] text-left transition-all select-none min-w-[170px] relative ${
         status === 'done' ? 'border-emerald-500/30' : ''
       } ${
         isCurrent ? 'border-violet-500 shadow-2xl shadow-violet-500/10 animate-pulse' : 'border-[#222233]'
       } ${
         isPaused ? 'border-amber-500 shadow-lg shadow-amber-500/15' : ''
-      }`}
+      } ${highlightClass}`}
     >
+      {showTooltip && (
+        <div className="absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-[#0C0C14] border border-[#222233] px-2.5 py-1.5 rounded shadow-xl text-[8px] font-mono text-gray-300 w-max z-[100] pointer-events-none animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-0.5 text-left border-l-2 border-l-indigo-500">
+          <div className="font-bold text-white uppercase tracking-wider">{data.label}</div>
+          <div>Status: <span className="text-violet-400 font-semibold">{status}</span></div>
+          <div>Tokens: <span className="text-amber-400 font-semibold">{formatTokens(data.tokens)}</span></div>
+        </div>
+      )}
       <Handle type="target" position={Position.Top} className="!bg-gray-600 !w-1.5 !h-1.5" />
       
       <div className="flex items-center justify-between mb-1.5">
@@ -142,7 +174,17 @@ function AgentNode({ data }: { data: AgentNodeData }) {
 
 const nodeTypes = { agentNode: AgentNode };
 
-export default function GraphVisualizer({ onNodeClick }: { onNodeClick?: (node: any) => void }) {
+export default function GraphVisualizer({ 
+  onNodeClick, 
+  onNodeDoubleClick,
+  onNodeContextMenu,
+  activeInspectorNodeId 
+}: { 
+  onNodeClick?: (event: React.MouseEvent, node: any) => void;
+  onNodeDoubleClick?: (event: React.MouseEvent, node: any) => void;
+  onNodeContextMenu?: (event: React.MouseEvent, node: any) => void;
+  activeInspectorNodeId?: string | null;
+}) {
   const nodeStatus = useGraphStore((s) => s.nodeStatus);
   const nodeTokens = useGraphStore((s) => s.nodeTokens);
   const current_node = useGraphStore((s) => s.current_node);
@@ -166,10 +208,12 @@ export default function GraphVisualizer({ onNodeClick }: { onNodeClick?: (node: 
           status: status,
           retries: retries[id] || 0,
           tokens: isPipelineRunning ? (nodeTokens[id] || 0) : 0,
+          isHighlighted: activeInspectorNodeId === id,
+          hasActiveInspector: !!activeInspectorNodeId,
         },
       };
     });
-  }, [nodeStatus, nodeTokens, retries, isPipelineRunning]);
+  }, [nodeStatus, nodeTokens, retries, isPipelineRunning, activeInspectorNodeId]);
 
   const edges: Edge[] = useMemo(() => {
     return [
@@ -189,14 +233,14 @@ export default function GraphVisualizer({ onNodeClick }: { onNodeClick?: (node: 
   }, []);
 
   return (
-    <div className="h-full w-full bg-[#0A0A0C]">
+    <div className={`h-full w-full bg-[#0A0A0C] transition-all duration-300 ${activeInspectorNodeId ? 'opacity-[0.85]' : 'opacity-100'}`}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        onNodeClick={(event, node) => {
-          if (onNodeClick) onNodeClick(node);
-        }}
+        onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
+        onNodeContextMenu={onNodeContextMenu}
         fitView
         minZoom={0.4}
         maxZoom={1.5}

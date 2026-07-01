@@ -134,7 +134,7 @@ function MainLayout() {
     contextWindow, setContextWindow, systemPrompt, setSystemPrompt,
     envContent, setEnvContent, envEditMode, setEnvEditMode,
     preflightStatus, installingTools, fetchPreflightStatus, installSystemTool, saveEnvContent,
-    isDiffMode, activeTab, editorFontSize, setEditorFontSize, currentFiles,
+    isDiffMode, activeTab, setActiveTab, editorFontSize, setEditorFontSize, currentFiles,
     dbSchemaData, fetchDbSchemaDiagram,
     githubToken, setGithubToken, githubRepoName, setGithubRepoName, githubPrivate, setGithubPrivate, isPublishingGithub, publishToGithub,
     isDbProvisioning, handleDbProvision,
@@ -169,6 +169,55 @@ function MainLayout() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [hasUserStarted, setHasUserStarted] = useState(false);
 
+  const getAgentFile = (label: string, fileKeys: string[]) => {
+    const l = label.toLowerCase();
+    if (l.includes('architect')) {
+      return fileKeys.find(k => k.endsWith('SPEC.md') || k.endsWith('ARCHITECTURE.md')) || 'SPEC.md';
+    }
+    if (l.includes('dba')) {
+      return fileKeys.find(k => k.includes('schema') || k.endsWith('.sql')) || 'db/schema.sql';
+    }
+    if (l.includes('backend')) {
+      return fileKeys.find(k => k.endsWith('.py')) || 'main_output.py';
+    }
+    if (l.includes('frontend')) {
+      return fileKeys.find(k => k.endsWith('.html') || k.endsWith('.css') || k.includes('static/')) || 'templates/index.html';
+    }
+    return fileKeys[0] || 'SPEC.md';
+  };
+
+  const handleGraphNodeClick = (event: React.MouseEvent, node: any) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const spaceRight = window.innerWidth - rect.right;
+    const cardWidth = 320;
+    const padding = 12;
+
+    let left = rect.right + padding;
+    if (spaceRight < cardWidth + padding) {
+      left = rect.left - cardWidth - padding;
+    }
+
+    setInspectorPosition({
+      top: rect.top + window.scrollY,
+      left: left + window.scrollX
+    });
+    setInspectorNode(node);
+    setIsInspectorOpen(true);
+  };
+
+  const handleGraphNodeDoubleClick = (event: React.MouseEvent, node: any) => {
+    const fileKeys = Object.keys(currentFiles);
+    const targetFile = getAgentFile(node.data?.label || node.label, fileKeys);
+    setActiveTab(targetFile);
+    setCentralView('editor');
+    setIsInspectorOpen(false);
+  };
+
+  const handleGraphNodeContextMenu = (event: React.MouseEvent, node: any) => {
+    event.preventDefault();
+    handleGraphNodeClick(event, node);
+  };
+
   const showIdleScreen = !isPipelineRunning && !hasUserStarted;
 
   const handleStartSwarm = () => {
@@ -199,6 +248,7 @@ function MainLayout() {
   // States for Tiers 1-4 UI features
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [inspectorNode, setInspectorNode] = useState<any>(null);
+  const [inspectorPosition, setInspectorPosition] = useState<{ top: number; left: number } | null>(null);
   const [isDiffOpen, setIsDiffOpen] = useState(false);
   const [diffFileData, setDiffFileData] = useState({ fileName: 'main_output.py', original: '', modified: '' });
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -865,10 +915,12 @@ function MainLayout() {
               <MonacoEditorPanel />
             ) : (
               <div className="w-full h-full relative">
-                <GraphVisualizer onNodeClick={(node) => {
-                  setInspectorNode(node);
-                  setIsInspectorOpen(true);
-                }} />
+                <GraphVisualizer 
+                  onNodeClick={handleGraphNodeClick}
+                  onNodeDoubleClick={handleGraphNodeDoubleClick}
+                  onNodeContextMenu={handleGraphNodeContextMenu}
+                  activeInspectorNodeId={inspectorNode?.id || null}
+                />
               </div>
             )}
           </div>
@@ -963,10 +1015,12 @@ function MainLayout() {
                 )}
 
                 {activeBottomTab === 'graph' && (
-                  <GraphVisualizer onNodeClick={(node) => {
-                    setInspectorNode(node);
-                    setIsInspectorOpen(true);
-                  }} />
+                  <GraphVisualizer 
+                    onNodeClick={handleGraphNodeClick}
+                    onNodeDoubleClick={handleGraphNodeDoubleClick}
+                    onNodeContextMenu={handleGraphNodeContextMenu}
+                    activeInspectorNodeId={inspectorNode?.id || null}
+                  />
                 )}
 
                 {activeBottomTab === 'repl' && (
@@ -2341,8 +2395,52 @@ function MainLayout() {
 
       <AgentInspector 
         isOpen={isInspectorOpen} 
-        onClose={() => setIsInspectorOpen(false)} 
+        onClose={() => {
+          setIsInspectorOpen(false);
+          setInspectorNode(null);
+        }} 
         nodeData={inspectorNode} 
+        position={inspectorPosition}
+        onViewCode={(label) => {
+          const fileKeys = Object.keys(currentFiles);
+          const targetFile = getAgentFile(label, fileKeys);
+          setActiveTab(targetFile);
+          setCentralView('editor');
+          setIsInspectorOpen(false);
+        }}
+        onViewLogs={(label) => {
+          const sessionMap: Record<string, string> = {
+            'architect': 'architect',
+            'dba': 'dba',
+            'backend': 'backend',
+            'frontend': 'frontend',
+            'review': 'qa',
+            'fix': 'qa',
+            'qa': 'qa',
+            'devops': 'qa'
+          };
+          const l = label.toLowerCase();
+          const targetSession = Object.keys(sessionMap).find(k => l.includes(k));
+          if (targetSession) {
+            useGraphStore.getState().setActiveReplSession(sessionMap[targetSession]);
+          }
+          setActiveBottomTab('repl');
+          setShowBottomPanel(true);
+        }}
+        onViewDiff={() => {
+          const diff = useGraphStore.getState().diffData;
+          if (diff) {
+            useGraphStore.setState({ showDiffPanel: true });
+          } else {
+            showToast("No hay diff disponible de la última iteración.");
+          }
+        }}
+        onRetry={async () => {
+          await approveSpec();
+        }}
+        onEscalate={async () => {
+          await useGraphStore.getState().approveHitl();
+        }}
       />
       <DiffViewer 
         isOpen={isDiffOpen} 
